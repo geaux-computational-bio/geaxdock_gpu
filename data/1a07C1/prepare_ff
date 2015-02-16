@@ -1,0 +1,721 @@
+#!/usr/bin/perl -w
+ 
+ use strict;
+ use File::Path;
+ use File::Slurp;
+ use File::Temp qw/ tempfile tempdir /;
+ use Statistics::Descriptive;
+ use Benchmark;
+ use Uniq;
+ use Cwd;
+ 
+ local $| = 1;
+ 
+ print "------------------------------------------------------------\n";
+ print "                         GeauxDock\n";
+ print "                        version 1.0\n\n";
+ print "   GPU-accelerated mixed-resolution ligand docking using\n";
+ print "                Replica Exchange Monte Carlo\n";
+ print "------------------------------------------------------------\n\n";
+ 
+ if ($#ARGV < 7)
+ {
+  print "prepare_ff -l <docking compounds in SD format>\n";
+  print "           -i <molecule id keyword (default MOLID)>\n";
+  print "           -o <output filename>\n";
+  print "           -s <eFindSite ligands>\n";
+  print "           -a <eFindSite alignments>\n";
+  print "           -p <eFindSite pockets>\n";
+  print "           -t <eFindSite templates>\n";
+  print "           -n <pocket number (default 1)>\n";
+  die "\n";
+ }
+ 
+ die "GEAUXDOCK_PKCOMBU is not set\n" if !( $ENV{'GEAUXDOCK_PKCOMBU'} );
+ die "GEAUXDOCK_BABEL is not set\n" if !( $ENV{'GEAUXDOCK_BABEL'} );
+ die "GEAUXDOCK_FF is not set\n" if !( $ENV{'GEAUXDOCK_FF'} );
+ 
+ my $pkcombu = $ENV{'GEAUXDOCK_PKCOMBU'};
+ my $babel = $ENV{'GEAUXDOCK_BABEL'};
+ my $paramsff = $ENV{'GEAUXDOCK_FF'};
+ 
+ die "Could not find pkcombu\n" if ( !( -e $pkcombu ) );
+ die "Could not find babel\n" if ( !( -e $babel ) );
+ die "Could not find force field file\n" if ( !( -e $paramsff ) );
+ 
+ my $fsdf1 = '';
+ my $fkey1 = 'MOLID';
+ my $fout1 = '';
+ my $flig1 = '';
+ my $fali1 = '';
+ my $fpkt1 = '';
+ my $ftpl1 = '';
+ my $fnum1 = 1;
+ 
+ for ( my $i = 0; $i <= $#ARGV; $i++ )
+ {
+  $fsdf1 = $ARGV[$i+1] if ( $ARGV[$i] eq '-l' );
+  $fkey1 = $ARGV[$i+1] if ( $ARGV[$i] eq '-i' );
+  $fout1 = $ARGV[$i+1] if ( $ARGV[$i] eq '-o' );
+  $flig1 = $ARGV[$i+1] if ( $ARGV[$i] eq '-s' );
+  $fali1 = $ARGV[$i+1] if ( $ARGV[$i] eq '-a' );
+  $fpkt1 = $ARGV[$i+1] if ( $ARGV[$i] eq '-p' );
+  $ftpl1 = $ARGV[$i+1] if ( $ARGV[$i] eq '-t' );
+  $fnum1 = $ARGV[$i+1] if ( $ARGV[$i] eq '-n' );
+ }
+ 
+ die "Provide docking compounds in SD format\n" if ( !( -e $fsdf1 ) or !length($fsdf1) );
+ die "Molecule id keyword is invalid\n" if ( !length($fkey1) );
+ die "Provide output filename\n" if ( !length($fout1) );
+ die "Provide eFindSite ligands\n" if ( !( -e $flig1 ) or !length($flig1) );
+ die "Provide eFindSite alignments\n" if ( !( -e $fali1 ) or !length($fali1) );
+ die "Provide eFindSite pockets\n" if ( !( -e $fpkt1 ) or !length($fpkt1) );
+ die "Provide eFindSite templates\n" if ( !( -e $ftpl1 ) or !length($ftpl1) );
+ die "Pocket number is invalid\n" if ( $fnum1 < 1 );
+ 
+ my $maxatom = 200;
+ 
+ my $bt0 = Benchmark->new;
+ 
+ my $tot1 = 0;
+ 
+ my $dir1 = getcwd();
+ 
+ my $dir2 = tempdir( CLEANUP => 1 );
+ 
+ my ($fh1, $tmpfil1) = tempfile( DIR => $dir2, UNLINK => 1);
+ my ($fh2, $tmpfil2) = tempfile( DIR => $dir2, UNLINK => 1);
+ my ($fh3, $tmpfil3) = tempfile( DIR => $dir2, UNLINK => 1);
+ my ($fh4, $tmpfil4) = tempfile( DIR => $dir2, UNLINK => 1);
+ my ($fh5, $tmpfil5) = tempfile( DIR => $dir2, UNLINK => 1);
+ my ($fh6, $tmpfil6) = tempfile( DIR => $dir2, UNLINK => 1);
+ my ($fh7, $tmpfil7) = tempfile( DIR => $dir2, UNLINK => 1);
+ 
+ printf("Tempdir created: %s\n\n", $dir2);
+ 
+ print "Preparing data for KDE ... ";
+ 
+ my @lig01 = read_file($flig1); chomp(@lig01);
+ 
+ my @lig02 = ();
+ my @lig03 = ();
+ my %lig07 = ();
+ 
+ foreach my $wlig01 (@lig01)
+ {
+  push(@lig02, $wlig01);
+  
+  if ( $wlig01 eq '$$$$' )
+  {
+   my $nlig02 = @lig02;
+   
+   my $tt1 = 0;
+   my $tt2 = '';
+   
+   for ( my $xa = 0; $xa < $nlig02 - 1; $xa++ )
+   {
+    $tt1 = $lig02[$xa+1] if ( $lig02[$xa] =~ /EFINDSITE_POCKET/ );
+    $tt2 = $lig02[$xa+1] if ( $lig02[$xa] =~ /MOLID/ );
+   }
+   
+   if ( $tt1 == $fnum1 )
+   {
+    my @lig08 = ();
+    
+    foreach my $wlig02 ( @lig02 )
+    {
+     push(@lig03, "$wlig02\n");
+     push(@lig08, "$wlig02\n");
+    }
+    
+    $lig07{$tt2} = \@lig08;
+   }
+   
+   @lig02 = ();
+  }
+ }
+ 
+ write_file($tmpfil1, @lig03);
+ 
+ open (BAB, "$babel -isdf $tmpfil1 -omol2 $tmpfil2 2>&1 |") || die "Cannot execute $babel -isdf $tmpfil1 -opdb $tmpfil2\n";
+  my @lig04=<BAB>;
+  chomp(@lig04);
+ close (BAB);
+ 
+ my @lig05 = read_file($tmpfil2); chomp(@lig05);
+ 
+ unlink($tmpfil1) if ( -e $tmpfil1 );
+ unlink($tmpfil2) if ( -e $tmpfil2 );
+ 
+ my @out01 = ();
+ 
+ my $w1 = 0;
+ 
+ my @atm01 = qw( Br C.1 C.2 C.3 C.ar C.cat Cl F I N.1 N.2 N.3 N.4 N.am N.ar N.pl3 O.2 O.3 O.co2 P.3 S.2 S.3 S.O S.O2 );
+ 
+ my $atm02 = 0;
+ 
+ my %atm03 = ();
+ 
+ foreach my $wlig05 (@lig05)
+ {
+  $w1 = 0 if ( $wlig05 eq '@<TRIPOS>BOND' );
+  
+  if ( $w1 )
+  {
+   my $x1 = substr($wlig05, 16, 10) * 1.0;
+   my $y1 = substr($wlig05, 26, 10) * 1.0;
+   my $z1 = substr($wlig05, 36, 10) * 1.0;
+   
+   my $n1 = substr($wlig05, 47, 7);
+   
+   while ( $n1 =~ /\ / ) { $n1 =~ s/\ //g }
+   
+   push (@out01, "KDE $n1 $x1 $y1 $z1\n");
+   
+   if ( exists $atm03{$n1} )
+   {
+    $atm03{$n1}++;
+   }
+   else
+   {
+    $atm03{$n1} = 1;
+   }
+   
+   $atm02++;
+  }
+  
+  $w1 = 1 if ( $wlig05 eq '@<TRIPOS>ATOM' );
+ }
+ 
+ print "done\n\n";
+ 
+ print "Calculating pocket-specific potential ... ";
+ 
+ my @ali01 = read_file($fali1); chomp(@ali01);
+ 
+ my %ali02 = ();
+ 
+ my @ali03 = ();
+ 
+ foreach my $wali01 (@ali01)
+ {
+  push(@ali03, $wali01);
+  
+  if ( $wali01 eq '*' )
+  {
+   my @tt2 = split(/\ /, $ali03[0]);
+   
+   substr($tt2[0], 0, 1) = '' if ( substr($tt2[0], 0, 1) eq '>' );
+   
+   my $n1 = 0;
+   my $n2 = 0;
+   
+   for ( my $xa = 0; $xa < length($ali03[1]); $xa++ )
+   {
+    $n1++ if ( substr($ali03[1], $xa, 1) ne '-' );
+    $n2++ if ( substr($ali03[3], $xa, 1) ne '-' );
+    
+    $ali02{"$tt2[0]:$n2"} = $n1 if ( substr($ali03[1], $xa, 1) ne '-' and substr($ali03[3], $xa, 1) ne '-' );
+   }
+   
+   @ali03 = ();
+  }
+ }
+ 
+ my @dat01 = read_file($paramsff); chomp(@dat01);
+ 
+ my %dat02 = ();
+ 
+ foreach my $wdat01 (@dat01)
+ {
+  if ( length($wdat01) > 4 )
+  {
+   if ( substr($wdat01, 0, 3) eq 'PMF' )
+   {
+    my @tt3 = split(/\ /, $wdat01);
+    
+    $dat02{"$tt3[1]:$tt3[2]"} = $tt3[3];
+   }
+  }
+ }
+ 
+ my @pkt01 = read_file($fpkt1); chomp(@pkt01);
+ 
+ my @pkt02 = ();
+ 
+ my @pkt03 = ();
+ 
+ foreach my $wpkt01 (@pkt01)
+ {
+  push(@pkt03, $wpkt01);
+  
+  if ( $wpkt01 eq 'TER' )
+  {
+   if ( substr($pkt03[0], 7, 4) * 1 == $fnum1 )
+   {
+    @pkt02 = ();
+    
+    foreach my $wpkt03 (@pkt03)
+    {
+     push(@pkt02, $wpkt03);
+    }
+   }
+   
+   @pkt03 = ();
+  }
+  
+  last if ( @pkt02 );
+ }
+ 
+ my @res01 = grep(/RESIDUE /, @pkt02);
+ 
+ @res01 = grep(/\*/, @res01);
+ 
+ my $nres01 = @res01;
+ 
+ my %res02 = ();
+ 
+ foreach my $wres01 (@res01)
+ {
+  my $tt4 = substr($wres01, 8, 5) * 1;
+  
+  $res02{$tt4} = substr($wres01, 39, 8) * 1.0;
+ }
+ 
+ my @pdb01 = read_file($ftpl1); chomp(@pdb01);
+ 
+ my %pdb02 = ();
+ 
+ my @pdb03 = ();
+ 
+ my %cod01 = ( 'ALA' => 'A', 
+               'CYS' => 'C', 
+               'ASP' => 'D', 
+               'GLU' => 'E', 
+               'PHE' => 'F', 
+               'GLY' => 'G', 
+               'HIS' => 'H', 
+               'ILE' => 'I', 
+               'LYS' => 'K', 
+               'LEU' => 'L', 
+               'MET' => 'M', 
+               'ASN' => 'N', 
+               'PRO' => 'P', 
+               'GLN' => 'Q', 
+               'ARG' => 'R', 
+               'SER' => 'S', 
+               'THR' => 'T', 
+               'VAL' => 'V', 
+               'TRP' => 'W', 
+               'TYR' => 'Y' );
+ 
+ foreach my $wpdb01 (@pdb01)
+ {
+  push(@pdb03, $wpdb01);
+  
+  if ( $wpdb01 eq 'TER' )
+  {
+   my $pdb04 = '';
+   
+   my @tt6 = grep(/REMARK   PDB-ID:/, @pdb03);
+   
+   my @tt7 = split(/\ /, $tt6[0]);
+   
+   my $tt8 = pop(@tt7);
+   
+   my @tt9 = grep(/ATOM  /, @pdb03);
+   
+   my @tt10;
+   
+   my $pat1 = 0;
+   
+   push(@tt9, 'ATOM  99999  N   ALA  9999       0.000   0.000   0.000');
+   
+   foreach my $wtt9 (@tt9)
+   {
+    my $tt11 = substr($wtt9, 22, 4) * 1;
+    
+    if ( $tt11 > $pat1 )
+    {
+     $pat1 = $tt11;
+     
+     if ( @tt10 )
+     {
+      my $tt12 = substr($tt10[0], 17, 3);
+      
+      if ( $tt12 eq 'GLY' )
+      {
+       my @tt13 = grep(/ CA /, @tt10);
+       
+       my $hh1 = substr($tt13[0], 22, 4) * 1;
+       my $hh2 = substr($tt13[0], 30, 8) * 1.0;
+       my $hh3 = substr($tt13[0], 38, 8) * 1.0;
+       my $hh4 = substr($tt13[0], 46, 8) * 1.0;
+       
+       $pdb04 .= 'G'.':'.$hh1.':'.$hh2.':'.$hh3.':'.$hh4.'&';
+      }
+      elsif ( $tt12 eq 'ALA' or $tt12 eq 'SER' or $tt12 eq 'THR' or $tt12 eq 'VAL' or $tt12 eq 'LEU' or $tt12 eq 'ILE' or $tt12 eq 'ASN' or $tt12 eq 'ASP' or $tt12 eq 'PRO' or $tt12 eq 'CYS' )
+      {
+       my @tt13 = grep(!/ N  | CA | C  | O  /, @tt10);
+       
+       my $hh1 = substr($tt13[0], 22, 4) * 1;
+       
+       my @tt6x = ();
+       my @tt6y = ();
+       my @tt6z = ();
+       
+       foreach my $wtt13 (@tt13)
+       {
+        push(@tt6x, substr($wtt13, 30, 8) * 1.0);
+        push(@tt6y, substr($wtt13, 38, 8) * 1.0);
+        push(@tt6z, substr($wtt13, 46, 8) * 1.0);
+       }
+       
+       my $tt7x = Statistics::Descriptive::Full->new();
+       my $tt7y = Statistics::Descriptive::Full->new();
+       my $tt7z = Statistics::Descriptive::Full->new();
+       
+       $tt7x->add_data(@tt6x);
+       $tt7y->add_data(@tt6y);
+       $tt7z->add_data(@tt6z);
+       
+       $pdb04 .= $cod01{$tt12}.':'.$hh1.':'.$tt7x->mean().':'.$tt7y->mean().':'.$tt7z->mean().'&';
+      }
+      elsif ( $tt12 eq 'ARG' or $tt12 eq 'LYS' or $tt12 eq 'GLU' or $tt12 eq 'GLN' or $tt12 eq 'HIS' or $tt12 eq 'MET' or $tt12 eq 'PHE' or $tt12 eq 'TYR' or $tt12 eq 'TRP' )
+      {
+       my @tt13 = grep(!/ N  | CA | C  | O  | CB | CG /, @tt10);
+       
+       my $hh1 = substr($tt13[0], 22, 4) * 1;
+       
+       my @tt6x = ();
+       my @tt6y = ();
+       my @tt6z = ();
+       
+       foreach my $wtt13 (@tt13)
+       {
+        push(@tt6x, substr($wtt13, 30, 8) * 1.0);
+        push(@tt6y, substr($wtt13, 38, 8) * 1.0);
+        push(@tt6z, substr($wtt13, 46, 8) * 1.0);
+       }
+       
+       my $tt7x = Statistics::Descriptive::Full->new();
+       my $tt7y = Statistics::Descriptive::Full->new();
+       my $tt7z = Statistics::Descriptive::Full->new();
+       
+       $tt7x->add_data(@tt6x);
+       $tt7y->add_data(@tt6y);
+       $tt7z->add_data(@tt6z);
+       
+       $pdb04 .= $cod01{$tt12}.':'.$hh1.':'.$tt7x->mean().':'.$tt7y->mean().':'.$tt7z->mean().'&';
+      }
+     }
+     
+     @tt10 = ();
+    }
+    
+    push(@tt10, $wtt9);
+   }
+  
+   substr($pdb04, -1, 1) = '' if ( substr($pdb04, -1, 1) eq '&' );
+   
+   $pdb02{$tt8} = $pdb04;
+   
+   @pdb03 = ();
+  }
+ }
+ 
+ chomp(@lig03);
+ 
+ my @lig06 = ();
+ 
+ my @cnt01 = ();
+ 
+ foreach my $wlig03 (@lig03)
+ {
+  push(@lig06, $wlig03);
+  
+  if ( $wlig03 eq '$$$$' )
+  {
+   my $nlig06 = @lig06;
+   
+   my $tt5 = '';
+   
+   for ( my $xa = 0; $xa < $nlig06 - 1; $xa++ )
+   {
+    $tt5 = $lig06[$xa+1] if ( $lig06[$xa] =~ /MOLID/ );
+   }
+   
+   my $tt6 = substr($tt5, 0, 5);
+   
+   if ( exists $pdb02{$tt6} )
+   {
+    foreach my $wlig06 (@lig06)
+    {
+     $wlig06 .= "\n";
+    }
+    
+    write_file($tmpfil3, @lig06);
+    
+    open (BAB, "$babel -isdf $tmpfil3 -omol2 $tmpfil4 2>&1 |") || die "Cannot execute $babel -isdf $tmpfil3 -opdb $tmpfil4\n";
+     my @mol01=<BAB>;
+     chomp(@mol01);
+    close (BAB);
+    
+    my @mol02 = read_file($tmpfil4); chomp(@mol02);
+    
+    unlink($tmpfil3) if ( -e $tmpfil3 );
+    unlink($tmpfil4) if ( -e $tmpfil4 );
+    
+    my @mol03 = ();
+    
+    my $w2 = 0;
+    
+    foreach my $wmol02 (@mol02)
+    {
+     $w2 = 0 if ( $wmol02 eq '@<TRIPOS>BOND' );
+     
+     if ( $w2 )
+     {
+      my $x3 = substr($wmol02, 16, 10) * 1.0;
+      my $y3 = substr($wmol02, 26, 10) * 1.0;
+      my $z3 = substr($wmol02, 36, 10) * 1.0;
+      
+      my $n3 = substr($wmol02, 47, 7);
+      
+      while ( $n3 =~ /\ / ) { $n3 =~ s/\ //g }
+      
+      push(@mol03, "$n3:$x3:$y3:$z3");
+     }
+     
+     $w2 = 1 if ( $wmol02 eq '@<TRIPOS>ATOM' );
+    }
+    
+    my @rec01 = split(/\&/, $pdb02{$tt6});
+    
+    foreach my $wrec01 ( @rec01 )
+    {
+     my @tt14 = split(/\:/, $wrec01);
+     
+     if ( exists $ali02{"$tt6:$tt14[1]"} )
+     {
+      foreach my $wmol03 ( @mol03 )
+      {
+       my @tt15 = split(/\:/, $wmol03);
+       
+       my $rr2 = sqrt( ( $tt15[1] - $tt14[2] )**2 + ( $tt15[2] - $tt14[3] )**2 + ( $tt15[3] - $tt14[4] )**2 );
+       
+       my $tt16 = 'CA';
+       
+       $tt16 = $tt14[0].'1' if ( $tt14[0] ne 'G' );
+       
+       if ( exists $dat02{"$tt16:$tt15[0]"} )
+       {
+        push(@cnt01, ($ali02{"$tt6:$tt14[1]"}).':'.$tt15[0]) if ( $rr2 <= $dat02{"$tt16:$tt15[0]"} and exists $res02{$ali02{"$tt6:$tt14[1]"}} );
+       }
+      }
+     }
+    }
+   }
+   
+   @lig06 = ();
+  }
+ }
+ 
+ my $ncnt01 = @cnt01;
+ 
+ my %cnt02 = ();
+ 
+ foreach my $wcnt01 (@cnt01)
+ {
+  if ( exists $cnt02{$wcnt01} )
+  {
+   $cnt02{$wcnt01}++;
+  }
+  else
+  {
+   $cnt02{$wcnt01} = 1;
+  }
+ }
+ 
+ foreach my $wres02 ( sort { $a <=> $b } keys %res02 )
+ {
+  foreach my $watm01 (@atm01)
+  {
+   my $pmf1 = 0.0;
+   
+   $pmf1 = $cnt02{"$wres02:$watm01"} if ( exists $cnt02{"$wres02:$watm01"} );
+   
+   my $pmf2 = 0.0;
+   
+   $pmf2 = $atm03{$watm01} if ( exists $atm03{$watm01} );
+   
+   my $pmf3 = 1.0 / $nres01;
+   
+   my $pmf4 = $pmf2 / $atm02;
+   
+   my $pmf5 = $ncnt01 * $pmf3 * $pmf4;
+   
+   if ( $pmf1 != 0 and $pmf5 != 0.0 )
+   {
+    my $pmf6 = -1.0 * log( $pmf1 / $pmf5 );
+    
+    push(@out01, "PSP $wres02 $watm01 $pmf6\n");
+   }
+  }
+ }
+ 
+ print "done\n\n";
+ 
+ print "Calculating position restraints for docking compounds:\n\n";
+ 
+ my @cmp01 = read_file($fsdf1); chomp(@cmp01);
+ 
+ my @cmp02 = ();
+ 
+ my $tot01 = 0;
+ 
+ foreach my $wcmp01 (@cmp01)
+ {
+  push(@cmp02, $wcmp01);
+  
+  if ( $wcmp01 eq '$$$$' )
+  {
+   printf("Cmp%7d: ", ++$tot01);
+   
+   my $bt2 = new Benchmark;
+   
+   my $ncmp02 = @cmp02;
+   
+   my $cmp03 = '';
+   
+   for ( my $xa = 0; $xa < $ncmp02 - 1; $xa++ )
+   {
+    $cmp03 = $cmp02[$xa+1] if ( $cmp02[$xa] =~ /$fkey1/ );
+   }
+   
+   if ( length($cmp03) > 2 )
+   {
+    print $cmp03, ' -> ';
+    
+    my @cmp04 = ();
+    
+    foreach my $wcmp02 (@cmp02)
+    {
+     push(@cmp04, "$wcmp02\n");
+    }
+    
+    write_file($tmpfil5, @cmp04);
+    
+    foreach my $wlig07 ( keys %lig07 )
+    {
+     write_file($tmpfil6, @{$lig07{$wlig07}});
+     
+     open (CAL, "$pkcombu -A $tmpfil5 -B $tmpfil6 -oam $tmpfil7 -fA S -fB S 2>&1 |") || die "Cannot execute $pkcombu -A $tmpfil5 -B $tmpfil6 -oam $tmpfil7 -fA S -fB S\n";
+      my @cal01=<CAL>;
+      chomp(@cal01);
+     close (CAL);
+     
+     if ( -e $tmpfil7 )
+     {
+      my @cal02 = read_file($tmpfil7); chomp(@cal02);
+      
+      unlink($tmpfil7);
+      
+      my $tcc01 = 0.0;
+      
+      my %tcc02 = ();
+      
+      my $tcc03 = 0;
+      
+      foreach my $wcal02 (@cal02)
+      {
+       if ( $wcal02 =~ /\#/ )
+       {
+        if ( $wcal02 =~ /tanimoto/ )
+        {
+         while ( $wcal02 =~ /\t/ ) { $wcal02 =~ s/\t/\ /g; }
+         while ( $wcal02 =~ /\ \ / ) { $wcal02 =~ s/\ \ /\ /g }
+         
+         substr($wcal02,  0, 1) = '' if ( substr($wcal02,  0, 1) eq ' ' );
+         substr($wcal02, -1, 1) = '' if ( substr($wcal02, -1, 1) eq ' ' );
+         
+         my @tt16 = split(/\ /, $wcal02);
+         
+         $tcc01 = pop(@tt16);
+        }
+       }
+       else
+       {
+        if ( $wcal02 =~ /\-\-\-/ )
+        {
+         while ( $wcal02 =~ /\t/ ) { $wcal02 =~ s/\t/\ /g; }
+         while ( $wcal02 =~ /\ \ / ) { $wcal02 =~ s/\ \ /\ /g }
+         
+         substr($wcal02,  0, 1) = '' if ( substr($wcal02,  0, 1) eq ' ' );
+         substr($wcal02, -1, 1) = '' if ( substr($wcal02, -1, 1) eq ' ' );
+         
+         my @tt17 = split(/\ /, $wcal02);
+         
+         $tcc03++;
+         
+         $tcc02{$tt17[0]} = $tt17[4];
+        }
+       }
+      }
+      
+      if ( $tcc03 )
+      {
+       my @xyz01 = @{$lig07{$wlig07}};
+       
+       chomp(@xyz01);
+       
+       my $nxyz01 = @xyz01;
+       
+       my $cmp05 = '';
+       
+       for ( my $xa = 0; $xa < $nxyz01; $xa++ )
+       {
+        $cmp05 = $xyz01[$xa+1] if ( $xyz01[$xa] =~ /MOLID/ );
+       }
+       
+       my $tcc04 = 'MCS '.$cmp05." ".$tcc01.' '.$tcc03;
+       
+       foreach my $wtcc02 ( sort { $a <=> $b } keys %tcc02 )
+       {
+        my $xx4 = substr($xyz01[$tcc02{$wtcc02}+3],  0, 10) * 1.0;
+        my $yy4 = substr($xyz01[$tcc02{$wtcc02}+3], 10, 10) * 1.0;
+        my $zz4 = substr($xyz01[$tcc02{$wtcc02}+3], 20, 10) * 1.0;
+        
+        $tcc04 .= ' '.$wtcc02.' '.$xx4.' '.$yy4.' '.$zz4;
+       }
+       
+       push(@out01, "$tcc04\n");
+      }
+     }
+     
+     unlink($tmpfil6) if ( -e $tmpfil6 );
+    }
+    
+    unlink($tmpfil5) if ( -e $tmpfil5 );
+    
+    my $bt3 = Benchmark->new;
+    
+    printf("done in %s\n", timestr(timediff($bt3, $bt2), 'nop'));
+   }
+   
+   @cmp02 = ();
+  }
+ }
+ 
+ write_file($fout1, @out01);
+ 
+ my $bt1 = Benchmark->new;
+ 
+ printf("\n------------------------------------------------------------\n");
+ printf("Walltime: %s\n", timestr(timediff($bt1, $bt0)));
+ printf("------------------------------------------------------------\n");
+ 
+ exit(0);
+ 
+ 

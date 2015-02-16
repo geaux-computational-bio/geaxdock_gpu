@@ -1,0 +1,256 @@
+                  A LA-SiGMA Software Distribution
+             GeauxDock: GPU Accelerated Molecular Docking
+                  Version 0 (r000) - 17 April 2014
+              Copyright 2014 Louisiana State University
+	      
+This package contains codes and sample data for running molecular
+docking simulation on systems equipped with NVidia GPU. 
+	      
+For the latest version and other resources visit
+http://lasigma.loni.org/package/dock/
+
+LA-SiGMA, the Louisiana Alliance for Simulation-Guided Materials
+Applications, is a statewide interdisciplinary collaboration of
+material and computer scientists developing computational resources
+tuned for the latest generation of accelerator-equipped systems. The
+Alliance also develops graduate curricula and is engaged in multiple
+outreach activities. Visit us at http://lasigma.loni.org .
+
+This work was supported in part by the National Science Foundation
+under the NSF EPSCoR Cooperative Agreement No. EPS-1003897 with
+additional support from the Louisiana Board of Regents.
+
+=== Description
+GeauxDock is an ultra-fast automated docking program, designed to predict
+how small ligands bind to pharmacologically relevant macromolecules.
+
+GeauxDock  employs a novel hybrid force field and a Monte Carlo protocol for 
+the efficient sampling of conformational space.
+
+The codes have been tuned for NVidia Fermi- and Kepler-Generation Graphics 
+processing unit(GPU).
+
+GeauxDock has applications in:
+1. ligand virtual screening
+2. structure-based drug design
+3. drug repositioning and polypharmacology
+
+
+=== Purpose
+The purpose of molecular docking is to predict the preferred orientation of 
+small ligands within the binding sites of pharmacologically relevant 
+macromolecules as well as to reliably estimate the associated strength of 
+binding. GeauxDock simulates small molecule binding to proteins expanding the 
+repertoire of tools for computer-aided structure-based drug discovery.
+
+=== Specifications 
+Compared to other ligand docking programs, GeauxDock offers several unique 
+features:
+
+1. A mixed-resolution of protein-ligand complexes. Ligands are treated at the 
+atomic level, whereas proteins are coarse-grained representing individual 
+residues by sets of effective points: the backbone alpha carbon, the geometric 
+center of a peptide plate, and either one or two effective points representing 
+the side chain (depending on the size).
+
+2. A high tolerance to target structure deformations. As a consequence of the 
+mixed-resolution, GeauxDock is fairly insensitive to distortions in protein 
+structures. Thus, experimental structures in their apo conformational states as 
+well as various quality protein models can be used as targets for small 
+molecule docking.
+
+3. A combined evolution/physics-based force field. The energy function 
+implemented in GeauxDock integrates evolution- and physics-based components. 
+The relative contribution of these terms depends on the amount of evolutionary 
+information extracted from homologous complexes. In the absence of homologues, 
+weaker evolutionary-derived restraints are compensated by the stronger 
+contribution of physics-based energy terms.The capability of the force field to 
+reproduce experimental ligand binding poses and the corresponding binding 
+affinities was tested on the Astex/CCDC and BindingDB datasets of 
+pharmacologically relevant protein-ligand complexes.
+
+4. Monte Carlo sampling scheme. GeauxDock uses the Replica Exchange Monte Carlo 
+algorithm to efficiently explore the conformational space of protein-ligand 
+interactions. This protocol was optimized to rapidly discover near-native 
+ligand configurations.
+
+4. Computations on graphics processing units (GPU). GeauxDock is implemented in 
+CUDA-C. The code exploits the coarse-grained parallelisms for multiple 
+replicas; specifically, replica simulations are dispatched on multiple CUDA 
+thread blocks. The computation of molecular interactions utilizes the 
+fine-grained parallelism using massive CUDA threads.
+
+
+=== Prerequisites
+
+GeauxDock has been tested on the following OS:
+
+  Red Hat Enterprise Linux Version 6.5
+  Red Hat Enterprise Linux Server release 6.2
+
+GeauxDock has been tested with the following packages:
+
+ CUDA 5 and the NVidia binary GPU drivers
+ gcc 4.4.6
+ hdf5 1.8.10
+
+
+=== Steps - Initial Setup and Simple Run
+
+Follow these steps to setup and run the code the first time. The sample 
+commands are for a user with home directory "/home/smith/“ and who has unpacked 
+the GeauxDock distribution into a directory “dock/“, so that the path to the 
+readme file would be “/home/smith/dock/README.txt”.
+
+ [ ]  Install Prerequisites
+      Review the list of prerequisites, and install what is
+      needed. 
+
+
+ [ ]  Set Location of CUDA and HDF5
+      If your CUDA installation is in /usr/local/cuda (the
+      default), and the HDF5 library is in /usr/local/lib,
+      then edit src/Makefile, and change the assignment of
+      LIBPATH so that it points to your CUDA and HDF5 installation.
+
+      example:
+      LIBPATH := -L/usr/local/cuda/lib64 -L/usr/local/lib
+
+
+ [ ]  Build the Code
+      Commands:
+
+      % cd /home/smith/dock/src/
+      % make
+
+      If the build is successful a executable named "dock" will be created
+      in the src directory.  If not, find an experienced programmer
+      to help identify and fix the problems.
+ 
+
+ [ ]  Run The Code
+      The command below will run GeauxDock using the provided parameter file.
+
+      > cd /home/smith/dock/data
+
+      > ../src/dock -id 1a07C1 -p ./1a07C1/1a07C.pdb -l ./1a07C1/1a07C1.sdf \
+        -s ./1a07C1/1a07C1-0.8.ff -opt ./parameters/08ff_opt \
+        -na ./parameters/08_nor_a -nb ./parameters/08_nor_b \
+        -para ./parameters/paras -ns 2000 -nc 10 -floor_temp 0.044f \
+        -ceiling_temp 0.036f -nt 1 -t 0.02f -r 0.08f
+
+      The execution using the provided input and parameter file should complete
+      in just a few seconds.
+
+      A folder named with the time stamp "YYYYmmdd_HHMMSS" will be 
+      created, under which you should see three output files: a_0000.h5,
+      a_0001.h5 and a_0002.h5.  These files record the Monte Carlo steps 0-999, 
+      1000-1999, and 2000-2999 respectively.
+
+
+  [ ]  Results Verification
+       In case of a successful simulation using the example input files,
+       initial energy state as part of standard output should agree with the
+       lines below:
+
+       initial energy state
+       ================================================================================
+       rep step vdw ele pmf psp hdb hpc kde lhm dst total
+       0 0 0.6434 -0.0369 -0.2079 0.2210 0.8521 -1.0402 -53.2772 -0.1593 17.0834 21.8245
+
+
+
+=== Documentation of Features
+
+== Command-line options
+
+1. Mandatory arguments
+-id
+    ligand name
+
+-p pdb_file
+    target protein structure in PDB(Protein Data Bank) format
+
+-l sdf_file
+    ligand to dock in sdf format
+    (http://en.wikipedia.org/wiki/Chemical_table_file#SDF)
+
+-s ff_file
+    force field parameters to calculate ligand-target interaction
+
+-opt opt_file
+    optimized weights assigned to energy components
+
+-na
+    linear normalization parameter a
+
+-nb
+    linear normalization parameter b
+
+-para
+    energy calculation parameters
+
+
+2. Optional arguments
+
+-ns <integer>
+    total Monte Carlo steps, 3000 by default
+    This iteration parameter should be multiple of STEPS_PER_DUMP 
+    (defined in src/size.h).
+
+-nc <integer>
+    Monte Carlo steps between two consecutive replica exchange, 5 by default
+    This iteration parameter should divide STEPS_PER_DUMP 
+    (defined in src/size.h).
+
+-floor_temp <float>
+    floor temperature set for the replicas, 0.004 by default
+
+-ceiling_temp <float>
+    ceiling temperature set for the replicas, 0.036 by default
+
+-nt <integer>
+    temperature replica numbers, 6 by default
+
+-t <float>
+    transnational scale in each perturbation of the ligand, 0.02 (in Angstrom) 
+    by default
+
+-r <float>
+    rotational scale in each perturbation of the ligand, 0.08 (in Angstrom) by 
+    default
+
+== Input file formats
+1. sdf
+   ligand input file (http://en.wikipedia.org/wiki/Chemical_table_file#SDF)
+
+2. pdb
+   protein input file (http://www.rcsb.org/pdb/home/home.do)
+
+3. ff
+   force field parameters that can be generated using utils/prepare_ff and 
+   files generated by eFindSite (http://brylinski.cct.lsu.edu/efindsite)
+
+== Output format
+1. standard output, including 
+   * info on intput and output data paths
+   * simulation parameter setup
+   * runtime performance measurements
+
+2. hdf5 files recording docking trajectories
+   * a directory containing hdf5 files should have been created
+   * data analysis toolkit under development
+
+
+=== Development History
+
+== Discussion of the code origin
+GeauxDock was designed to use computer-generated protein models as targets for 
+small molecule docking in structure-based drug discovery. The current 
+high-performance implementation is based on a serial C++ version written by 
+Michal Brylinski at Louisiana State University.
+
+This software contains source code provided by NVIDIA Corporation.
+
+== Changes in each release.
+First release.
