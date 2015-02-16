@@ -34,8 +34,8 @@ GPU := GPU_NA
 
 
 
-# HOST: mike, smic, shelob, las07
-HOST := shelob
+# HOST: mike, shelob, qb, smic las07
+HOST := qb
 
 ifeq ($(HOST), mike)
 # edit include/yeah/cudautil.h, locate "CUDA_LDG_P", enable the second branch
@@ -50,6 +50,11 @@ else ifeq ($(HOST), shelob)
 # edit ~/.soft
 # +cuda-5.5.22
 # +hdf5-1.8.10-gcc-4.4.6-openmpi-1.6.2
+	LIBPATH := -L/usr/local/packages/cuda/5.5.22/lib64 -L/usr/local/packages/hdf5/1.8.10/gcc-4.4.6/lib
+	DMARCRO += -DTARGET_DEVICE=$(TARGET_GPU)
+	GPU := GK110
+
+else ifeq ($(HOST), qb)
 	LIBPATH := -L/usr/local/packages/cuda/5.5.22/lib64 -L/usr/local/packages/hdf5/1.8.10/gcc-4.4.6/lib
 	DMARCRO += -DTARGET_DEVICE=$(TARGET_GPU)
 	GPU := GK110
@@ -80,15 +85,13 @@ endif
 # TperB		512		768		128				Threads per Block
 
 ifeq ($(GPU), GF110)
-	#DEVFLAGS := -gencode arch=compute_20,code=sm_20
-	DEVFLAGS := -gencode=arch=compute_20,code=\"sm_20,compute_20\"
+	DEVFLAGS := -gencode arch=compute_20,code=sm_20
 	GD := 16
 	BDy := 8
 	BDx := 64
 	TperB := 512
 else ifeq ($(GPU), GK110)
-	DEVFLAGS := -gencode arch=compute_35,code=\"sm_35,compute_35\" -Xptxas -dlcm=ca
-	#DEVFLAGS := -arch=sm_35
+	DEVFLAGS := -gencode arch=compute_35,code=sm_35 -Xptxas -dlcm=ca
 	GD := 56
 	BDy := 8
 	BDx := 96

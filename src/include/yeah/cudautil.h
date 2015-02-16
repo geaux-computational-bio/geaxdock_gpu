@@ -58,11 +58,11 @@ cudaGetLastError ();
 
 
 // force the load to go through the read-only data cache, for CC > 3.5
-#if 0
+#if 1
 #define CUDA_LDG_P(p) __ldg (p)
 #define CUDA_LDG_D(d) __ldg (&d)
 #endif
-#if 1
+#if 0
 #define CUDA_LDG_P(p) *p
 #define CUDA_LDG_D(d) d
 #endif
