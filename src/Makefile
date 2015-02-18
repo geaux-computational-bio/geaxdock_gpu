@@ -116,7 +116,7 @@ DMARCRO_GPU := -DGD=$(GD) -DBDy=$(BDy) -DBDx=$(BDx) -DTperB=$(TperB) -DNGPU=$(NG
 
 
 HOSTFLAGS :=
-HEADPATH := -I./include -I./include/nvidia_gpucomputingsdk_4.2.9_c_common_inc
+HEADPATH := -I./modules -I./modules/nvidia_gpucomputingsdk_4.2.9_c_common_inc
 OPTFLAGS := -O3
 LINKFLAGS := -lcudart -lhdf5 -lm
 
