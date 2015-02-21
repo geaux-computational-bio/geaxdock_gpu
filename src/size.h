@@ -79,6 +79,9 @@
 #define MAXMCS 256
 /* mcs fields, number of field in a mcs */
 
+#define MINLIGRMSD 0.1
+/* minimum rmsdf value of ligand ensembles from native */
+
 
 
 #define INITTEMP 10000.0f

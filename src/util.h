@@ -5,6 +5,7 @@
 #include <list>
 #include <cstring>
 #include <string>
+#include <vector>
 #include "size.h"
 #include "dock.h"
 
@@ -64,6 +65,7 @@ void DumpLigRecord (const LigRecord *, const int, const char*);
 
 int minimal_int (const int, const int);
 
+vector < string > splitByWhiteSpace (string);
 
 
 #endif // UTIL_H

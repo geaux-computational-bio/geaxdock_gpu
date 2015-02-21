@@ -6,6 +6,10 @@
 #include <cmath>
 #include <ctime>
 #include <list>
+#include <vector>
+#include <string>
+#include <stdio.h>
+#include <sstream>
 #include <sys/stat.h>
 
 #include "size.h"
@@ -1330,5 +1334,16 @@ minimal_int (const int a, const int b)
 }
 
 
+vector < string >
+splitByWhiteSpace(string s) {
+  vector < string > tokens;
+  istringstream ss (s);
+  while (!ss.eof())
+    {
+      string x;
+      getline(ss, x, ' ');
+      tokens.push_back(x);
+    }
 
-
+  return tokens;
+}

@@ -25,10 +25,12 @@
 #include <cstdio>
 #include <cstring>
 #include <vector>
+#include <assert.h>
 
 #include "dock.h"
 #include "data.h"
-#include "rmsd.h"
+#include "util.h"
+// #include "rmsd.h"
 #include "size.h"
 #include "load.h"
 
@@ -131,9 +133,304 @@ read2D(TraceFile *trace_file)
   return matrix;
 }
 
+// string
+vector < float >
+getLigEnsembleRmsd (vector < string > sect) {
+  string rmsd_line;
+
+  int lnum = 0;
+  vector < string > :: iterator iter_sdf;
+  for (iter_sdf = sect.begin(); iter_sdf != sect.end(); iter_sdf++) {
+    string line = (*iter_sdf);
+    if (line.find("ENSEMBLE_RMSD") != string::npos)
+      rmsd_line = sect.at(lnum + 1);
+    lnum += 1;
+  }
+
+  vector < float > rmsds;
+
+  if (!rmsd_line.empty()) {
+    vector < string > rmsd_strs = splitByWhiteSpace(rmsd_line);
+    for (vector < string > :: iterator i = rmsd_strs.begin();
+         i != rmsd_strs.end(); i++)
+      rmsds.push_back(atof((*i).c_str()));
+  }
+
+  return rmsds;
+}
+
+vector < string >
+getLigEnsembleCoords (vector < string > sect ) {
+  vector < string > coords;
+  
+  int lnum = 0;
+  vector < string > :: iterator iter_sdf;
+  int tot_lnum = sect.size();
+  for (iter_sdf = sect.begin(); iter_sdf != sect.end(); iter_sdf++) {
+    string line = (*iter_sdf);
+    if (line.find("ENSEMBLE_COORDS") != string::npos) {
+      for (int i = lnum + 1; i < tot_lnum; i++) {
+        string coord_line = sect.at(i);
+        if (!coord_line.empty())
+          coords.push_back(coord_line);
+        else
+          break;
+      }
+    }
+    lnum += 1;
+  }
+
+  return coords;
+}
 
 void 
-loadLigand( LigandFile * lig_file, Ligand0 * lig)
+loadLigand ( LigandFile * lig_file, Ligand0 * lig)
+{
+  vector < vector < string > > sections = readLigandSections(lig_file->path);
+
+  // TODO for astex sdf file, only one compounds in one sdf file
+  vector < string > sect = sections.at(0);
+  lig_file->conf_total = loadOneLigand(sect, lig);
+  lig_file->lna = lig->lna;
+}
+
+int
+loadOneLigand (vector < string > sect, Ligand0 * ligs)
+{
+  vector < float > rmsds = getLigEnsembleRmsd(sect);
+  vector < string > coords = getLigEnsembleCoords(sect);
+  assert( rmsds.size() == coords.size());
+
+  // load the default ligand
+  Ligand0 * default_lig = &ligs[0];
+  writeLigProperty(sect, default_lig);
+  writeLigAtomProperty(sect, default_lig);
+  writeDefaultLigAtomCoord(sect, default_lig);
+
+  // load variational conformers
+  int idx = 1;
+  int max_confs = rmsds.size();
+  for (int i = 0; i < max_confs; i++) {
+    float my_rmsd = rmsds.at(i);
+    if (my_rmsd > MINLIGRMSD) {
+      Ligand0 * mylig = &ligs[idx];
+      writeLigProperty(sect, mylig);
+      writeLigAtomProperty(sect, mylig);
+      string coord_line = coords.at(i);
+      writeEnsAtomCoord(coord_line, mylig);
+      idx += 1;
+    }
+  }
+
+  return idx;
+}
+
+int
+getLigEnsembleTotal (vector < string > sect)
+{
+  int ens_tot = -1;
+  int lnum = 0;
+  vector < string > :: iterator iter_sdf;
+  for (iter_sdf = sect.begin(); iter_sdf != sect.end(); iter_sdf++) {
+    string line = (*iter_sdf);
+    if (line.find("ENSEMBLE_TOTAL") != string::npos) {
+      string next_line = sect.at(lnum + 1);
+      ens_tot = atoi(next_line.c_str());
+    }
+    lnum += 1;
+  }
+
+  if (ens_tot == -1)
+    exit (EXIT_FAILURE);
+  else
+    return ens_tot;
+}
+
+// void
+// writeLig
+
+void
+writeEnsAtomCoord (string coord_line, Ligand0 * mylig)
+{
+  vector < string > coords = splitByWhiteSpace(coord_line);
+
+  assert(coords.size() % 3 == 0);
+
+  int tot = coords.size();
+  for (int i = 0; i < tot; i ++) {
+    int atom_num = i / 3;
+    float coord = atof(coords.at(i).c_str());
+    if (i % 3 == 0)  // write to x
+      mylig->coord_orig.x[atom_num] = coord;
+    else if ( i % 3 == 1)  // write y
+      mylig->coord_orig.y[atom_num] = coord;
+    else if ( i % 3 == 2)  // write z
+      mylig->coord_orig.z[atom_num] = coord;
+  }
+}
+
+void
+writeDefaultLigAtomCoord (vector < string > sect, Ligand0 * mylig)
+{
+  string lines[MAXSDF];
+  int lnum = 0;
+
+  vector < string > :: iterator iter_sdf;
+  for (iter_sdf = sect.begin(); iter_sdf != sect.end(); iter_sdf++) {
+    lines[lnum++] = (*iter_sdf);
+  }
+
+  mylig->lna = atoi(lines[3].substr(0, 3).c_str());
+  mylig->lnb = atoi(lines[3].substr(3, 3).c_str());
+
+  float tmp8[MAXLIG][3];
+  for (int i1 = 4; i1 < mylig->lna + 4; i1++) {
+    tmp8[i1 - 4][0] = atof(lines[i1].substr(0, 10).c_str());
+    tmp8[i1 - 4][1] = atof(lines[i1].substr(10, 10).c_str());
+    tmp8[i1 - 4][2] = atof(lines[i1].substr(20, 10).c_str());
+  }
+
+  // push the coords to the default lig
+  int i4 = 0;
+  for (i4 = 0; i4 < mylig->lna; i4++) {
+    mylig->coord_orig.x[i4] = tmp8[mylig->n[i4]][0];
+    mylig->coord_orig.y[i4] = tmp8[mylig->n[i4]][1];
+    mylig->coord_orig.z[i4] = tmp8[mylig->n[i4]][2];
+
+    // cout << "coord " <<  mylig->coord_orig.x[i4] << ' ';
+    // cout << mylig->coord_orig.y[i4] << ' ';
+    // cout << mylig->coord_orig.z[i4] << endl; 
+  }
+}
+
+void
+writeLigAtomProperty (vector < string > sect, Ligand0 * mylig)
+{
+  string lines[MAXSDF];
+  int lnum = 0;
+  int total_lines = sect.size();
+
+  vector < string > :: iterator iter_sdf;
+  for (iter_sdf = sect.begin(); iter_sdf != sect.end(); iter_sdf++) {
+    lines[lnum++] = (*iter_sdf);
+  }
+
+  mylig->lna = atoi(lines[3].substr(0, 3).c_str());
+  mylig->lnb = atoi(lines[3].substr(3, 3).c_str());
+
+  float tmp2[MAXLIG];	// for OB_ATOMIC_CHARGES
+  int tmp3[MAXLIG];	// for atom types 
+
+  for (lnum = 4 + mylig->lna + mylig->lnb; lnum < total_lines; lnum++) {
+     if (lines[lnum].find("OB_ATOM_TYPES") != string::npos) {
+      int tmp4 = 0;
+
+      istringstream tmp5(lines[lnum + 1]);
+
+      while (tmp5) {
+        std::string tmp6;
+
+        tmp5 >> tmp6;
+
+        if (tmp6.length() > 0)
+          tmp3[tmp4++] = getLigCode(tmp6);
+      }
+    }
+
+    else if (lines[lnum].find("OB_ATOMIC_CHARGES") != string::npos) {
+      int tmp4 = 0;
+
+      istringstream tmp5(lines[lnum + 1]);
+
+      while (tmp5) {
+        std::string tmp6;
+
+        tmp5 >> tmp6;
+
+        if (tmp6.length() > 0)
+          tmp2[tmp4++] = atof(tmp6.c_str());
+      }
+    }
+  }
+
+  /* write the properties of each atom */
+  for (int i1 = 4; i1 < mylig->lna + 4; i1++) {
+    pushLigandPoint(mylig, i1 - 4, lines[i1].substr(31, 24).c_str(), tmp3[i1 - 4], tmp2[i1 - 4]);
+  }
+}
+  
+
+void
+writeLigProperty (vector < string > sect, Ligand0 * mylig)
+{
+  string id_key = "MOLID";
+  string lines[MAXSDF];
+  int lnum = 0;
+  int total_lines = sect.size();
+
+  vector < string > :: iterator iter_sdf;
+  for (iter_sdf = sect.begin(); iter_sdf != sect.end(); iter_sdf++) {
+    lines[lnum++] = (*iter_sdf);
+  }
+
+
+  mylig->lna = atoi(lines[3].substr(0, 3).c_str());
+  mylig->lnb = atoi(lines[3].substr(3, 3).c_str());
+  
+  for (lnum = 4 + mylig->lna + mylig->lnb; lnum < total_lines; lnum++) {
+    if (lines[lnum].find(id_key) != string::npos) {
+      mylig->id = lines[lnum + 1];
+    }
+
+    else if (lines[lnum].find("SMILES_CANONICAL") != string::npos)
+      mylig->smiles = lines[lnum + 1];
+
+    else if (lines[lnum].find("OB_MW") != string::npos)
+      mylig->mw = atof(lines[lnum + 1].c_str());
+
+    else if (lines[lnum].find("OB_logP") != string::npos)
+      mylig->logp = atof(lines[lnum + 1].c_str());
+
+    else if (lines[lnum].find("OB_PSA") != string::npos)
+      mylig->psa = atof(lines[lnum + 1].c_str());
+
+    else if (lines[lnum].find("OB_MR") != string::npos)
+      mylig->mr = atof(lines[lnum + 1].c_str());
+
+    else if (lines[lnum].find("MCT_HBD") != string::npos)
+      mylig->hbd = atoi(lines[lnum + 1].c_str());
+
+    else if (lines[lnum].find("MCT_HBA") != string::npos)
+      mylig->hba = atoi(lines[lnum + 1].c_str());
+  }
+}
+
+
+vector < vector < string > > 
+readLigandSections(string sdf_path) 
+{
+  vector < vector < string > > sections;
+  string line;
+  ifstream file(sdf_path.c_str());
+
+  if (!file.is_open()) {
+    cout << "Error opening file " << sdf_path << endl;
+  }
+
+  vector < string > one_section;
+  while(getline(file, line)) {
+    one_section.push_back(line);
+    if (line.compare("$$$$") == 0) {
+      sections.push_back(one_section);
+      one_section.clear();
+    }
+  }
+  
+  return sections;
+}
+
+void 
+loadLigand_bk ( LigandFile * lig_file, Ligand0 * lig)
 {
 	// ifstream
 	std::string llib3 = lig_file->molid;
@@ -415,13 +712,13 @@ loadLigand( LigandFile * lig_file, Ligand0 * lig)
 	  float t[3];
 	  int ier = 0;
 
-	  u3b_(&weights, &mob_xyz, &ref_xyz, &(mylig->lna), &mode, &rms1, &u, &t, &ier);
+	  // u3b_(&weights, &mob_xyz, &ref_xyz, &(mylig->lna), &mode, &rms1, &u, &t, &ier);
 
 	  // cout << "0-- rms1 " << rms1 << endl;
 	  // cout << "0-- mylig.lna " << mylig->lna << endl;
 
 	  float rms2 = sqrt(rms1 / (float)mylig->lna);
-
+          
 	  if (rms2 > 0.1) {
 	    Ligand0 *my_rest_lig = &lig[*conf_ip];	// my_rest_lig points to other conformations in the data file 
 	    // cout << "0-- lig_conf_rest  " << *conf_ip << endl;

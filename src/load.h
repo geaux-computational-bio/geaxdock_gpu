@@ -2,12 +2,35 @@
 #define  LOAD_H
 
 #include <vector>
+#include <string>
 
 #include "dock.h"
 
 using namespace std;
 
-void loadTrace(TraceFile *, float *);
+void loadTrace (TraceFile *, float *);
+
+// write the property of the ligand, such as SMILES, does not wirte coordinates
+void writeLigProperty( vector < string > , Ligand0 *);
+
+// write properties of the atoms
+void writeLigAtomProperty( vector < string > , Ligand0 *);
+
+// write the coords to the default ligand
+void writeDefaultLigAtomCoord (vector < string >, Ligand0 *);
+
+// write the coords to the ensemble ligand
+void writeEnsAtomCoord (string coord_line, Ligand0 * mylig);
+
+// load ligand and return the total number of conformers
+int loadOneLigand (vector < string >, Ligand0 *);
+
+int getLigEnsembleTotal ( vector < string > );
+
+vector < vector < string > > readLigandSections (string);
+vector < string > getLigEnsembleCoords (vector < string > );
+vector < float > getLigEnsembleRmsd (vector < string > );
+
 
 void loadLigConf (LigandFile *);
 void loadLigand (LigandFile *, Ligand0 *);
