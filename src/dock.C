@@ -47,7 +47,7 @@ main (int argc, char **argv)
   loadEnePara (&inputfiles->enepara_file, enepara0);
   loadWeight(&inputfiles->weight_file, enepara0);
   loadNorPara(&inputfiles->norpara_file, enepara0);
-
+  
 
   // sizes
   ComplexSize complexsize;

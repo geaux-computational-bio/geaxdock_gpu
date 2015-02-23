@@ -10,6 +10,12 @@ using namespace std;
 
 void loadTrace (TraceFile *, float *);
 
+// move the ligand to the protein pocket center
+void moveLigand2PocketCenter(float *, Ligand0 *);
+
+// move the ligand to its center frame
+void moveLigand2ItsCenterFrame (Ligand0 *);
+
 // write the property of the ligand, such as SMILES, does not wirte coordinates
 void writeLigProperty( vector < string > , Ligand0 *);
 
@@ -34,10 +40,12 @@ vector < float > getLigEnsembleRmsd (vector < string > );
 
 void loadLigConf (LigandFile *);
 void loadLigand (LigandFile *, Ligand0 *);
+void loadLigand_bk (LigandFile *, Ligand0 *);
 
 void loadPrtConf (ProteinFile *, Protein0 *);
 void loadProtein (ProteinFile *, Protein0 *);
 
+void loadPocketCenter (string, float *);
 void loadLHM (LhmFile *, Psp0 *, Kde0 *, Mcs0 *);
 void loadEnePara (EneParaFile *, EnePara0 *);
 

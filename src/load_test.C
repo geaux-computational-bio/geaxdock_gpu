@@ -12,6 +12,34 @@
 
 using namespace std;
 
+TEST (original_load, 1a07C1)
+{
+  InputFiles *inputfiles = new InputFiles[1];
+  inputfiles->lig_file.id = "1a07C1";
+  inputfiles->lig_file.path = "../data/1a07C1/1a07C1.sdf";
+  inputfiles->lig_file.molid = "MOLID";
+
+  Ligand0 *lig0 = new Ligand0[MAXEN2];
+
+  loadLigand_bk (&inputfiles->lig_file, lig0);
+
+  // cout << "pocket center" << endl;
+  // for (int i = 0; i < 3; i++) {
+  //   cout << lig0->pocket_center[i] << " ";
+  // }
+  // cout << endl;
+
+  // cout << "ligand center" << endl;
+  // for (int i = 0; i < 3; i++) {
+  //   cout << lig0->coord_orig.center[i] << " ";
+  // }
+  // cout << endl;
+
+  delete[]lig0;
+  delete[]inputfiles;
+}
+
+
 TEST (Load_Ligands, 1a07C1)
 {
   string sdf_path = "../data/1a07C1/1a07C1.sdf";
@@ -35,7 +63,7 @@ TEST (Load_Ligands, 1a07C1)
   Ligand0 *lig0 = new Ligand0[MAXEN2];
 
   int tot_conf = loadOneLigand(sections.at(0), lig0);
-  EXPECT_EQ(20, tot_conf);
+  EXPECT_EQ(21, tot_conf);
 
   float left = 45.6740;
   float right = lig0->coord_orig.x[0];
@@ -47,6 +75,8 @@ TEST (Load_Ligands, 1a07C1)
   right = lig1->coord_orig.y[0];
   const testing::internal::FloatingPoint<float> lhs1(left), rhs1(right);
   EXPECT_TRUE(lhs1.AlmostEquals(rhs1));
+
+  
 
   delete[]lig0;
 
@@ -101,9 +131,21 @@ TEST (Load_Ligands, 1b9vA)
   EXPECT_TRUE(lhs2.AlmostEquals(rhs2));
 
   
-  
+  moveLigand2ItsCenterFrame(lig0);
+  left = -3.6306739;
+  right = lig0->coord_orig.x[0];
+  const testing::internal::FloatingPoint<float> lhs3(left), rhs3(right);
+  EXPECT_TRUE(lhs3.AlmostEquals(rhs3));
 
-  // TODO load the pocket center and move ligands to it TODO
+  float pocket_center[3];
+  loadPocketCenter("../data/edud/1b9v_4.ff", pocket_center);
+
+  left = -9.590;
+  right = pocket_center[1];
+  const testing::internal::FloatingPoint<float> lhs4(left), rhs4(right);
+  EXPECT_TRUE(lhs4.AlmostEquals(rhs4));
+
+  moveLigand2PocketCenter(pocket_center, lig0);
 
   delete[]lig0;
 

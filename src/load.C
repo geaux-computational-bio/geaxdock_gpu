@@ -225,6 +225,42 @@ loadOneLigand (vector < string > sect, Ligand0 * ligs)
   return idx;
 }
 
+void
+moveLigand2PocketCenter(float * pocket_center, Ligand0 * lig) {
+  int lna = lig->lna;
+  LigCoord * lig_coord = &lig->coord_orig;
+  for (int i = 0; i < lna; i++) {
+    lig_coord->x[i] += pocket_center[0];
+    lig_coord->y[i] += pocket_center[1];
+    lig_coord->z[i] += pocket_center[2];
+  }
+}
+
+void
+moveLigand2ItsCenterFrame (Ligand0 * lig)
+{
+  int lna = lig->lna;
+  float sum_x = 0.;
+  float sum_y = 0.;
+  float sum_z = 0.;
+  LigCoord * lig_coord = &lig->coord_orig;
+  for (int i = 0; i < lna; i++) {
+    sum_x += lig_coord->x[i];
+    sum_y += lig_coord->y[i];
+    sum_z += lig_coord->z[i];
+  }
+
+  float center_x = sum_x / lna;
+  float center_y = sum_y / lna;
+  float center_z = sum_z / lna;
+
+  for (int i = 0; i < lna; i++) {
+    lig_coord->x[i] -= center_x;
+    lig_coord->y[i] -= center_y;
+    lig_coord->z[i] -= center_z;
+  }
+}
+
 int
 getLigEnsembleTotal (vector < string > sect)
 {
@@ -706,18 +742,19 @@ loadLigand_bk ( LigandFile * lig_file, Ligand0 * lig)
 	    for (int i5 = 0; i5 < 3; i5++)
 	      mob_xyz[i7][i5] -= mob_cen[i5];
 
-	  int mode = 1;
-	  float rms1 = 0.0;
-	  float u[3][3];
-	  float t[3];
-	  int ier = 0;
+	  // int mode = 1;
+	  // float rms1 = 0.0;
+	  // float u[3][3];
+	  // float t[3];
+	  // int ier = 0;
 
 	  // u3b_(&weights, &mob_xyz, &ref_xyz, &(mylig->lna), &mode, &rms1, &u, &t, &ier);
 
 	  // cout << "0-- rms1 " << rms1 << endl;
 	  // cout << "0-- mylig.lna " << mylig->lna << endl;
 
-	  float rms2 = sqrt(rms1 / (float)mylig->lna);
+	  // float rms2 = sqrt(rms1 / (float)mylig->lna);
+          float rms2 = 0.4;  // For debugging
           
 	  if (rms2 > 0.1) {
 	    Ligand0 *my_rest_lig = &lig[*conf_ip];	// my_rest_lig points to other conformations in the data file 
@@ -1339,7 +1376,27 @@ pushKDEpoint (int at, float ax, float ay, float az, Kde0 * kde)
 }
 
 
+void
+loadPocketCenter (string lhm_path, float * center)
+{
+  ifstream file(lhm_path.c_str());
+  string line;
+  
+  if (!file.is_open()) {
+    cout << "Error opening file " << lhm_path << endl;
+  }
 
+  string center_line;
+  while(getline(file, line)) {
+    if (line.find("CENTER") != string::npos)
+      center_line = line;
+  }
+
+  vector < string > tokens = splitByWhiteSpace(center_line);
+  for (int i = 1; i < 4; i++) {
+    center[i-1] = atof(tokens.at(i).c_str());
+  }
+}
 
 
 
