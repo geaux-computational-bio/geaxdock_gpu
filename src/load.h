@@ -10,6 +10,9 @@ using namespace std;
 
 void loadTrace (TraceFile *, float *);
 
+
+void trimLigand (InputFiles * inputfiles, Ligand0 * lig);
+
 // move the ligand to the protein pocket center
 void moveLigand2PocketCenter(float *, Ligand0 *);
 

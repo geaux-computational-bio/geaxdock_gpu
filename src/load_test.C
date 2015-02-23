@@ -18,23 +18,35 @@ TEST (original_load, 1a07C1)
   inputfiles->lig_file.id = "1a07C1";
   inputfiles->lig_file.path = "../data/1a07C1/1a07C1.sdf";
   inputfiles->lig_file.molid = "MOLID";
+  inputfiles->lhm_file.path = "../data/1a07C1/1a07C1.ff";
 
   Ligand0 *lig0 = new Ligand0[MAXEN2];
-
   loadLigand_bk (&inputfiles->lig_file, lig0);
 
-  // cout << "pocket center" << endl;
-  // for (int i = 0; i < 3; i++) {
-  //   cout << lig0->pocket_center[i] << " ";
-  // }
-  // cout << endl;
+  Ligand0 *lig1 = new Ligand0[MAXEN2];
+  loadLigand(&inputfiles->lig_file, lig1);
+  trimLigand(inputfiles, lig1);
+  
+  /*
+  for (int i = 0; i < 3; i++) {
+    float left = lig0->coord_orig.center[i];
+    float right = lig1->coord_orig.center[i];
+    cout << left << " " << right << endl;
+    const testing::internal::FloatingPoint<float> lhs(left), rhs(right);
+    EXPECT_TRUE(lhs.AlmostEquals(rhs));
+  }
+  
+  for (int i = 0; i < 3; i++) {
+    float left = lig0->pocket_center[i];
+    float right = lig1->pocket_center[i];
+    cout << left << " " << right << endl;
+    const testing::internal::FloatingPoint<float> lhs(left), rhs(right);
+    EXPECT_TRUE(lhs.AlmostEquals(rhs));
+  }
+  */
 
-  // cout << "ligand center" << endl;
-  // for (int i = 0; i < 3; i++) {
-  //   cout << lig0->coord_orig.center[i] << " ";
-  // }
-  // cout << endl;
 
+  delete[]lig1;
   delete[]lig0;
   delete[]inputfiles;
 }

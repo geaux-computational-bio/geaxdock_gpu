@@ -194,6 +194,24 @@ loadLigand ( LigandFile * lig_file, Ligand0 * lig)
   lig_file->lna = lig->lna;
 }
 
+void
+trimLigand (InputFiles * inputfiles, Ligand0 * lig)
+{
+  float pocket_center[3];
+  string lhm_path = inputfiles->lhm_file.path;
+  loadPocketCenter(lhm_path, pocket_center);
+
+  int tot_conf = inputfiles->lig_file.conf_total;
+  for (int i = 0; i < tot_conf; i++) {
+    Ligand0 *mylig = &lig[i];
+    moveLigand2ItsCenterFrame(mylig);
+    for (int j = 0; j < 3; j++) {
+      mylig->pocket_center[j] = pocket_center[j];
+      mylig->coord_orig.center[j] = pocket_center[j];
+    }
+  }
+}
+
 int
 loadOneLigand (vector < string > sect, Ligand0 * ligs)
 {
