@@ -42,7 +42,7 @@ vector < float > getLigEnsembleRmsd (vector < string > );
 
 
 void loadLigConf (LigandFile *);
-void loadLigand (LigandFile *, Ligand0 *);
+void loadLigand (InputFiles *, Ligand0 *);
 void loadLigand_bk (LigandFile *, Ligand0 *);
 
 void loadPrtConf (ProteinFile *, Protein0 *);
