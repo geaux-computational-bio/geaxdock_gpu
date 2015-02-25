@@ -1347,3 +1347,50 @@ splitByWhiteSpace(string s) {
 
   return tokens;
 }
+
+
+// return 1 if two movevector are the same else return 0
+int
+sameVector(float *v1, float *v2)
+{
+  float threshold = 0.01;
+  for (int i = 0; i < 6; i++) {
+    float diff = fabs(v1[i] - v2[i]);
+    if (diff > threshold)
+      return 0;
+  }
+  return 1;
+}
+
+int
+checkRedundancy(vector < Energy > &eners,
+                vector < Replica > &reps,
+                vector < vector < float > > &move_vectors,
+                int idx_rep,
+                LigRecord *ligrecord)
+{
+  // rare array of float used to be compared
+  // expext no initial move-vectors be the same as this one
+  float current_matrix[6] = {3.10, 1.6, 4.8, 1.2, 0.03, 0.08};
+  
+  for (int i = 0; i < STEPS_PER_DUMP; i++) {
+    LigRecordSingleStep *myrecord = &ligrecord[idx_rep].step[i];
+    float *movematrix = myrecord->movematrix;
+
+    if (!sameVector(current_matrix, movematrix))
+      {
+        // push energy
+        eners.push_back(myrecord->energy);
+        // push replica info, ligand conf, prt conf, temperature idx
+        reps.push_back(myrecord->replica);
+        // push move vector
+        vector < float > mv (movematrix, movematrix + sizeof(movematrix) / sizeof(movematrix[0]));
+        move_vectors.push_back(mv);
+
+        // copied for the next comparison
+        memcpy(current_matrix, movematrix, sizeof(current_matrix));
+      }
+  }
+
+  return eners.size();
+}

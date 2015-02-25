@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string>
 #include <vector>
+#include <cstring>
 
 #include "size.h"
 #include "dock.h"
@@ -13,6 +14,9 @@
 #include "gtest/internal/gtest-internal.h"
 
 using namespace std;
+
+
+
 
 TEST (load_h5, 1a07C1)
 {
@@ -40,20 +44,20 @@ TEST (load_h5, 1a07C1)
   size_t ligrecord_sz = sizeof (LigRecord) * n_rep;
   ligrecord = (LigRecord *) malloc (ligrecord_sz);
 
-  string h5_path = "../data/output_20150224_204013/a_0000.h5";
+  string h5_path = "../data/output_20150225_141635/a_0000.h5";
   const char * path = h5_path.c_str();
 
   ReadLigRecord(ligrecord, n_rep, path);
 
-  // LigRecordSingleStep step = ligrecord->step[0];
-  // for (int i = 0; i < STEPS_PER_DUMP; i++) {
-  for (int i = 0; i < 100; i++) {
-    cout << ligrecord->step[i].step << endl;
-  }
+  int idx_rep = 0;
 
+  vector < Energy > eners;
+  vector < Replica > reps;
+  vector < vector < float >  > move_vectors;
+  int tot_records = checkRedundancy(eners, reps, move_vectors, idx_rep, ligrecord);
+  cout << "total non-redundant records in " << h5_path << "\t" << tot_records << endl;
 
   free (ligrecord);
-    
 
   delete[]lig0;
   delete[]prt0;
