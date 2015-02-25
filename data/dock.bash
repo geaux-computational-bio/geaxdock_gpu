@@ -32,7 +32,7 @@ ${bin} \
 -nb ${nor_b_file} \
 -para ${para_file} \
 \
--ns 3000 \
+-ns 1000 \
 -nc 10 \
 -floor_temp 0.044f \
 -ceiling_temp 0.036f \
