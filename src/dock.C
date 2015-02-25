@@ -41,9 +41,7 @@ main (int argc, char **argv)
   Mcs0 *mcs0 = new Mcs0[MAXPOS];
   EnePara0 *enepara0 = new EnePara0;
 
-  loadLigand (&inputfiles->lig_file, lig0);
-  trimLigand (inputfiles, lig0);
-
+  loadLigand (inputfiles, lig0);
   loadProtein (&inputfiles->prt_file, prt0);
   loadLHM (&inputfiles->lhm_file, psp0, kde0, mcs0);
   loadEnePara (&inputfiles->enepara_file, enepara0);

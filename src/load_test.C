@@ -24,8 +24,7 @@ TEST (original_load, 1a07C1)
   loadLigand_bk (&inputfiles->lig_file, lig0);
 
   Ligand0 *lig1 = new Ligand0[MAXEN2];
-  loadLigand(&inputfiles->lig_file, lig1);
-  trimLigand(inputfiles, lig1);
+  loadLigand(inputfiles, lig1);
   
   /*
   for (int i = 0; i < 3; i++) {
