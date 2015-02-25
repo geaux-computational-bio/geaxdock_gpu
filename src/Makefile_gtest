@@ -29,7 +29,7 @@ CXXFLAGS += -g -Wall -Wextra
 
 # All tests produced by this Makefile.  Remember to add new tests you
 # created to the list.
-TESTS = load_test
+TESTS = load_test h5_test
 
 # All Google Test headers.  Usually you shouldn't change this
 # definition.
@@ -74,13 +74,21 @@ gtest_main.a : gtest-all.o gtest_main.o
 FC := gfortran
 
 HEADPATH := -I./modules -I./modules/nvidia_gpucomputingsdk_4.2.9_c_common_inc
+LIBPATH := -L/usr/local/packages/cuda/5.0/lib64 -L/usr/local/packages/hdf5/1.8.10/gcc-4.4.6-openmpi-1.6.2/lib
+LINKFLAGS = -lhdf5
+
 HOSTFLAGS += -Wall $(HEADPATH)
-# OBJ_CPU := load.o data.o rmsd.o util.o 
-OBJ_CPU := load.o data.o util.o 
+OBJ_CPU := load.o data.o util.o hdf5io.o
 
 
-load_test.o : $(USER_DIR)/load_test.C $(USER_DIR)/load.h $(GTEST_HEADERS)
+load_test.o : $(USER_DIR)/load_test.C $(GTEST_HEADERS)
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $(USER_DIR)/load_test.C
+
+h5_test.o : $(USER_DIR)/h5_test.C $(GTEST_HEADERS)
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $(USER_DIR)/h5_test.C
+
+hdf5io.o: hdf5io.C
+	h5c++ -c $<
 
 %.o: %.C
 	$(CXX) $(HOSTFLAGS) $(CPPFLAGS) $(CXXFLAGS) -c $<
@@ -89,4 +97,8 @@ load_test.o : $(USER_DIR)/load_test.C $(USER_DIR)/load.h $(GTEST_HEADERS)
 	$(FC) -c $<
 
 load_test : $(OBJ_CPU) load_test.o gtest_main.a
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -lpthread $^ -o $@
+	$(CXX) $(LIBPATH) $(CPPFLAGS) $(CXXFLAGS) -lpthread $^ -o $@ $(LINKFLAGS)
+
+
+h5_test : $(OBJ_CPU) h5_test.o gtest_main.a
+	$(CXX) $(LIBPATH) $(CPPFLAGS) $(CXXFLAGS) -lpthread $^ -o $@ $(LINKFLAGS)
