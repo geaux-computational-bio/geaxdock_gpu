@@ -106,7 +106,7 @@
 #define BOLTZMANN_CONST 1.0f
 
 // monte carlo steps
-#define STEPS_PER_DUMP 100
+#define STEPS_PER_DUMP 1000
 
 
 
