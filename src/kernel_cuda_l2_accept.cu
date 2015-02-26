@@ -10,7 +10,7 @@
 */
 
 __forceinline__
-__device__ void
+__device__ int
 Accept_d (const int bidx, Ligand * __restrict__ mylig, const float mybeta, const int myreplica)
 {
   __shared__ int is_accept;
@@ -39,6 +39,8 @@ Accept_d (const int bidx, Ligand * __restrict__ mylig, const float mybeta, const
     if (bidx == 0)
 	  mylig->energy_old = mylig->energy_new;
   }
+
+  return is_accept;
 }
 
  

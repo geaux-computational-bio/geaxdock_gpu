@@ -26,7 +26,7 @@ __device__ void CalcMcc_d (const int, Ligand * __restrict__, const Protein * __r
 
 __device__ void InitRefMatrix_d (const int, Ligand * __restrict__, const Protein * __restrict__);
 
-__forceinline__ __device__ void Accept_d (const int, Ligand * __restrict__, const float, const int);
+__forceinline__ __device__ int Accept_d (const int, Ligand * __restrict__, const float, const int);
 
 
 
@@ -39,7 +39,7 @@ __device__ void InitLigRecord_d (const int, const int, const int);
 
 //__forceinline__ __device__ void BackupLigCoord_d (const int, Ligand *);
 
-__device__ void RecordLigand_d (const int, const int, const int, const int, const int, const Ligand *);
+__device__ void RecordLigand_d (const int, const int, const int, const int, const int, const Ligand *, const int);
 
 
 

@@ -92,10 +92,10 @@ ifeq ($(GPU), GF110)
 	TperB := 512
 else ifeq ($(GPU), GK110)
 	DEVFLAGS := -gencode arch=compute_35,code=sm_35 -Xptxas -dlcm=ca
-	GD := 16
+	GD := 15
 	BDy := 8
-	BDx := 32
-	TperB := 256
+	BDx := 96
+	TperB := 768
 else ifeq ($(GPU), GM204)
 	DEVFLAGS := -gencode arch=compute_52,code=compute_52 -Xptxas -dlcm=ca
 	GD := 64

@@ -357,6 +357,7 @@ struct LigRecordSingleStep
 struct LigRecord
 {
   LigRecordSingleStep step[STEPS_PER_DUMP];
+  int next_ptr; // next available record stop
 };
 
 struct LigMoveVector
