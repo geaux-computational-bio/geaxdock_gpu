@@ -70,11 +70,16 @@ vector < string > splitByWhiteSpace (string);
 // return 1 if two movevector are the same else return 0
 int sameVector(float *v1, float *v2);
 
-int checkRedundancy(vector < Energy > &eners,
-                    vector < Replica > &reps,
-                    vector < vector < float > > &move_vectors,
-                    int idx_rep,
-                    LigRecord *ligrecord);
+int
+checkRedundancy(vector < LigRecordSingleStep > &records,
+                int idx_rep,
+                LigRecord * ligrecord);
+
+/* int checkRedundancy(vector < Energy > &eners, */
+/*                     vector < Replica > &reps, */
+/*                     vector < vector < float > > &move_vectors, */
+/*                     int idx_rep, */
+/*                     LigRecord *ligrecord); */
 
 #endif // UTIL_H
 

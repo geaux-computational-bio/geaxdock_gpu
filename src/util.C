@@ -1365,11 +1365,9 @@ sameVector(float *v1, float *v2)
 }
 
 int
-checkRedundancy(vector < Energy > &eners,
-                vector < Replica > &reps,
-                vector < vector < float > > &move_vectors,
+checkRedundancy(vector < LigRecordSingleStep > &records,
                 int idx_rep,
-                LigRecord *ligrecord)
+                LigRecord * ligrecord)
 {
   // rare array of float used to be compared
   // expext no initial move-vectors be the same as this one
@@ -1381,18 +1379,14 @@ checkRedundancy(vector < Energy > &eners,
 
     if (!sameVector(current_matrix, movematrix))
       {
-        // push energy
-        eners.push_back(myrecord->energy);
-        // push replica info, ligand conf, prt conf, temperature idx
-        reps.push_back(myrecord->replica);
-        // push move vector
-        vector < float > mv (movematrix, movematrix + sizeof(movematrix) / sizeof(movematrix[0]));
-        move_vectors.push_back(mv);
+        LigRecordSingleStep rec;
+        memcpy(&rec, myrecord, sizeof(LigRecordSingleStep));
+        records.push_back(rec);
 
         // copied for the next comparison
         memcpy(current_matrix, movematrix, sizeof(current_matrix));
       }
   }
 
-  return eners.size();
+  return records.size();
 }
