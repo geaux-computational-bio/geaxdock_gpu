@@ -69,7 +69,6 @@ void
 ParseArguments (int argc, char **argv, McPara * mcpara, ExchgPara * exchgpara,
 		InputFiles * inputfiles)
 {
-  char mydir[MAXSTRINGLENG] = "output_default";
 
   ////////////////////////////////////////////////////////////////////////////////
   // default settings
@@ -98,9 +97,10 @@ ParseArguments (int argc, char **argv, McPara * mcpara, ExchgPara * exchgpara,
   inputfiles->lig_file.molid = "MOLID";
 
 
-  bool protein_opt = false;
-  bool compounds_opt = false;
-  bool lhm_opt = false;
+  bool protein_on = false;
+  bool compounds_on = false;
+  bool lhm_one = false;
+  bool hdf_on = false;
 
   for (int i = 0; i < argc; i++) {
 
@@ -112,17 +112,17 @@ ParseArguments (int argc, char **argv, McPara * mcpara, ExchgPara * exchgpara,
 	// *.pdb
     if (!strcmp (argv[i], "-p") && i < argc) {
       inputfiles->prt_file.path = argv[i + 1];
-      protein_opt = true;
+      protein_on = true;
     }
 	// *.sdf
     if (!strcmp (argv[i], "-l") && i < argc) {
       inputfiles->lig_file.path = argv[i + 1];
-      compounds_opt = true;
+      compounds_on = true;
     }
 	// *.ff
     if (!strcmp (argv[i], "-s") && i < argc) {
       inputfiles->lhm_file.path = argv[i + 1];
-      lhm_opt = true;
+      lhm_one = true;
     }
 
 
@@ -185,6 +185,12 @@ ParseArguments (int argc, char **argv, McPara * mcpara, ExchgPara * exchgpara,
 	}
       }
     }
+
+    // trace file
+    if (!strcmp (argv[i], "-d") && i < argc) {
+      inputfiles->hdf5_out_path = argv[i + 1];
+      hdf_on = true;
+    }
     
     // trace file
     if (!strcmp (argv[i], "-tr") && i < argc) {
@@ -206,17 +212,17 @@ ParseArguments (int argc, char **argv, McPara * mcpara, ExchgPara * exchgpara,
     }
   }
 
-  if (!protein_opt) {
+  if (!protein_on) {
     cout << "Provide target protein structure" << endl;
     exit (EXIT_FAILURE);
   }
 
-  if (!compounds_opt) {
+  if (!compounds_on) {
     cout << "Provide compound library in SD format" << endl;
     exit (EXIT_FAILURE);
   }
 
-  if (!lhm_opt) {
+  if (!lhm_one) {
     cout << "Provide LHM potentials" << endl;
     exit (EXIT_FAILURE);
   }
@@ -230,29 +236,25 @@ ParseArguments (int argc, char **argv, McPara * mcpara, ExchgPara * exchgpara,
 
 
 #if IS_OUTPUT == 1
-  // create output directory
+  char mydir[MAXSTRINGLENG];
 
-  // obtain the time tag
   char mystime[MAXSTRINGLENG];
   time_t mytime = time (NULL);
   struct tm *mylocaltime;
   mylocaltime = localtime (&mytime);
   strftime (mystime, MAXSTRINGLENG, "%Y%m%d_%H%M%S", mylocaltime);
 
-  // name the output directory using time tag
-  if (strcmp (mydir, "output_default") == 0) {
-    sprintf (mydir, "output_%s", mystime);
-  }
-
+  sprintf (mydir, "output_%s", mystime);
   strcpy (mcpara->outputdir, mydir);
   MakeDir (mydir);
 
   // prefix of the file name
   const char h5file[MAXSTRINGLENG] = "a";
-  strcpy (mcpara->outputfile, h5file);
+  if (hdf_on == false)
+    strcpy (mcpara->outputfile, h5file);
+  else
+    strcpy (mcpara->outputfile, inputfiles->hdf5_out_path.c_str());
 #endif
-
-
 }
 
 

@@ -76,6 +76,7 @@ struct InputFiles
   WeightFile weight_file;
   NorParaFile norpara_file;
   TraceFile trace_file;
+  std::string hdf5_out_path;
 };
 
 
