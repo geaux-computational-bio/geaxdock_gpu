@@ -50,11 +50,8 @@ TEST (load_h5, 1a07C1)
   ReadLigRecord(ligrecord, n_rep, path);
 
   int idx_rep = 0;
-
-  vector < Energy > eners;
-  vector < Replica > reps;
-  vector < vector < float >  > move_vectors;
-  int tot_records = checkRedundancy(eners, reps, move_vectors, idx_rep, ligrecord);
+  vector < LigRecordSingleStep > records;
+  int tot_records = checkRedundancy(records, idx_rep, ligrecord);
   cout << "total non-redundant records in " << h5_path << "\t" << tot_records << endl;
 
   free (ligrecord);
