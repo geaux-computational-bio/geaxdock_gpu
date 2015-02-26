@@ -55,7 +55,7 @@ else ifeq ($(HOST), shelob)
 	GPU := GK110
 
 else ifeq ($(HOST), qb)
-	LIBPATH := -L/usr/local/packages/cuda/5.5.22/lib64 -L/usr/local/packages/hdf5/1.8.10/gcc-4.4.6/lib
+	LIBPATH := -L/usr/local/packages/cuda/6.5/lib64 -L/usr/local/packages/hdf51.8.12/INTEL-140-MVAPICH2-2.0/lib
 	DMARCRO += -DTARGET_DEVICE=$(TARGET_GPU)
 	GPU := GK110
 
@@ -93,9 +93,9 @@ ifeq ($(GPU), GF110)
 else ifeq ($(GPU), GK110)
 	DEVFLAGS := -gencode arch=compute_35,code=sm_35 -Xptxas -dlcm=ca
 	GD := 15
-	BDy := 8
+	BDy := 4
 	BDx := 96
-	TperB := 768
+	TperB := 384
 else ifeq ($(GPU), GM204)
 	DEVFLAGS := -gencode arch=compute_52,code=compute_52 -Xptxas -dlcm=ca
 	GD := 64
