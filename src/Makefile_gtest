@@ -29,7 +29,7 @@ CXXFLAGS += -g -Wall -Wextra
 
 # All tests produced by this Makefile.  Remember to add new tests you
 # created to the list.
-TESTS = load_test h5_test
+TESTS = load_test h5_test cluster_test
 
 # All Google Test headers.  Usually you shouldn't change this
 # definition.
@@ -78,7 +78,7 @@ LIBPATH := -L/usr/local/packages/cuda/5.0/lib64 -L/usr/local/packages/hdf5/1.8.1
 LINKFLAGS = -lhdf5
 
 HOSTFLAGS += -Wall $(HEADPATH)
-OBJ_CPU := load.o data.o util.o hdf5io.o
+OBJ_CPU := load.o data.o util.o hdf5io.o seq_kmeans.o file_io.o
 
 
 load_test.o : $(USER_DIR)/load_test.C $(GTEST_HEADERS)
@@ -87,8 +87,15 @@ load_test.o : $(USER_DIR)/load_test.C $(GTEST_HEADERS)
 h5_test.o : $(USER_DIR)/h5_test.C $(GTEST_HEADERS)
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $(USER_DIR)/h5_test.C
 
+cluster_test.o : $(USER_DIR)/cluster_test.C $(GTEST_HEADERS)
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $(USER_DIR)/cluster_test.C
+
 hdf5io.o: hdf5io.C
 	h5c++ -c $<
+
+
+%.o: %.c
+	gcc $(HOSTFLAGS) $(CPPFLAGS) $(CXXFLAGS) -c $<
 
 %.o: %.C
 	$(CXX) $(HOSTFLAGS) $(CPPFLAGS) $(CXXFLAGS) -c $<
@@ -99,6 +106,8 @@ hdf5io.o: hdf5io.C
 load_test : $(OBJ_CPU) load_test.o gtest_main.a
 	$(CXX) $(LIBPATH) $(CPPFLAGS) $(CXXFLAGS) -lpthread $^ -o $@ $(LINKFLAGS)
 
-
 h5_test : $(OBJ_CPU) h5_test.o gtest_main.a
+	$(CXX) $(LIBPATH) $(CPPFLAGS) $(CXXFLAGS) -lpthread $^ -o $@ $(LINKFLAGS)
+
+cluster_test : $(OBJ_CPU) cluster_test.o gtest_main.a
 	$(CXX) $(LIBPATH) $(CPPFLAGS) $(CXXFLAGS) -lpthread $^ -o $@ $(LINKFLAGS)
