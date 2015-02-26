@@ -1390,3 +1390,11 @@ checkRedundancy(vector < LigRecordSingleStep > &records,
 
   return records.size();
 }
+
+bool
+energyLessThan(const LigRecordSingleStep &s1, const LigRecordSingleStep &s2)
+{
+  float e1 = s1.energy.e[MAXWEI - 1];
+  float e2 = s2.energy.e[MAXWEI - 1];
+  return (e1 < e2);
+}

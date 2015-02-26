@@ -75,11 +75,7 @@ checkRedundancy(vector < LigRecordSingleStep > &records,
                 int idx_rep,
                 LigRecord * ligrecord);
 
-/* int checkRedundancy(vector < Energy > &eners, */
-/*                     vector < Replica > &reps, */
-/*                     vector < vector < float > > &move_vectors, */
-/*                     int idx_rep, */
-/*                     LigRecord *ligrecord); */
+bool energyLessThan(const LigRecordSingleStep &s1, const LigRecordSingleStep &s2);
 
 #endif // UTIL_H
 
