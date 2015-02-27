@@ -4,6 +4,8 @@
 
 __global__ void InitCurand_d ();
 
+__global__ void ResetCounter_d (const int, const int);
+
 __global__ void ExchangeReplicas_d (const int, const int);
 
 __global__ void MonteCarlo_Init_d (const int, const int);
@@ -35,7 +37,7 @@ __forceinline__ __device__ void Accept_d (const int, Ligand * __restrict__, cons
 
 __device__ void InitAcs_d (const int);
 
-__device__ void InitLigRecord_d (const int, const int, const int);
+//__device__ void InitLigRecord_d (const int, const int, const int);
 
 //__forceinline__ __device__ void BackupLigCoord_d (const int, Ligand *);
 

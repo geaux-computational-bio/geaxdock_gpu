@@ -749,10 +749,6 @@ SetMcLog (McLog * mclog)
   mclog->t0 = 0;
   mclog->t1 = 0;
   mclog->t2 = 0;
-  mclog->ac_mc = 0;
-
-  for (int i = 0; i < MAXREP; ++i)
-    mclog->acs_mc[i] = 0;
 }
 
 
@@ -1259,11 +1255,12 @@ PrintSummary (const InputFiles * inputfiles, const McPara * mcpara, const Temp *
   printf ("size_mcs\t\t\t%d\n", complexsize->pos);
 
 
+  /*
   printf ("AR of MC \t\t\t%d / %d \t%f\n",
 	  mclog->ac_mc,
 	  mcpara->steps_total * complexsize->n_rep,
 	  (float) mclog->ac_mc / (mcpara->steps_total * complexsize->n_rep));
-
+  */
 
 #if 0
   for (int t = 0; t < complexsize->n_tmp; ++t) {
@@ -1291,11 +1288,13 @@ PrintSummary (const InputFiles * inputfiles, const McPara * mcpara, const Temp *
   }
 #endif
 
+  /*
   printf ("AR of temp exchange \t\t%d / %d \t%f\n",
 	  mclog->ac_temp_exchg,
 	  mcpara->steps_total / mcpara->steps_per_exchange * complexsize->n_rep,
 	  (float) mclog->ac_temp_exchg / (mcpara->steps_total / mcpara->steps_per_exchange *
 					  complexsize->n_rep));
+  */
 
   printf ("================================================================================\n");
 

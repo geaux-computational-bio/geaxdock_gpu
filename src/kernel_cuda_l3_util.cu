@@ -18,13 +18,13 @@ __device__ void
 InitAcs_d (const int bidx)
 {
   if (blockIdx.x == 0) {
-    for (int i = bidx; i < MAXREP; i += TperB) {
-      acs_mc_dc[i] = 0;
+    for (int i = bidx; i < n_rep_dc; i += TperB) {
       acs_temp_exchg_dc[i] = 0;
     }
   }
 }
 
+/*
 __device__ void
 InitLigRecord_d (const int bidx, const int myreplica, const int rep_begin)
 {
@@ -46,7 +46,7 @@ InitLigRecord_d (const int bidx, const int myreplica, const int rep_begin)
   }
 
 }
-
+*/
 
 /*
 __forceinline__
@@ -86,13 +86,23 @@ RecordLigand_d (const int bidx, const int s1, const int s2s3,
    */
 
   if (bidx == 0) {
-    LigRecordSingleStep *myrecord =
-      &ligrecord_dc[myreplica - rep_begin].step[s2s3];
-    myrecord->replica = replica_dc[myreplica];
-    myrecord->energy = mylig->energy_old;
-    for (int i = 0; i < 6; ++i)
-      myrecord->movematrix[i] = mylig->movematrix_old[i];
-    myrecord->step = s1 + s2s3;
+    if (mylig->is_move_accepted == 1) {
+      const int next_ptr = ligrecord_dc[myreplica - rep_begin].next_ptr;
+      ligrecord_dc[myreplica - rep_begin].next_ptr = next_ptr + 1;
+
+    /*
+    if (myreplica == 0)
+      printf ("record_d: nex_ptr %d iter %d\n", next_ptr + 1, s2s3);
+    */
+
+      LigRecordSingleStep *myrecord = &ligrecord_dc[myreplica - rep_begin].step[next_ptr];
+
+      myrecord->replica = replica_dc[myreplica];
+      myrecord->energy = mylig->energy_old;
+      for (int i = 0; i < 6; ++i)
+	myrecord->movematrix[i] = mylig->movematrix_old[i];
+      myrecord->step = s1 + s2s3;
+    }
   }
 
 }

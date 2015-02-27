@@ -2,6 +2,7 @@
 #include <cstdlib>
 #include <cstdio>
 #include <cmath>
+#include <assert.h>
 
 #include "dock.h"
 #include "size.h"
@@ -185,8 +186,7 @@ Run (const Ligand * lig,
   const size_t replica_sz = sizeof (Replica) * n_rep;
   const size_t etotal_sz = sizeof (float) * n_rep;
   const size_t ligmovevector_sz = sizeof (LigMoveVector) * n_rep;
-  const size_t acs_mc_sz = sizeof (int) * MAXREP; // acceptance counter
-  const size_t acs_temp_exchg_sz = sizeof (int) * MAXREP; // acceptance counter
+  const size_t acs_temp_exchg_sz = sizeof (int) * n_rep; // acceptance counter
   const size_t ref_matrix_sz = sizeof (ConfusionMatrix);
   //size_t etotal_sz_per_gpu[NGPU];
   //for (int i = 0; i < NGPU; ++i)
@@ -196,11 +196,9 @@ Run (const Ligand * lig,
   Replica *replica_d[NGPU];
   float *etotal_d[NGPU];
   LigMoveVector *ligmovevector_d[NGPU];
-  int *acs_mc, *acs_mc_d[NGPU];
   int *acs_temp_exchg, *acs_temp_exchg_d[NGPU];
   float *ref_matrix_d[NGPU];
 
-  acs_mc = (int *) malloc (acs_mc_sz);
   acs_temp_exchg = (int *) malloc (acs_temp_exchg_sz);
 
   for (int i = 0; i < NGPU; ++i) {
@@ -209,7 +207,6 @@ Run (const Ligand * lig,
     CUDAMALLOC (replica_d[i], replica_sz, Replica *);
     CUDAMALLOC (etotal_d[i], etotal_sz, float *);
     CUDAMALLOC (ligmovevector_d[i], ligmovevector_sz, LigMoveVector *);
-    CUDAMALLOC (acs_mc_d[i], acs_mc_sz, int *);
     CUDAMALLOC (acs_temp_exchg_d[i], acs_temp_exchg_sz, int *);
     CUDAMALLOC (ref_matrix_d[i], ref_matrix_sz, ConfusionMatrix *);
 
@@ -217,7 +214,6 @@ Run (const Ligand * lig,
     CUDAMEMCPYTOSYMBOL (replica_dc, &replica_d[i], Replica *);
     CUDAMEMCPYTOSYMBOL (etotal_dc, &etotal_d[i], float *);
     CUDAMEMCPYTOSYMBOL (ligmovevector_dc, &ligmovevector_d[i], LigMoveVector *);
-    CUDAMEMCPYTOSYMBOL (acs_mc_dc, &acs_mc_d[i], int *);
     CUDAMEMCPYTOSYMBOL (acs_temp_exchg_dc, &acs_temp_exchg_d[i], int *);
     CUDAMEMCPYTOSYMBOL (ref_matrix_dc, &ref_matrix_d[i], ConfusionMatrix *);
 
@@ -263,8 +259,10 @@ Run (const Ligand * lig,
 
 
 
-  // launch GPU kernels
+  // ligand conformation records
+  vector < vector < LigRecordSingleStep > > multi_reps_records;
 
+  // launch GPU kernels
   printf ("Start launching kernels\n");
 
 #if NGPU > 1
@@ -274,24 +272,20 @@ Run (const Ligand * lig,
 #endif
 
 
-
-
-
-
   // calcuate acceptance counters
   for (int i = 0; i < NGPU; ++i) {
     cudaSetDevice (i);
-    CUDAMEMCPY (acs_mc, acs_mc_d[i], acs_mc_sz, cudaMemcpyDeviceToHost);
     CUDAMEMCPY (acs_temp_exchg, acs_temp_exchg_d[i], acs_temp_exchg_sz, cudaMemcpyDeviceToHost);
-    for (int j = 0; j < MAXREP; ++j) {
-      mclog->acs_mc[j] += acs_mc[j];
+    for (int j = 0; j < n_rep; ++j) {
       mclog->acs_temp_exchg[j] += acs_temp_exchg[j];
     }
   }
-  for (int j = 0; j < MAXREP; ++j) {
-    mclog->ac_mc += mclog->acs_mc[j];
+  for (int j = 0; j < n_rep; ++j) {
     mclog->ac_temp_exchg += mclog->acs_temp_exchg[j];
   }
+
+
+
 
 
 
@@ -315,14 +309,12 @@ Run (const Ligand * lig,
     CUDAFREE (replica_d[i]);
     CUDAFREE (etotal_d[i]);
     CUDAFREE (ligmovevector_d[i]);
-    CUDAFREE (acs_mc_d[i]);
     CUDAFREE (acs_temp_exchg_d[i]);
     CUDAFREE (ref_matrix_d[i]);
 
     CUDAFREE (ligrecord_d[i]);
   }
 
-  free (acs_mc);
   free (acs_temp_exchg);
   free (ligrecord);
 

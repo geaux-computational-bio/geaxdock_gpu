@@ -49,7 +49,15 @@ MonteCarlo_Init_d (const int rep_begin, const int rep_end)
       Accept_d (bidx, mylig, 0.000000f, myreplica);
 #endif
 
-      
+      if (bidx == 0)
+	mylig->is_move_accepted = 1;
+
+#if IS_OUTPUT == 1
+	// record old status
+      RecordLigand_d (bidx, 0, 0, myreplica, rep_begin, mylig);
+#endif
+
+
     }
   }
 
@@ -81,12 +89,8 @@ MonteCarlo_d (const int rep_begin, const int rep_end, const int s1, const int s2
       const float mybeta = temp_dc[replica_dc[myreplica].idx_tmp].minus_beta;
       // printf("mybeta: %f\n", mybeta);
 
-      for (int s3 = 0; s3 < steps_per_exchange_dc; ++s3) {
 
-#if IS_OUTPUT == 1
-	// record old status
-	RecordLigand_d (bidx, s1, s2 + s3, myreplica, rep_begin, mylig);
-#endif
+      for (int s3 = 0; s3 < steps_per_exchange_dc; ++s3) {
 	
 #if IS_CONTROL_MOVE == 1
 	Move_d (bidx, mylig, 2.0f);
@@ -104,6 +108,11 @@ MonteCarlo_d (const int rep_begin, const int rep_end, const int s1, const int s2
 
 	CalcEnergy_d (bidx, mylig, myprt);
 	Accept_d (bidx, mylig, mybeta, myreplica);
+
+#if IS_OUTPUT == 1
+	// record old status
+	RecordLigand_d (bidx, s1, s2 + s3, myreplica, rep_begin, mylig);
+#endif
       }
 
       if (bidx == 0) {

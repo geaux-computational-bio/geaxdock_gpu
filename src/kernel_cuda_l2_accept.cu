@@ -27,18 +27,28 @@ Accept_d (const int bidx, Ligand * __restrict__ mylig, const float mybeta, const
       // printf("prob: %.32f\n", expf (delta_energy * mybeta));
       // printf("mybeta: %.20f\n", mybeta);
 #endif
-    acs_mc_dc[myreplica] += is_accept;
     //printf ("beta[%d] = %f\n", myreplica, 1.0f / mybeta);
+    mylig->is_move_accepted = is_accept;
   }
+
 
   __syncthreads ();
 
   if (is_accept == 1) {
     if (bidx < 6)
       mylig->movematrix_old[bidx] = mylig->movematrix_new[bidx];
-    if (bidx == 0)
+    if (bidx == 0) {
 	  mylig->energy_old = mylig->energy_new;
+    }
+
+    /*
+    if (bidx == 0 && myreplica == 0 && is_accept == 1)
+      printf ("accept_d: accepted %d\n", acs_mc_dc[myreplica]);
+    */
+
   }
+
+
 }
 
  
