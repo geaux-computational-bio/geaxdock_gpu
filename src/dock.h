@@ -332,8 +332,6 @@ struct McPara
 struct McLog
 {
   double t0, t1, t2; // time escape
-  int ac_mc;  // MC acceptance counter
-  int acs_mc[MAXREP];   // MC acceptance counter for all replicas
   int ac_temp_exchg;
   int acs_temp_exchg[MAXREP]; 
   
@@ -357,7 +355,7 @@ struct LigRecordSingleStep
 
 struct LigRecord
 {
-  LigRecordSingleStep step[STEPS_PER_DUMP];
+  LigRecordSingleStep step[STEPS_PER_DUMP_PLUS1];
   int next_ptr; // next available record stop
 };
 
@@ -382,7 +380,6 @@ typedef struct
   float *etotal_dc;
   LigMoveVector *ligmovevector_dc;
   LigRecord *ligrecord_dc;
-  int *acs_mc_dc;
   int *acs_temp_exchg_dc;
   ConfusionMatrix *ref_matrix_dc;
 } Parameter;

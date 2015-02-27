@@ -19,6 +19,7 @@ struct Ligand
 
   Energy energy_old;		//                                      used
   Energy energy_new;		//                                      used
+  int is_move_accepted;
 
   int t[MAXLIG];		// atom type                            used
   float c[MAXLIG];		// atom charge                          used

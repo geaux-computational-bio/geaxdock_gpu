@@ -14,7 +14,6 @@ __constant__ Replica *replica_dc;
 __constant__ float *etotal_dc;
 __constant__ LigMoveVector *ligmovevector_dc;
 __constant__ LigRecord *ligrecord_dc;
-__constant__ int *acs_mc_dc;
 __constant__ int *acs_temp_exchg_dc;
 __constant__ ConfusionMatrix *ref_matrix_dc;
 
@@ -54,7 +53,7 @@ __constant__ int pnk_dc;
 __constant__ int pos_dc;
 
 
-
+#include "kernel_cuda_l1_resetcounter.cu"
 #include "kernel_cuda_l1_exchangereplicas.cu"
 #include "kernel_cuda_l1_initcurand.cu"
 #include "kernel_cuda_l1_montecarlo.cu"
