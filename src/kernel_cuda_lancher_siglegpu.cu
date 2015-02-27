@@ -1,7 +1,6 @@
 
 
 
-vector < vector < LigRecordSingleStep > > record_multi_rep;
 
 
   int i = 0;
@@ -11,7 +10,6 @@ vector < vector < LigRecordSingleStep > > record_multi_rep;
   for (int s1 = 0; s1 < mcpara->steps_total; s1 += mcpara->steps_per_dump) {
 
     double t0 = HostTimeNow ();
-    printf ("\t%d / %d \r", s1, mcpara->steps_total);
     fflush (stdout);
 
     for (int s2 = 0; s2 < mcpara->steps_per_dump; s2 += mcpara->steps_per_exchange) {
@@ -29,26 +27,31 @@ vector < vector < LigRecordSingleStep > > record_multi_rep;
     // copy ligand record from GPU to CPU memory
     CUDAMEMCPY (&ligrecord[rep_begin[i]], ligrecord_d[i], ligrecord_sz_per_gpu[i], cudaMemcpyDeviceToHost);
 
-    // gather ligand record
-    for (int rep = rep_begin[i]; rep < rep_end[i]; ++rep) {
-      vector < LigRecordSingleStep > record_single_rep;
-      for (int s = 0; s < ligrecord[rep].next_ptr; ++s) {
-	record_single_rep.push_back (ligrecord[rep].step[s]);
-      }
-      record_multi_rep.push_back (record_single_rep);
-    }
-    // now "record_multi_rep" holds everything
+    int total_size = 0;
+    for (int rep = rep_begin[i]; rep <= rep_end[i]; ++rep)
+      total_size += ligrecord[rep].next_ptr;
 
+    // printf("total reps in the first GPU:\t%d\n", rep_end[i]);
+    printf("%d records in the first GPU:\n", total_size);
+
+    // gather ligand record
+    for (int rep = rep_begin[i]; rep <= rep_end[i]; ++rep) {
+      vector < LigRecordSingleStep > single_rep_records;
+      printf("%d records in %d replica\n", ligrecord[rep].next_ptr, rep);
+      for (int s = 0; s < ligrecord[rep].next_ptr; ++s) {
+        single_rep_records.push_back (ligrecord[rep].step[s]);
+      }
+      multi_reps_records.push_back(single_rep_records);
+    }
 
 
 
 #if IS_OUTPUT == 1
-    /*
+    
     // dump ligand record from CPU memory to disk
     char myoutputfile[MAXSTRINGLENG];
     sprintf(myoutputfile, "%s/%s_%04d.h5", mcpara->outputdir, mcpara->outputfile, s1 / mcpara->steps_per_dump);
     DumpLigRecord (ligrecord, n_rep, myoutputfile);
-    */
 #endif
     
     // accumulate for wall time (compute time plus I/O time)
