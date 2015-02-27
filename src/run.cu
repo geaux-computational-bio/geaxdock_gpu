@@ -261,8 +261,8 @@ Run (const Ligand * lig,
 
   // ligand conformation records
   vector < vector < LigRecordSingleStep > > multi_reps_records;
-  // launch GPU kernels
 
+  // launch GPU kernels
   printf ("Start launching kernels\n");
 
 #if NGPU > 1
@@ -270,18 +270,6 @@ Run (const Ligand * lig,
 #elif NGPU == 1
 #include "kernel_cuda_lancher_siglegpu.cu"
 #endif
-
-  // int total_reps = multi_reps_records.size();
-  // printf("total replicas pushed:\t%d\n", total_reps);
-  // for (int idx_rep = 0; idx_rep < total_reps; idx_rep++) {
-  //   vector < LigRecordSingleStep > my_rep_records = multi_reps_records[idx_rep];
-  //   int rec_sz = my_rep_records.size();
-  //   printf("# records in the first rep\t%d\n", rec_sz);
-  // }
-
-  
-
-
 
 
   // calcuate acceptance counters

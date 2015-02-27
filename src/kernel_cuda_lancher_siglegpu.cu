@@ -32,19 +32,9 @@
     // copy ligand record from GPU to CPU memory
     CUDAMEMCPY (&ligrecord[rep_begin[i]], ligrecord_d[i], ligrecord_sz_per_gpu[i], cudaMemcpyDeviceToHost);
 
-    int total_size = 0;
-    for (int rep = rep_begin[i]; rep <= rep_end[i]; ++rep)
-      total_size += ligrecord[rep].next_ptr;
-
-    // printf("total reps in the first GPU:\t%d\n", rep_end[i]);
-    printf("%d records in %d replica\n", ligrecord[0].next_ptr, 0);
-    printf("%d records in the first GPU:\n", total_size);
-
-
     // gather ligand record
     for (int rep = rep_begin[i]; rep <= rep_end[i]; ++rep) {
       vector < LigRecordSingleStep > single_rep_records;
-      //printf("%d records in %d replica\n", ligrecord[rep].next_ptr, rep);
       for (int s = 0; s < ligrecord[rep].next_ptr; ++s) {
         single_rep_records.push_back (ligrecord[rep].step[s]);
       }
