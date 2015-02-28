@@ -2,6 +2,7 @@
 #include <string>
 #include <vector>
 #include <cstring>
+#include <cmath>
 
 #include "size.h"
 #include "dock.h"
@@ -15,11 +16,14 @@
 
 using namespace std;
 
-
-
-
-TEST (load_h5, 1a07C1)
+float getTotalEner(LigRecordSingleStep step)
 {
+  return step.energy.e[MAXWEI - 1];
+}
+
+TEST (Energy, 1a07C1)
+{
+  // testing loadLigand and loadLigand_bk
   InputFiles *inputfiles = new InputFiles[1];
   Ligand0 *lig0 = new Ligand0[MAXEN2];
   Protein0 *prt0 = new Protein0[MAXEN1];
@@ -44,19 +48,42 @@ TEST (load_h5, 1a07C1)
   size_t ligrecord_sz = sizeof (LigRecord) * n_rep;
   ligrecord = (LigRecord *) malloc (ligrecord_sz);
 
-  string h5_path = "../data/output_20150225_141635/a_0000.h5";
+  LigRecord * old_ligrecord;
+  size_t old_ligrecord_sz = sizeof (LigRecord) * n_rep;
+  old_ligrecord = (LigRecord *) malloc (old_ligrecord_sz);
+
+  // using new loading function
+  string h5_path = "../data/output_20150227_163950/a_0000.h5";
   const char * path = h5_path.c_str();
+  
+  // using old loading function
+  string old_h5_path = "../data/output_20150227_164804/a_0000.h5";
+  const char * old_path = old_h5_path.c_str();
 
-  ReadLigRecord(ligrecord, n_rep, path);
 
-  int idx_rep = 0;
-  vector < LigRecordSingleStep > records;
-  int tot_records = checkRedundancy(records, idx_rep, ligrecord);
-  cout << "total non-redundant records in " << h5_path << "\t" << tot_records << endl;
+  // test if two loading functions affect energy calculation
+  for (int idx_rep = 0; idx_rep < n_rep; idx_rep++)
+    {
+      vector < LigRecordSingleStep > records;
+      ReadLigRecord(ligrecord, n_rep, path);
+      int tot_records = checkRedundancy(records, idx_rep, ligrecord);
 
+      vector < LigRecordSingleStep > old_records;
+      ReadLigRecord(old_ligrecord, n_rep, old_path);
+      int old_tot_records = checkRedundancy(old_records, idx_rep, old_ligrecord);
+
+      float new_ener = getTotalEner(records[0]);
+      float old_ener = getTotalEner(old_records[0]);
+      assert (fabs(new_ener - old_ener) < 0.01);
+      // printf ("# new : %f # old : %f\n", new_ener, old_ener);
+      // printf ("# new : %d # old : %d\n", tot_records, old_tot_records);
+    }
+
+  free (old_ligrecord);
   free (ligrecord);
 
   delete[]lig0;
   delete[]prt0;
   delete[]inputfiles;
+  
 }

@@ -3,7 +3,7 @@
 
 
 // output toggle
-#define IS_OUTPUT 0
+#define IS_OUTPUT 1
 
 // force each perturbation to be accepted
 #define IS_FORCE_TO_ACCEPT 0
@@ -18,10 +18,10 @@
 #define IS_CONTROL_MOVE 0
 
 // calculate mcc
-#define IS_CALCU_MCC 0
+#define IS_CALCU_MCC 1
 
 // calculate rmsd
-#define IS_CALCU_RMSD 0
+#define IS_CALCU_RMSD 1
 
 // calculate the total energy using linear combination
 #define IS_LINEAR 1
