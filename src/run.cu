@@ -240,22 +240,9 @@ Run (const Ligand * lig,
     CUDAMEMCPYTOSYMBOL (ligrecord_dc, &ligrecord_d[i], LigRecord *);
   }
 
-
-  /*
-  // debug
-  for (int i = 0; i < NGPU; ++i) {
-    printf ("rep_begin[%d] = %d\n", i, rep_begin[i]);
-    printf ("rep_end[%d] = %d\n", i, rep_end[i]);
-  }
-  */
-
   for (int i = 0; i < NGPU; ++i) {
     cudaGetLastError ();
   }
-
-
-
-
 
 
 
@@ -270,6 +257,20 @@ Run (const Ligand * lig,
 #elif NGPU == 1
 #include "kernel_cuda_lancher_siglegpu.cu"
 #endif
+
+  putchar ('\n');
+  printf ("================================================================================\n");
+  printf ("initial energy state\n");
+  printf ("================================================================================\n");
+  printf ("rep step vdw ele pmf psp hdb hpc kde lhm dst total\n");
+  printf ("0 0");
+  LigRecordSingleStep step = multi_reps_records[0][0];
+  for (int i = 0; i < MAXWEI; i++)
+    printf(" %.3f", step.energy.e[i]);
+  putchar ('\n');
+
+
+  processOneReplica(multi_reps_records[0]);
 
   mclog->ac_mc = 0;
   vector < vector < LigRecordSingleStep > > :: iterator it_rec;
@@ -321,36 +322,5 @@ Run (const Ligand * lig,
 
   free (acs_temp_exchg);
   free (ligrecord);
-
-
-// read outputfiles and print something
-#if 1
-#if IS_OUTPUT == 1
-  char myoutputfile[MAXSTRINGLENG];
-  sprintf(myoutputfile, "%s/%s_%04d.h5", mcpara->outputdir, mcpara->outputfile, 0);
-  LigRecord *ligrecord2;
-  ligrecord2 = (LigRecord *) malloc (ligrecord_sz);
-  ReadLigRecord (ligrecord2, n_rep, myoutputfile);
-
-  const int myreplica = 0;
-  //const int repp_begin = 70;
-  //const int repp_end = 90;
-  const int iter_begin = 0;
-  const int iter_end = minimal_int (STEPS_PER_DUMP, 1) - 1;
-  const int arg = 2;
-
-  putchar ('\n');
-  printf ("================================================================================\n");
-  printf ("initial energy state\n");
-  printf ("================================================================================\n");
-  PrintLigRecord (ligrecord2, mcpara->steps_per_dump, myreplica, iter_begin, iter_end, arg);
-  //PrintMoveRecord (ligrecord2, mcpara->steps_per_dump, myreplica, iter_begin, iter_end, arg);
-  //PrintRepRecord (ligrecord2, mcpara->steps_per_dump, repp_begin, repp_end, iter_begin, iter_end, arg);
-  //PrintRepRecord2 (ligrecord2, complexsize, STEPS_PER_DUMP, 0, 0, iter_begin, iter_end, arg);
-
-  free (ligrecord2);
-#endif
-#endif
-
 }
 

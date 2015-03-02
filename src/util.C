@@ -8,6 +8,7 @@
 #include <list>
 #include <vector>
 #include <string>
+#include <algorithm>
 #include <stdio.h>
 #include <sstream>
 #include <sys/stat.h>
@@ -235,7 +236,7 @@ ParseArguments (int argc, char **argv, McPara * mcpara, ExchgPara * exchgpara,
   mcpara->move_scale[5] = rs;
 
 
-#if IS_OUTPUT == 1
+#if IS_WRITE_TO_DRIVE == 1
   char mydir[MAXSTRINGLENG];
 
   char mystime[MAXSTRINGLENG];
@@ -1395,3 +1396,39 @@ energyLessThan(const LigRecordSingleStep &s1, const LigRecordSingleStep &s2)
   float e2 = s2.energy.e[MAXWEI - 1];
   return (e1 < e2);
 }
+
+
+
+float
+getTotalEner(LigRecordSingleStep *step)
+{
+  return step->energy.e[MAXWEI - 1];
+}
+
+float
+getRMSD(LigRecordSingleStep *step)
+{
+  return step->energy.rmsd;
+}
+
+float
+getCMS(LigRecordSingleStep *step)
+{
+  return step->energy.cmcc;
+}
+
+void
+processOneReplica(vector < LigRecordSingleStep > &steps)
+{
+  sort(steps.begin(), steps.end(), energyLessThan);
+  LigRecordSingleStep *s = &steps[0];
+
+  float rmsd = getRMSD(s);
+  float cms = getCMS(s);
+  printf("================================================================================\n");
+  printf("Docking result\n");
+  printf("best scored cms\t\t\t%.3f\n", cms);
+  printf("best scored rmsd\t\t%.3f\n", rmsd);
+}
+
+

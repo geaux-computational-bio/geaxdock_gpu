@@ -45,10 +45,13 @@
 
 #if IS_OUTPUT == 1
     
+#if IS_WRITE_TO_DRIVE == 1
     // dump ligand record from CPU memory to disk
     char myoutputfile[MAXSTRINGLENG];
     sprintf(myoutputfile, "%s/%s_%04d.h5", mcpara->outputdir, mcpara->outputfile, s1 / mcpara->steps_per_dump);
     DumpLigRecord (ligrecord, n_rep, myoutputfile);
+#endif
+
 #endif
     
     // accumulate for wall time (compute time plus I/O time)

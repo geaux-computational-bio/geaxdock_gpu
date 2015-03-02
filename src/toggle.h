@@ -5,6 +5,8 @@
 // output toggle
 #define IS_OUTPUT 1
 
+#define IS_WRITE_TO_DRIVE 0
+
 // force each perturbation to be accepted
 #define IS_FORCE_TO_ACCEPT 0
 
