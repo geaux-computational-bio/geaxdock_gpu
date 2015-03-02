@@ -271,6 +271,10 @@ Run (const Ligand * lig,
 #include "kernel_cuda_lancher_siglegpu.cu"
 #endif
 
+  mclog->ac_mc = 0;
+  vector < vector < LigRecordSingleStep > > :: iterator it_rec;
+  for (it_rec = multi_reps_records.begin(); it_rec != multi_reps_records.end(); it_rec++)
+    mclog->ac_mc += (*it_rec).size();
 
   // calcuate acceptance counters
   for (int i = 0; i < NGPU; ++i) {

@@ -334,6 +334,7 @@ struct McLog
   double t0, t1, t2; // time escape
   int ac_temp_exchg;
   int acs_temp_exchg[MAXREP]; 
+  int ac_mc;
   
   // int ac_lig_exchg;
   // int acs_lig_exchg[MAXREP];
