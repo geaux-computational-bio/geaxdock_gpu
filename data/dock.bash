@@ -19,6 +19,9 @@ nor_a_file=${parameters_dir}/08_nor_a
 nor_b_file=${parameters_dir}/08_nor_b
 para_file=${parameters_dir}/paras
 
+TO_ADD_CENTER=sdf_center.py
+python $TO_ADD_CENTER -s $sdf_file -f $ff_file
+
 
 cmd="\
 ${bin} \
