@@ -29,8 +29,6 @@ ${bin} \
 -l ${sdf_file} \
 -s ${ff_file} \
 \
--na ${nor_a_file} \
--nb ${nor_b_file} \
 -para ${para_file} \
 \
 -ns 3000 \

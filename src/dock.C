@@ -45,7 +45,6 @@ main (int argc, char **argv)
   loadProtein (&inputfiles->prt_file, prt0);
   loadLHM (&inputfiles->lhm_file, psp0, kde0, mcs0);
   loadEnePara (&inputfiles->enepara_file, enepara0);
-  loadNorPara(&inputfiles->norpara_file, enepara0);
   
 
   // sizes

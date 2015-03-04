@@ -1591,6 +1591,22 @@ loadEnePara (EneParaFile * enepara_file, EnePara0 * enepara)
           enepara->w[i] = atof(tokens[i+1].c_str());
         }
       }
+      else if (line1.substr (0, 3) == "NOA") {
+        vector < string > tokens = splitByWhiteSpace(line1);
+        int tot_tokens = tokens.size();
+        assert(tot_tokens == MAXWEI);
+        for (int i = 0; i < tot_tokens - 1; i++) {
+          enepara->a_para[i] = atof(tokens[i+1].c_str());
+        }
+      }
+      else if (line1.substr (0, 3) == "NOB") {
+        vector < string > tokens = splitByWhiteSpace(line1);
+        int tot_tokens = tokens.size();
+        assert(tot_tokens == MAXWEI);
+        for (int i = 0; i < tot_tokens - 1; i++) {
+          enepara->b_para[i] = atof(tokens[i+1].c_str());
+        }
+      }
       else if (line1.substr (0, 3) == "PLJ") {
 	std::string dat1[4];
 
