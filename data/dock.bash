@@ -31,9 +31,8 @@ ${bin} \
 \
 -para ${para_file} \
 \
--ns 3000 \
 -nc 10 \
--floor_temp 0.044f \
+-floor_temp 0.004f \
 -ceiling_temp 0.036f \
 -nt 1 \
 -t 0.02f \
