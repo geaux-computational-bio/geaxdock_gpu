@@ -37,7 +37,7 @@
       vector < LigRecordSingleStep > single_rep_records;
       for (int s = 0; s < ligrecord[rep].next_ptr; ++s) {
         LigRecordSingleStep my_step = ligrecord[rep].step[s];
-        if (my_step.energy.cmcc < 2.0)  // unphysical conformations are not filtered
+        if (my_step.energy.cms < 2.0)  // unphysical conformations are not filtered
           single_rep_records.push_back (my_step);
       }
       multi_reps_records.push_back(single_rep_records);

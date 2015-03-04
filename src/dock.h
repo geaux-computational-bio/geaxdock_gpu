@@ -123,7 +123,7 @@ struct Energy
 
      9 - total
    */
-  float cmcc;
+  float cms;
   float rmsd;
 };
 
@@ -308,6 +308,18 @@ struct Replica
   int idx_lig; // n_lig, ligand
 };
 
+struct SingleRepResult
+{
+  float best_scored_cms;
+  float best_scored_rmsd;
+  float best_achieved_cms;
+  float best_achieved_rmsd;
+
+  float ener_cms_p;
+  float ener_rmsd_p;
+
+  float accpt_ratio;
+};
 
 struct ExchgPara
 {

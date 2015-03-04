@@ -18,6 +18,7 @@
 #include "dock.h"
 #include "util.h"
 #include "load.h"
+#include "stats.h"
 
 #include <yeah/quicksort.h>
 #include <yeah/mkdir.h>
@@ -49,6 +50,7 @@ Banner ()
        << "   GPU-accelerated mixed-resolution ligand docking using    " << endl
        << "                Replica Exchange Monte Carlo                " << endl
        << "------------------------------------------------------------" << endl << endl;
+  cout << "GeauxDock ... begin" << endl;
 }
 
 
@@ -1313,6 +1315,7 @@ PrintSummary (const InputFiles * inputfiles, const McPara * mcpara, const Temp *
   printf ("MC sweeps per second\t\t%.3f\n", mcpersec1);
   printf ("speedup over 843.75\t\t%.3f X\n", mcpersec1 / 843.75);
   printf ("================================================================================\n");
+  printf ("GeauxDock ... done\n");
 
 
 }
@@ -1398,6 +1401,21 @@ energyLessThan(const LigRecordSingleStep &s1, const LigRecordSingleStep &s2)
 }
 
 
+bool
+rmsdLessThan(const LigRecordSingleStep &s1, const LigRecordSingleStep &s2)
+{
+  float rmsd1 = s1.energy.rmsd;
+  float rmsd2 = s2.energy.rmsd;
+  return (rmsd1 < rmsd2);
+}
+
+bool
+cmsLargerThan(const LigRecordSingleStep &s1, const LigRecordSingleStep &s2)
+{
+  float cms1 = s1.energy.cms;
+  float cms2 = s2.energy.cms;
+  return (cms1 > cms2);
+}
 
 float
 getTotalEner(LigRecordSingleStep *step)
@@ -1414,21 +1432,54 @@ getRMSD(LigRecordSingleStep *step)
 float
 getCMS(LigRecordSingleStep *step)
 {
-  return step->energy.cmcc;
+  return step->energy.cms;
 }
 
 void
-processOneReplica(vector < LigRecordSingleStep > &steps)
+processOneReplica(vector < LigRecordSingleStep > &steps, SingleRepResult * rep_result)
 {
   sort(steps.begin(), steps.end(), energyLessThan);
   LigRecordSingleStep *s = &steps[0];
 
   float rmsd = getRMSD(s);
   float cms = getCMS(s);
-  printf("================================================================================\n");
-  printf("Docking result\n");
-  printf("best scored cms\t\t\t%.3f\n", cms);
-  printf("best scored rmsd\t\t%.3f\n", rmsd);
+
+  rep_result->best_scored_cms = cms;
+  rep_result->best_scored_rmsd = rmsd;
+
+  sort(steps.begin(), steps.end(), rmsdLessThan);
+  s = &steps[0];
+  rmsd = getRMSD(s);
+
+  sort(steps.begin(), steps.end(), cmsLargerThan);
+  s = &steps[0];
+  cms = getCMS(s);
+
+  rep_result->best_achieved_cms = cms;
+  rep_result->best_achieved_rmsd = rmsd;
+
+  int tot_samples = steps.size();
+  float * ener_vals = new float[tot_samples];
+  float * cms_vals = new float[tot_samples];
+  float * rmsd_vals = new float[tot_samples];
+
+  for (int i = 0; i < tot_samples; i++) {
+    LigRecordSingleStep *s = &steps[i];
+    ener_vals[i] = getTotalEner(s);
+    rmsd_vals[i] = getRMSD(s);
+    cms_vals[i] = getCMS(s);
+  }
+
+  rep_result->ener_rmsd_p = pearsonr(ener_vals, rmsd_vals, tot_samples);
+  rep_result->ener_cms_p = pearsonr(ener_vals, cms_vals, tot_samples);
+
+  rep_result->accpt_ratio = (float) steps.size() / STEPS_PER_DUMP;
+
+
+  delete[]ener_vals;
+  delete[]rmsd_vals;
+  delete[]cms_vals;
+  
 }
 
 

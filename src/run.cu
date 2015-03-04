@@ -269,8 +269,26 @@ Run (const Ligand * lig,
     printf(" %.3f", step.energy.e[i]);
   putchar ('\n');
 
+  int total_results = multi_reps_records.size();
+  SingleRepResult * results = new SingleRepResult[total_results];
+  processOneReplica(multi_reps_records[0], &results[0]);
 
-  processOneReplica(multi_reps_records[0]);
+  
+  SingleRepResult * first_rep = &results[0];
+  printf("================================================================================\n");
+  printf("Docking result\n");
+  printf("================================================================================\n");
+  printf("acceptance ratio\t\t%.3f\n", first_rep->accpt_ratio);
+  printf("best scored cms\t\t\t%.3f\n", first_rep->best_scored_cms);
+  printf("best scored rmsd\t\t%.3f\n", first_rep->best_scored_rmsd);
+  printf("best rmsd achieved\t\t%f\n", first_rep->best_achieved_rmsd);
+  printf("best cms achieved\t\t%f\n", first_rep->best_achieved_cms);
+  printf("pearson between score and rmsd\t%f\n", first_rep->ener_rmsd_p);
+  printf("pearson between score and cms\t%f\n", first_rep->ener_cms_p);
+
+  
+
+  delete[]results;
 
   mclog->ac_mc = 0;
   vector < vector < LigRecordSingleStep > > :: iterator it_rec;

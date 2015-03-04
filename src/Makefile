@@ -17,7 +17,7 @@ NGPU := 1
 
 
 EXE := dock
-OBJ_CPU := dock.o load.o data.o rmsd.o util.o hdf5io.o
+OBJ_CPU := dock.o load.o data.o rmsd.o util.o hdf5io.o stats.o
 OBJ_GPU := run.o
 SH := sh
 CPP_HOST := g++

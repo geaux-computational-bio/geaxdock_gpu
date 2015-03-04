@@ -42,7 +42,7 @@ MonteCarlo_Init_d (const int rep_begin, const int rep_end)
 	mylig->energy_old.e[bidx] = mylig->energy_new.e[bidx];
 
       if (bidx == 0)
-	mylig->energy_old.cmcc = mylig->energy_new.cmcc;
+	mylig->energy_old.cms = mylig->energy_new.cms;
       
 #if IS_AWAY
       // force to accept, set mybeta to be zero

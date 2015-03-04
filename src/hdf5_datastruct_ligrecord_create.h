@@ -27,7 +27,7 @@ struct Replica
 struct Energy
 {
   float e[MAXWEI];
-  float cmcc;
+  float cms;
   float rmsd;
 };
 */
@@ -66,7 +66,7 @@ struct Energy
 
   hid_t Energy_t = H5Tcreate (H5T_COMPOUND, sizeof (Energy));
   status = H5Tinsert (Energy_t, "e", HOFFSET (Energy, e), sz_MAXWEI_t);
-  status = H5Tinsert (Energy_t, "cmcc", HOFFSET (Energy, cmcc), sz_1_t);
+  status = H5Tinsert (Energy_t, "cms", HOFFSET (Energy, cms), sz_1_t);
   status = H5Tinsert (Energy_t, "rmsd", HOFFSET (Energy, rmsd), sz_1_t);
 
   hid_t LigRecordSingleStep_t = H5Tcreate (H5T_COMPOUND, sizeof (LigRecordSingleStep));

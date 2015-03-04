@@ -109,7 +109,7 @@
 #define STEPS_PER_DUMP 3000
 
 // plus 1 because the initial state also needs recording
-#define STEPS_PER_DUMP_PLUS1 3001
+#define STEPS_PER_DUMP_PLUS1 (STEPS_PER_DUMP + 1)
 
 
 

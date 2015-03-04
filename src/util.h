@@ -77,13 +77,17 @@ checkRedundancy(vector < LigRecordSingleStep > &records,
 
 bool energyLessThan(const LigRecordSingleStep &s1, const LigRecordSingleStep &s2);
 
+bool rmsdLessThan(const LigRecordSingleStep &s1, const LigRecordSingleStep &s2);
+
+bool cmsLargerThan(const LigRecordSingleStep &s1, const LigRecordSingleStep &s2);
+
 float getTotalEner(LigRecordSingleStep *step);
 
 float getRMSD(LigRecordSingleStep *step);
 
 float getCMS(LigRecordSingleStep *step);
 
-void processOneReplica(vector < LigRecordSingleStep > &steps);
+void processOneReplica(vector < LigRecordSingleStep > &steps, SingleRepResult * rep_result);
 
 #endif // UTIL_H
 

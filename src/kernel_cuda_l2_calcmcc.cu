@@ -129,12 +129,12 @@ serial_CalcMcc_d (const int bidx, Ligand * __restrict__ mylig, const Protein * _
     const float dividend = sqrtf ((tp0 + fp0) * (tp0 + fn0) * (tn0 + fp0) * (tn0 + fn0));
 
     if (dividend != 0)
-      mylig->energy_new.cmcc = (tp0 * tn0 - fp0 * fn0) / dividend;
+      mylig->energy_new.cms = (tp0 * tn0 - fp0 * fn0) / dividend;
     else
-      mylig->energy_new.cmcc = CMCC_INVALID_VAL;
+      mylig->energy_new.cms = CMCC_INVALID_VAL;
 
     // printf("%f %f %f %f %f\n", tp0, fn0, fp0, tn0, dividend);
-    // printf("cmcc %f\n", mylig->energy_new.cmcc);
+    // printf("cms %f\n", mylig->energy_new.cms);
 
     //printf ("calc lna %d pnp %d pnk %d pos %d\n", lna_dc, pnp_dc, pnk_dc, pos_dc);
 
@@ -201,12 +201,12 @@ CalcMcc_d (const int bidx, Ligand * __restrict__ mylig, const Protein * __restri
     const float dividend = sqrtf ((tp0 + fp0) * (tp0 + fn0) * (tn0 + fp0) * (tn0 + fn0));
 
     if (dividend != 0)
-      mylig->energy_new.cmcc = (tp0 * tn0 - fp0 * fn0) / dividend;
+      mylig->energy_new.cms = (tp0 * tn0 - fp0 * fn0) / dividend;
     else
-      mylig->energy_new.cmcc = CMCC_INVALID_VAL;
+      mylig->energy_new.cms = CMCC_INVALID_VAL;
 
     // printf("%f %f %f %f %f\n", tp0, fn0, fp0, tn0, dividend);
-    // printf("cmcc %f\n", mylig->energy_new.cmcc);
+    // printf("cms %f\n", mylig->energy_new.cms);
 
   }
 
