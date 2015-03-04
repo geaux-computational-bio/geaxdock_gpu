@@ -14,7 +14,6 @@ pdb_file=${complex_dir}/$(echo ${complex:0:5}).pdb
 sdf_file=${complex_dir}/${complex}.sdf
 ff_file=${complex_dir}/${complex}-0.8.ff
 
-opt_file=${parameters_dir}/08ff_opt
 nor_a_file=${parameters_dir}/08_nor_a
 nor_b_file=${parameters_dir}/08_nor_b
 para_file=${parameters_dir}/paras
@@ -30,7 +29,6 @@ ${bin} \
 -l ${sdf_file} \
 -s ${ff_file} \
 \
--opt ${opt_file} \
 -na ${nor_a_file} \
 -nb ${nor_b_file} \
 -para ${para_file} \

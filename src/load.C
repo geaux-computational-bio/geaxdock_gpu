@@ -1583,6 +1583,14 @@ loadEnePara (EneParaFile * enepara_file, EnePara0 * enepara)
 	  atof (dat1[4].c_str ());
 											/**< vdw[prtein pt][ligand pt][0] is the 1st parameter, and vdw[][][1] is the 2nd */
       }
+      else if (line1.substr (0, 3) == "WEI") {
+        vector < string > tokens = splitByWhiteSpace(line1);
+        int tot_tokens = tokens.size();
+        assert(tot_tokens == MAXWEI);
+        for (int i = 0; i < tot_tokens - 1; i++) {
+          enepara->w[i] = atof(tokens[i+1].c_str());
+        }
+      }
       else if (line1.substr (0, 3) == "PLJ") {
 	std::string dat1[4];
 
@@ -1679,21 +1687,6 @@ loadEnePara (EneParaFile * enepara_file, EnePara0 * enepara)
 	  atof (dat1[3].c_str ());
 	enepara->hdb[getPntCode (dat1[1])][getLigCode (dat1[2])][1] =
 	  atof (dat1[4].c_str ());
-      }
-      else if (line1.substr (0, 3) == "WEI") {
-	std::string dat1[10];
-
-	int dat2 = 0;
-
-	istringstream dat3 (line1);
-
-	while (dat3)
-	  dat3 >> dat1[dat2++];
-
-	for (int wi = 0; wi < MAXWEI; wi++) {
-	  enepara->w[wi] = atof (dat1[wi + 1].c_str ());
-	}
-
       }
       else if (line1.substr (0, 3) == "KDE") {
 	std::string dat1[2];
@@ -1836,6 +1829,7 @@ void loadTrace(TraceFile * trace_file, float * trace)
 		trace[trace_iter] = tmp;
 	}
 }
+
 
 void loadWeight(WeightFile * weight_file, EnePara0 * enepara )
 {

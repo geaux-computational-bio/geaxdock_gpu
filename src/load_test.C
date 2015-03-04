@@ -12,6 +12,23 @@
 
 using namespace std;
 
+TEST (loadWeight, parameters)
+{
+  EneParaFile enepara_file;
+  enepara_file.path = "../data/parameters/paras";
+  EnePara0 enepara;
+  loadEnePara (&enepara_file, &enepara);
+
+  WeightFile weight_file;
+  weight_file.path = "../data/parameters/08ff_opt";
+  EnePara0 another_enepara;
+  loadWeight(&weight_file, &another_enepara);
+
+  for (int i = 0; i < MAXWEI; i++) {
+    assert ((enepara.w[i] - another_enepara.w[i]) < 0.0001);
+  }
+}
+
 TEST (original_load, 1a07C1)
 {
   InputFiles *inputfiles = new InputFiles[1];
