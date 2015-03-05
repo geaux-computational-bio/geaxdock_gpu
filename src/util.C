@@ -1412,6 +1412,20 @@ getCMS(LigRecordSingleStep *step)
   return step->energy.cms;
 }
 
+
+void
+printStates(vector < LigRecordSingleStep > &steps)
+{
+  vector < LigRecordSingleStep > :: iterator its;
+  for (its = steps.begin(); its != steps.end(); its++) {
+    LigRecordSingleStep *s = &(*its);
+    float ener = getTotalEner(s);
+    float cms = getCMS(s);
+    float rmsd = getRMSD(s);
+    printf("#\t%.3f\t%.3f\t%.3f\n", ener, cms, rmsd);
+  }
+}
+
 void
 processOneReplica(vector < LigRecordSingleStep > &steps, SingleRepResult * rep_result)
 {

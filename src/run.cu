@@ -271,6 +271,9 @@ Run (const Ligand * lig,
 
   int total_results = multi_reps_records.size();
   SingleRepResult * results = new SingleRepResult[total_results];
+
+  printStates(multi_reps_records[0]);
+  
   processOneReplica(multi_reps_records[0], &results[0]);
 
   
