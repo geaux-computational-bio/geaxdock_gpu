@@ -81,7 +81,7 @@ ParseArguments (int argc, char **argv, McPara * mcpara, ExchgPara * exchgpara,
   exchgpara->floor_temp = 0.3f;
   exchgpara->ceiling_temp = 0.3f;
 
-  mcpara->steps_total = 3000;
+  mcpara->steps_total = STEPS_PER_DUMP;
   mcpara->steps_per_dump = STEPS_PER_DUMP;
   mcpara->steps_per_exchange = 5;
 
@@ -152,6 +152,7 @@ ParseArguments (int argc, char **argv, McPara * mcpara, ExchgPara * exchgpara,
     if (!strcmp (argv[i], "-ns") && i < argc) {
       mcpara->steps_total = atoi (argv[i + 1]);
     }
+
     if (!strcmp (argv[i], "-nc") && i < argc) {
       mcpara->steps_per_exchange = atoi (argv[i + 1]);
     }
@@ -1438,26 +1439,39 @@ getCMS(LigRecordSingleStep *step)
 void
 processOneReplica(vector < LigRecordSingleStep > &steps, SingleRepResult * rep_result)
 {
+
+  float rmsd;
+  float cms;
+  LigRecordSingleStep *s;
+
+  // first step, initial state
+  s = &steps[0];
+  rmsd = getRMSD(s);
+  cms = getCMS(s);
+  rep_result->init_cms = cms;
+  rep_result->init_rmsd = rmsd;
+  
+  // sort by energy
   sort(steps.begin(), steps.end(), energyLessThan);
-  LigRecordSingleStep *s = &steps[0];
-
-  float rmsd = getRMSD(s);
-  float cms = getCMS(s);
-
+  s = &steps[0];
+  rmsd = getRMSD(s);
+  cms = getCMS(s);
   rep_result->best_scored_cms = cms;
   rep_result->best_scored_rmsd = rmsd;
 
+  // sort by rmsd
   sort(steps.begin(), steps.end(), rmsdLessThan);
   s = &steps[0];
   rmsd = getRMSD(s);
 
+  // sort by cms
   sort(steps.begin(), steps.end(), cmsLargerThan);
   s = &steps[0];
   cms = getCMS(s);
-
   rep_result->best_achieved_cms = cms;
   rep_result->best_achieved_rmsd = rmsd;
 
+  // pearson coefficient
   int tot_samples = steps.size();
   float * ener_vals = new float[tot_samples];
   float * cms_vals = new float[tot_samples];

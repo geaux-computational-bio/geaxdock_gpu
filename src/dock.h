@@ -310,6 +310,9 @@ struct Replica
 
 struct SingleRepResult
 {
+  float init_cms;
+  float init_rmsd;
+  
   float best_scored_cms;
   float best_scored_rmsd;
   float best_achieved_cms;

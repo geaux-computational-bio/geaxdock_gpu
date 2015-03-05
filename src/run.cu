@@ -279,6 +279,8 @@ Run (const Ligand * lig,
   printf("Docking result\n");
   printf("================================================================================\n");
   printf("acceptance ratio\t\t%.3f\n", first_rep->accpt_ratio);
+  printf("initial cms\t\t\t%.3f\n", first_rep->init_cms);
+  printf("initial rmsd\t\t\t%.3f\n", first_rep->init_rmsd);
   printf("best scored cms\t\t\t%.3f\n", first_rep->best_scored_cms);
   printf("best scored rmsd\t\t%.3f\n", first_rep->best_scored_rmsd);
   printf("best rmsd achieved\t\t%f\n", first_rep->best_achieved_rmsd);
