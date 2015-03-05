@@ -325,11 +325,12 @@ CalcEnergy_d (const int bidx, Ligand * __restrict__ mylig, const Protein * __res
 
     SumReduction2D_2_d (a_val, a_sz);
 
-    if (threadIdx.x == 0 && m < pos_dc) {
-      elhm[threadIdx.y] +=
-	mcs_dc[m].tcc *
-	sqrtf (a_val[threadIdx.y][0] / a_sz[threadIdx.y][0]);
-    }
+    if (threadIdx.x == 0 && m < pos_dc)
+      if (a_sz[threadIdx.y][0] > 0.) {
+        elhm[threadIdx.y] +=
+          mcs_dc[m].tcc *
+          sqrtf (a_val[threadIdx.y][0] / a_sz[threadIdx.y][0]);
+      }
   } // lhm loop
 
   __syncthreads ();
