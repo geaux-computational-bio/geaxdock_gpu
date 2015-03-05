@@ -103,7 +103,6 @@ ParseArguments (int argc, char **argv, McPara * mcpara, ExchgPara * exchgpara,
   bool protein_on = false;
   bool compounds_on = false;
   bool lhm_one = false;
-  bool hdf_on = false;
 
   for (int i = 0; i < argc; i++) {
 
@@ -190,10 +189,10 @@ ParseArguments (int argc, char **argv, McPara * mcpara, ExchgPara * exchgpara,
       }
     }
 
-    // trace file
+    // trajectory file
     if (!strcmp (argv[i], "-d") && i < argc) {
-      inputfiles->hdf5_out_path = argv[i + 1];
-      hdf_on = true;
+      string hdf_path = argv[i + 1];
+      strcpy(mcpara->hdf_path, hdf_path.c_str());
     }
     
     // trace file
@@ -237,28 +236,6 @@ ParseArguments (int argc, char **argv, McPara * mcpara, ExchgPara * exchgpara,
   mcpara->move_scale[3] = rs;
   mcpara->move_scale[4] = rs;
   mcpara->move_scale[5] = rs;
-
-
-#if IS_WRITE_TO_DRIVE == 1
-  char mydir[MAXSTRINGLENG];
-
-  char mystime[MAXSTRINGLENG];
-  time_t mytime = time (NULL);
-  struct tm *mylocaltime;
-  mylocaltime = localtime (&mytime);
-  strftime (mystime, MAXSTRINGLENG, "%Y%m%d_%H%M%S", mylocaltime);
-
-  sprintf (mydir, "output_%s", mystime);
-  strcpy (mcpara->outputdir, mydir);
-  MakeDir (mydir);
-
-  // prefix of the file name
-  const char h5file[MAXSTRINGLENG] = "a";
-  if (hdf_on == false)
-    strcpy (mcpara->outputfile, h5file);
-  else
-    strcpy (mcpara->outputfile, inputfiles->hdf5_out_path.c_str());
-#endif
 }
 
 
@@ -1221,8 +1198,7 @@ PrintSummary (const InputFiles * inputfiles, const McPara * mcpara, const Temp *
   printf ("weight file\t\t\t");
   std::cout << inputfiles->weight_file.path << std::endl;
 
-  printf ("output directory\t\t%s\n", mcpara->outputdir);
-  printf ("out file (HDF5)\t\t\t%s/%s_XXXX.h5\n", mcpara->outputdir, mcpara->outputfile);
+  printf ("out file (HDF)\t\t\t%s\n", mcpara->hdf_path);
 
   printf ("steps_per_dump\t\t\t%d\n", mcpara->steps_per_dump);
 

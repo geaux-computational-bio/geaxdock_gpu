@@ -94,7 +94,7 @@
 #define BADKDE 50
 
 // maximum string length for file names
-#define MAXSTRINGLENG 128
+#define MAXSTRINGLENG 512
 
 // if mcs equal to 728492, it is invalid
 #define MCS_INVALID_COORD 728492
@@ -106,7 +106,7 @@
 #define BOLTZMANN_CONST 1.0f
 
 // monte carlo steps
-#define STEPS_PER_DUMP 3000
+#define STEPS_PER_DUMP 100
 
 // plus 1 because the initial state also needs recording
 #define STEPS_PER_DUMP_PLUS1 (STEPS_PER_DUMP + 1)
