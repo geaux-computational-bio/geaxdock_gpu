@@ -245,7 +245,6 @@ Run (const Ligand * lig,
   }
 
 
-
   // ligand conformation records
   vector < vector < LigRecordSingleStep > > multi_reps_records;
 
@@ -272,7 +271,12 @@ Run (const Ligand * lig,
   int total_results = multi_reps_records.size();
   SingleRepResult * results = new SingleRepResult[total_results];
 
-  printStates(multi_reps_records[0]);
+  if (!(strlen(mcpara->csv_path) == 0)) {
+    printHeader(mcpara);
+    vector < vector < LigRecordSingleStep > > :: iterator itr;
+    for (itr = multi_reps_records.begin(); itr != multi_reps_records.end(); itr++)
+      printStates((*itr), mcpara);
+  }
   
   processOneReplica(multi_reps_records[0], &results[0]);
 

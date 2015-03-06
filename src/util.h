@@ -89,7 +89,10 @@ float getCMS(LigRecordSingleStep *step);
 
 void processOneReplica(vector < LigRecordSingleStep > &steps, SingleRepResult * rep_result);
 
-void printStates(vector < LigRecordSingleStep > &steps);
+void printStates(vector < LigRecordSingleStep > &steps, const McPara * mcpara);
+
+void printHeader(const McPara * mcpara);
+
 #endif // UTIL_H
 
 

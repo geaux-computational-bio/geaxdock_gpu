@@ -1,5 +1,6 @@
 #include <iostream>
 #include <fstream>
+#include <iomanip>
 #include <cstdlib>
 #include <cstdio>
 #include <cstring>
@@ -194,6 +195,13 @@ ParseArguments (int argc, char **argv, McPara * mcpara, ExchgPara * exchgpara,
       string hdf_path = argv[i + 1];
       strcpy(mcpara->hdf_path, hdf_path.c_str());
     }
+
+    // output csv file
+    if (!strcmp (argv[i], "-csv") && i < argc) {
+      string path = argv[i + 1];
+      strcpy(mcpara->csv_path, path.c_str());
+    }
+    
     
     // trace file
     if (!strcmp (argv[i], "-tr") && i < argc) {
@@ -1412,18 +1420,45 @@ getCMS(LigRecordSingleStep *step)
   return step->energy.cms;
 }
 
+void
+printHeader(const McPara * mcpara)
+{
+  ofstream myfile;
+  myfile.open(mcpara->csv_path);
+  myfile << "lig prt t0 t1 t2 r0 r1 r2 cms rmsd ener"  << endl;
+  myfile.close();
+}
 
 void
-printStates(vector < LigRecordSingleStep > &steps)
+printStates(vector < LigRecordSingleStep > &steps, const McPara * mcpara)
 {
+  ofstream myfile;
+  myfile.open(mcpara->csv_path, ios::app);
+  myfile << fixed;
+  myfile << setprecision(4);
+
   vector < LigRecordSingleStep > :: iterator its;
   for (its = steps.begin(); its != steps.end(); its++) {
     LigRecordSingleStep *s = &(*its);
+    Replica * rep = &s->replica;
+    float * mv = s->movematrix;
     float ener = getTotalEner(s);
     float cms = getCMS(s);
     float rmsd = getRMSD(s);
-    printf("#\t%.3f\t%.3f\t%.3f\n", ener, cms, rmsd);
-  }
+
+    myfile << rep->idx_lig << " ";
+    myfile << rep->idx_prt << " ";
+
+    for (int i = 0; i < 6; i++)
+      myfile << mv[i] << " ";
+
+    myfile << cms << " ";
+    myfile << rmsd << " ";
+    myfile << ener << " ";
+    myfile << endl;
+  } 
+
+  myfile.close();
 }
 
 void

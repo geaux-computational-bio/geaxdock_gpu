@@ -341,6 +341,7 @@ struct McPara
   float move_scale[6]; // translation x y z, rotation x y z
 
   char hdf_path[MAXSTRINGLENG];
+  char csv_path[MAXSTRINGLENG];
 };
 
 struct McLog

@@ -22,6 +22,7 @@ pdb_file=${ff_dir}/$pdb
 sdf_file=${ff_dir}/$sdf
 ff_file=${ff_dir}/$ff
 
+csv_file=${ff_dir}/${complex}.csv
 
 para_file=${parameters_dir}/paras
 
@@ -35,6 +36,7 @@ ${bin} \
 -s ${ff_file} \
 \
 -para ${para_file} \
+-csv ${csv_file} \
 \
 -nc 10 \
 -floor_temp 0.04f \
