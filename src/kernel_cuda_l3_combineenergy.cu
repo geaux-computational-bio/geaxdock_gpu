@@ -28,8 +28,11 @@ CombineEnergy_d (const int bidx, Energy * e)
   // calculate the total energy using linear combination
 #if IS_LINEAR == 1
     float etotal = 0.0f;
-    for (int i = 0; i < MAXWEI - 1; ++i)
-      etotal +=  enepara_dc->w[i] * e->e[i];
+    for (int i = 0; i < MAXWEI - 1; ++i) {
+      float * ener = &e->e[i];
+      *ener = (*ener) * enepara_dc->w[i];
+      etotal += *ener;
+    }
     e->e[MAXWEI - 1] = etotal;
 #endif
 
