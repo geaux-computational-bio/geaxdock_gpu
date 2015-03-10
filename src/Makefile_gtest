@@ -79,7 +79,7 @@ LIBPATH := -L/usr/local/packages/cuda/5.0/lib64 -L/usr/local/packages/hdf5/1.8.1
 LINKFLAGS = -lhdf5
 
 HOSTFLAGS += -Wall $(HEADPATH)
-OBJ_CPU := load.o data.o util.o hdf5io.o seq_kmeans.o file_io.o stats.o
+OBJ_CPU := load.o data.o util.o hdf5io.o seq_kmeans.o file_io.o stats.o cluster.o
 
 
 load_test.o : $(USER_DIR)/load_test.C $(GTEST_HEADERS)
@@ -94,9 +94,15 @@ analysis_test.o : $(USER_DIR)/analysis_test.C $(GTEST_HEADERS)
 cluster_test.o : $(USER_DIR)/cluster_test.C $(GTEST_HEADERS)
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $(USER_DIR)/cluster_test.C
 
+linkage_test.o : $(USER_DIR)/linkage_test.C $(GTEST_HEADERS)
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $(USER_DIR)/linkage_test.C
+
 hdf5io.o: hdf5io.C
 	h5c++ -c $<
 
+SRCDIR = ./modules/cluster-1.52a/src
+cluster.o: $(SRCDIR)/cluster.c $(SRCDIR)/cluster.h
+	gcc -c -Wall $(SRCDIR)/cluster.c
 
 %.o: %.c
 	gcc $(HOSTFLAGS) $(CPPFLAGS) $(CXXFLAGS) -c $<
@@ -118,3 +124,7 @@ analysis_test : $(OBJ_CPU) analysis_test.o gtest_main.a
 
 cluster_test : $(OBJ_CPU) cluster_test.o gtest_main.a
 	$(CXX) $(LIBPATH) $(CPPFLAGS) $(CXXFLAGS) -lpthread $^ -o $@ $(LINKFLAGS)
+
+linkage_test : $(OBJ_CPU) linkage_test.o gtest_main.a
+	$(CXX) $(LIBPATH) $(CPPFLAGS) $(CXXFLAGS) -lpthread $^ -o $@ $(LINKFLAGS)
+
