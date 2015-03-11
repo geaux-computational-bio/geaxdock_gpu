@@ -13,6 +13,7 @@
 #include <stdio.h>
 #include <sstream>
 #include <sys/stat.h>
+#include <assert.h>
 
 #include "size.h"
 #include "toggle.h"
@@ -20,6 +21,14 @@
 #include "util.h"
 #include "load.h"
 #include "stats.h"
+
+extern "C" {
+#include "kmeans.h"
+}
+
+extern "C" {
+#include "./modules/cluster-1.52a/src/cluster.h" /* The C Clustering Library */
+}
 
 #include <yeah/quicksort.h>
 #include <yeah/mkdir.h>
@@ -1377,6 +1386,7 @@ checkRedundancy(vector < LigRecordSingleStep > &records,
   return records.size();
 }
 
+
 bool
 energyLessThan(const LigRecordSingleStep &s1, const LigRecordSingleStep &s2)
 {
@@ -1430,6 +1440,44 @@ printHeader(const McPara * mcpara)
 }
 
 void
+printStates(vector < Medoid > &medoids, const McPara * mcpara)
+{
+  ofstream myfile;
+  myfile.open(mcpara->csv_path);
+  myfile << "lig prt t0 t1 t2 r0 r1 r2 cms rmsd ener cluster_sz"  << endl;
+  myfile.close();
+
+  myfile.open(mcpara->csv_path, ios::app);
+  myfile << fixed;
+  myfile << setprecision(4);
+
+  vector < Medoid > :: iterator itc;
+  for (itc = medoids.begin(); itc != medoids.end(); itc++)
+    {
+      LigRecordSingleStep *s = &((*itc).step);
+      int cluster_sz = (*itc).cluster_sz;
+      Replica * rep = &s->replica;
+      float * mv = s->movematrix;
+      float ener = getTotalEner(s);
+      float cms = getCMS(s);
+      float rmsd = getRMSD(s);
+
+      myfile << rep->idx_lig << " ";
+      myfile << rep->idx_prt << " ";
+
+      for (int i = 0; i < 6; i++)
+        myfile << mv[i] << " ";
+
+      myfile << cms << " ";
+      myfile << rmsd << " ";
+      myfile << ener << " ";
+      myfile << cluster_sz << " ";
+      myfile << endl;
+    }
+  myfile.close();
+}
+
+void
 printStates(vector < LigRecordSingleStep > &steps, const McPara * mcpara)
 {
   ofstream myfile;
@@ -1459,6 +1507,191 @@ printStates(vector < LigRecordSingleStep > &steps, const McPara * mcpara)
   } 
 
   myfile.close();
+}
+
+/*----< euclid_dist_2() >----------------------------------------------------*/
+/* square of Euclid distance between two multi-dimensional points            */
+__inline static
+float euclid_dist_2(int    numdims,  /* no. dimensions */
+                    float *coord1,   /* [numdims] */
+                    float *coord2)   /* [numdims] */
+{
+    int i;
+    float ans=0.0;
+
+    for (i=0; i<numdims; i++)
+        ans += (coord1[i]-coord2[i]) * (coord1[i]-coord2[i]);
+
+    return(ans);
+}
+
+bool
+medoidEnergyLessThan(const Medoid &c1, const Medoid &c2)
+{
+  float e1 = c1.step.energy.e[MAXWEI - 1];
+  float e2 = c2.step.energy.e[MAXWEI - 1];
+
+  return (e1 < e2);
+}
+
+vector < Medoid >
+clusterByAveLinkage(vector < LigRecordSingleStep > &steps)
+{
+  int nrows = steps.size();
+  int ncols = MAXWEI - 1;
+  int i, j;
+
+  const int nnodes = nrows -1;
+  double** data = (double**) malloc(nrows * sizeof(double*));
+  double* weight = (double*) malloc(ncols*sizeof(double));
+  int** mask = (int**) malloc(nrows * sizeof(int*));
+  int* clusterid;
+  Node* tree;
+
+  for (i = 0; i < ncols; i++) weight[i] = 1.0;
+
+  for (i = 0; i < nrows; i++)
+    {
+      data[i] = (double*) malloc(ncols * sizeof(double));
+      mask[i] = (int*) malloc(ncols * sizeof(int));
+    }
+
+  // copy the data
+  // convert float to double
+  for (i = 0; i < nrows; i++)
+    {
+      float *e = steps[i].energy.e;
+      for (j = 0; j < ncols; j++)
+        {
+          data[i][j] = (double) e[j];
+          mask[i][j] = 1;
+        }
+    }
+
+  printf("\n");
+  printf("================ Pairwise average linkage clustering ============\n");
+  tree = treecluster(nrows, ncols, data, mask, weight, 0, 'e', 'a', 0);
+  if (!tree)
+    {
+      printf ("treecluster routine failed due to insufficient memory\n");
+      free(weight);
+      exit(1);
+    }
+  printf("Node     Item 1   Item 2    Distance\n");
+  for ( i = 0; i < nnodes; i++)
+    printf("%3d:%9d%9d      %g\n",
+           -i-1, tree[i].left, tree[i].right, tree[i].distance);
+  printf("\n");
+
+  printf("=============== Cutting a hierarchical clustering tree ==========\n");
+  clusterid = (int*) malloc(nrows*sizeof(int));
+  cuttree (nrows, tree, 10, clusterid);
+  for (i = 0; i < nrows; i++)
+    printf("conformation %2d: cluster %2d\n", i, clusterid[i]);
+
+  free(clusterid);
+  free(tree);
+  free(weight);
+
+  vector < Medoid > medoids;
+  return medoids;
+}
+
+vector < Medoid >
+clusterByKmeans(vector < LigRecordSingleStep > &steps)
+{
+  int     numClusters, numCoords, numObjs;
+  int    *membership;    /* [numObjs] */
+  float **objects;       /* [numObjs][numCoords] data objects */
+  float **clusters;      /* [numClusters][numCoords] cluster center */
+  float   threshold;
+  int     loop_iterations;
+
+  /* allocate space for objects[][] and load the features' value */
+  int i, j, len;
+  numCoords = MAXWEI - 1;
+  numObjs = steps.size();
+  len = numCoords * numObjs;
+  objects = (float**) malloc(numObjs * sizeof(float*));
+  assert(objects != NULL);
+  objects[0] = (float*) malloc(len * sizeof(float));
+  assert(objects[0] != NULL);
+  for (i = 1; i < numObjs; i++)
+    objects[i] = objects[i - 1] + numCoords;
+
+  // shuffle the records
+  srand ( unsigned (time(0)) );
+  random_shuffle(steps.begin(), steps.end());
+  for (i = 0; i< numObjs; i++)
+    {
+      LigRecordSingleStep *s = &steps[i];
+      for (j = 0; j < MAXWEI - 1; j++)
+        objects[i][j] = s->energy.e[j];
+    }
+  
+  /* some default values */
+  threshold        = 0.001;
+  numClusters      = 0;
+
+  // user defined
+  numClusters = 20;
+
+  /* membership: the cluster id for each data object */
+  membership = (int*) malloc(numObjs * sizeof(int));
+  assert(membership != NULL);
+
+  clusters = seq_kmeans(objects, numCoords, numObjs, numClusters, threshold,
+                        membership, &loop_iterations);
+    
+  // find medoids for each cluster
+  vector < Medoid > medoids;
+  for (i = 0; i < numClusters; i++)
+    {
+      int medoid_idx = -1;
+      float dist = -1.0;
+      int cluster_sz = 0;
+      float * my_medoid = clusters[i];
+      for (j = 0; j < numObjs; j++) {
+        if ( membership[j] == i ) {
+          cluster_sz += 1;
+          LigRecordSingleStep *s = &steps[j];
+          float * feature_vals = s->energy.e;
+          float euclid_dist = euclid_dist_2(numCoords, my_medoid, feature_vals);
+          if (euclid_dist > dist)
+            medoid_idx = j;
+        }
+      }
+      LigRecordSingleStep medoid_step = steps[medoid_idx];
+      Medoid medoid;
+      medoid.step = medoid_step;
+      medoid.cluster_sz = cluster_sz;
+      medoids.push_back(medoid);
+    }
+
+  free(objects[0]);
+  free(objects);
+
+  free(membership);
+  free(clusters[0]);
+  free(clusters);
+
+  sort(medoids.begin(), medoids.end(), medoidEnergyLessThan);
+  return medoids;
+}
+
+vector < Medoid >
+clusterOneRepResults(vector < LigRecordSingleStep > &steps, string clustering_method)
+{
+  if ( clustering_method.compare("k") == 0 )
+    {
+      cout << "using k-means to cluster the trajectories" << endl;
+      return clusterByKmeans(steps);
+    }
+  else if ( clustering_method.compare("a") == 0)
+    {
+      cout << "using average_linkage to cluster the trajectories" << endl;
+      return clusterByAveLinkage(steps);
+    }
 }
 
 void

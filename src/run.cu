@@ -40,6 +40,7 @@ Run (const Ligand * lig,
      const Replica * replica,
      const McPara * mcpara,
      McLog * mclog,
+     vector < vector < LigRecordSingleStep > > &multi_reps_records,
      const ComplexSize complexsize)
 {
   //Parameter para;
@@ -246,7 +247,7 @@ Run (const Ligand * lig,
 
 
   // ligand conformation records
-  vector < vector < LigRecordSingleStep > > multi_reps_records;
+  // vector < vector < LigRecordSingleStep > > multi_reps_records;
 
   // launch GPU kernels
   printf ("Start launching kernels\n");
@@ -257,47 +258,6 @@ Run (const Ligand * lig,
 #include "kernel_cuda_lancher_siglegpu.cu"
 #endif
 
-  putchar ('\n');
-  printf ("================================================================================\n");
-  printf ("initial energy state\n");
-  printf ("================================================================================\n");
-  printf ("rep step vdw ele pmf psp hdb hpc kde lhm dst total\n");
-  printf ("0 0");
-  LigRecordSingleStep step = multi_reps_records[0][0];
-  for (int i = 0; i < MAXWEI; i++)
-    printf(" %.3f", step.energy.e[i]);
-  putchar ('\n');
-
-  int total_results = multi_reps_records.size();
-  SingleRepResult * results = new SingleRepResult[total_results];
-
-  if (!(strlen(mcpara->csv_path) == 0)) {
-    printHeader(mcpara);
-    vector < vector < LigRecordSingleStep > > :: iterator itr;
-    for (itr = multi_reps_records.begin(); itr != multi_reps_records.end(); itr++)
-      printStates((*itr), mcpara);
-  }
-  
-  processOneReplica(multi_reps_records[0], &results[0]);
-
-  
-  SingleRepResult * first_rep = &results[0];
-  printf("================================================================================\n");
-  printf("Docking result\n");
-  printf("================================================================================\n");
-  printf("acceptance ratio\t\t%.3f\n", first_rep->accpt_ratio);
-  printf("initial cms\t\t\t%.3f\n", first_rep->init_cms);
-  printf("initial rmsd\t\t\t%.3f\n", first_rep->init_rmsd);
-  printf("best scored cms\t\t\t%.3f\n", first_rep->best_scored_cms);
-  printf("best scored rmsd\t\t%.3f\n", first_rep->best_scored_rmsd);
-  printf("best rmsd achieved\t\t%f\n", first_rep->best_achieved_rmsd);
-  printf("best cms achieved\t\t%f\n", first_rep->best_achieved_cms);
-  printf("pearson between score and rmsd\t%f\n", first_rep->ener_rmsd_p);
-  printf("pearson between score and cms\t%f\n", first_rep->ener_cms_p);
-
-  
-
-  delete[]results;
 
   mclog->ac_mc = 0;
   vector < vector < LigRecordSingleStep > > :: iterator it_rec;

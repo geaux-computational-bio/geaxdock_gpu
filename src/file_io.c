@@ -36,7 +36,7 @@ float** file_read(int   isBinaryFile,  /* flag: 0 or 1 */
 {
     float **objects;
     int     i, j, len;
-    ssize_t numBytesRead;
+    size_t numBytesRead;
     int _debug = 0;
 
     if (isBinaryFile) {  /* input file is in raw binary format -------------*/

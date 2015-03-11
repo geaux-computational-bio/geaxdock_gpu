@@ -125,10 +125,62 @@ main (int argc, char **argv)
   //PrintProtein (prt);
 
 
+  vector < vector < LigRecordSingleStep > > multi_reps_records;
   // run simulation on optimized data structure
 #if IS_CALCU_DOCK == 1
   printf ("Start docking\n");
-  Run (lig, prt, psp, kde, mcs, enepara, temp, replica, mcpara, mclog, complexsize);
+  Run (lig, prt, psp, kde, mcs, enepara, temp, replica, mcpara, mclog,
+       multi_reps_records, complexsize);
+
+  putchar ('\n');
+  printf ("================================================================================\n");
+  printf ("initial energy state\n");
+  printf ("================================================================================\n");
+  printf ("rep step vdw ele pmf psp hdb hpc kde lhm dst total\n");
+  printf ("0 0");
+  LigRecordSingleStep step = multi_reps_records[0][0];
+  for (int i = 0; i < MAXWEI; i++)
+    printf(" %.3f", step.energy.e[i]);
+  putchar ('\n');
+
+  int total_results = multi_reps_records.size();
+  SingleRepResult * results = new SingleRepResult[total_results];
+
+  // if (!(strlen(mcpara->csv_path) == 0)) {
+  //   printHeader(mcpara);
+  //   vector < vector < LigRecordSingleStep > > :: iterator itr;
+  //   for (itr = multi_reps_records.begin(); itr != multi_reps_records.end(); itr++)
+  //     printStates((*itr), mcpara);
+  // }
+
+  
+  processOneReplica(multi_reps_records[0], &results[0]);
+
+  SingleRepResult * first_rep = &results[0];
+  printf("================================================================================\n");
+  printf("Docking result\n");
+  printf("================================================================================\n");
+  printf("acceptance ratio\t\t%.3f\n", first_rep->accpt_ratio);
+  printf("initial cms\t\t\t%.3f\n", first_rep->init_cms);
+  printf("initial rmsd\t\t\t%.3f\n", first_rep->init_rmsd);
+  printf("best scored cms\t\t\t%.3f\n", first_rep->best_scored_cms);
+  printf("best scored rmsd\t\t%.3f\n", first_rep->best_scored_rmsd);
+  printf("best rmsd achieved\t\t%f\n", first_rep->best_achieved_rmsd);
+  printf("best cms achieved\t\t%f\n", first_rep->best_achieved_cms);
+  printf("pearson between score and rmsd\t%f\n", first_rep->ener_rmsd_p);
+  printf("pearson between score and cms\t%f\n", first_rep->ener_cms_p);
+
+  
+  // string clustering_method = "k";
+  string clustering_method = "a";
+  vector < Medoid > medoids;
+  medoids = clusterOneRepResults(multi_reps_records[0], clustering_method);
+  if (!(strlen(mcpara->csv_path) == 0)) {
+    printStates(medoids, mcpara);
+  }
+
+  delete[]results;
+
   PrintSummary (inputfiles, mcpara, temp, mclog, &complexsize);
 #endif
 

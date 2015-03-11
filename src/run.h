@@ -1,7 +1,10 @@
 #ifndef  RUN_H
 #define  RUN_H
 
+#include <vector>
 #include "dock.h"
+
+using namespace std;
 
 void
 Run (const Ligand *,
@@ -14,6 +17,7 @@ Run (const Ligand *,
      const Replica *,
      const McPara *,
      McLog *,
+     vector < vector < LigRecordSingleStep > > &,
      const ComplexSize);
 
 

@@ -17,7 +17,7 @@ NGPU := 1
 
 
 EXE := dock
-OBJ_CPU := dock.o load.o data.o rmsd.o util.o hdf5io.o stats.o
+OBJ_CPU := dock.o load.o data.o rmsd.o util.o hdf5io.o stats.o seq_kmeans.o file_io.o cluster.o
 OBJ_GPU := run.o
 SH := sh
 CPP_HOST := g++
@@ -117,7 +117,8 @@ DMARCRO_GPU := -DGD=$(GD) -DBDy=$(BDy) -DBDx=$(BDx) -DTperB=$(TperB) -DNGPU=$(NG
 
 HOSTFLAGS :=
 HEADPATH := -I./modules -I./modules/nvidia_gpucomputingsdk_4.2.9_c_common_inc
-OPTFLAGS := -O3
+# OPTFLAGS := -O3
+OPTFLAGS := -O0
 LINKFLAGS := -lcudart -lhdf5 -lm
 
 
@@ -139,6 +140,13 @@ $(EXE): $(OBJ_CPU) $(OBJ_GPU)
 hdf5io.o: hdf5io.C
 	h5c++ -c $<
 
+SRCDIR = ./modules/cluster-1.52a/src
+cluster.o: $(SRCDIR)/cluster.c $(SRCDIR)/cluster.h
+	gcc -c -Wall $(SRCDIR)/cluster.c
+
+%.o: %.c
+	gcc $(HOSTFLAGS) -c $<
+
 %.o: %.C
 	$(CPP_HOST) $(HOSTFLAGS) -c $<
 
@@ -149,7 +157,7 @@ hdf5io.o: hdf5io.C
 	$(CPP_DEV) $(DEVFLAGS) -c $<
 
 install:
-	@cp $(EXE) ../work/
+	@cp $(EXE) ~/local/bin/
 
 clean:
 	@(rm -f ${EXE} ${OBJ_CPU} ${OBJ_GPU} count *i *cubin* *.ptx *cudafe* *.fatbin* *.hash count count.o ../bin/dock)

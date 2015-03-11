@@ -356,8 +356,6 @@ struct McLog
 };
 
 
-
-
 struct LigRecordSingleStep
 {
   Replica replica;
@@ -367,6 +365,11 @@ struct LigRecordSingleStep
 };
 
 
+struct Medoid
+{
+  LigRecordSingleStep step;
+  int cluster_sz;
+};
 
 
 struct LigRecord

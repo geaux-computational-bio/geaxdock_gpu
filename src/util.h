@@ -77,6 +77,8 @@ checkRedundancy(vector < LigRecordSingleStep > &records,
 
 bool energyLessThan(const LigRecordSingleStep &s1, const LigRecordSingleStep &s2);
 
+bool medoidEnergyLessThan(const Medoid &c1, const Medoid &c2);
+
 bool rmsdLessThan(const LigRecordSingleStep &s1, const LigRecordSingleStep &s2);
 
 bool cmsLargerThan(const LigRecordSingleStep &s1, const LigRecordSingleStep &s2);
@@ -91,7 +93,12 @@ void processOneReplica(vector < LigRecordSingleStep > &steps, SingleRepResult * 
 
 void printStates(vector < LigRecordSingleStep > &steps, const McPara * mcpara);
 
+void printStates(vector < Medoid > &medoids, const McPara * mcpara);
+
 void printHeader(const McPara * mcpara);
+
+// clustering the trajectories
+vector < Medoid > clusterOneRepResults(vector < LigRecordSingleStep > &steps, string clustering_method);
 
 #endif // UTIL_H
 
