@@ -1,0 +1,9 @@
+* GeauxDock
+
+** DONE add k-means and linkage clustering
+
+*** DONE k-means
+
+*** DONE average linkage <2015-03-11 Wed>
+
+** TODO Configuration-based similarity v.s. Energy-based similarity
