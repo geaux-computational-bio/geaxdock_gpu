@@ -1,6 +1,9 @@
 #include <assert.h>
 #include <math.h>
+#include <vector>
 #include "stats.h"
+
+using namespace std;
 
 
 float sum(float * x, int n)
@@ -34,4 +37,25 @@ float pearsonr(float * x, float * y, int n)
   float p_val = c / (sqrt(a) * sqrt(b));
 
   return p_val;
+}
+
+float pearsonr(vector < float > x, vector < float > y)
+{
+  assert(x.size() == y.size());
+  int tot = x.size();
+  float * a = new float[tot];
+  float * b = new float[tot];
+
+  for (int i = 0; i < tot; i++)
+    {
+      a[i] = x[i];
+      b[i] = y[i];
+    }
+
+  float p = pearsonr(a, b, tot);
+
+  delete[]a;
+  delete[]b;
+
+  return p;
 }

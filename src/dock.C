@@ -11,6 +11,7 @@
 #include "util.h"
 #include "toggle.h"
 #include "load.h"
+#include "stats.h"
 
 using namespace std;
 
@@ -146,6 +147,7 @@ main (int argc, char **argv)
   int total_results = multi_reps_records.size();
   SingleRepResult * results = new SingleRepResult[total_results];
 
+  /* print traces */
   // if (!(strlen(mcpara->csv_path) == 0)) {
   //   printHeader(mcpara);
   //   vector < vector < LigRecordSingleStep > > :: iterator itr;
@@ -153,6 +155,26 @@ main (int argc, char **argv)
   //     printStates((*itr), mcpara);
   // }
 
+  vector < float > cms_vals;
+  vector < float > euclid_vals;
+  vector < float > p_vals;
+  vector < float > :: iterator it_simi;
+  cms_vals = SimilarityBetweenConfs(multi_reps_records[0], 'c', lig, prt, enepara);
+  euclid_vals = SimilarityBetweenConfs(multi_reps_records[0], 'e', lig, prt, enepara);
+  p_vals = SimilarityBetweenConfs(multi_reps_records[0], 'p', lig, prt, enepara);
+
+  float p_cms_euclid = pearsonr(cms_vals, euclid_vals);
+  float p_cms_p = pearsonr(cms_vals, p_vals);
+
+  printf("pearson between cms simi and ener disimi\t%f\n", p_cms_euclid);
+  printf("pearson between cms simi and p disimi\t%f\n", p_cms_p);
+
+  // for (it_simi = euclid_vals.begin(); it_simi != euclid_vals.end(); it_simi++) {
+  //   cout << (*it_simi) << endl;
+  // }
+  // for (it_simi = cms_vals.begin(); it_simi != cms_vals.end(); it_simi++) {
+  //   cout << (*it_simi) << endl;
+  // }
   
   processOneReplica(multi_reps_records[0], &results[0]);
 
@@ -171,6 +193,8 @@ main (int argc, char **argv)
   printf("pearson between score and cms\t%f\n", first_rep->ener_cms_p);
 
   
+  /* clustering */
+  /*
   // string clustering_method = "k";
   string clustering_method = "a";
   vector < Medoid > medoids;
@@ -178,6 +202,7 @@ main (int argc, char **argv)
   if (!(strlen(mcpara->csv_path) == 0)) {
     printStates(medoids, mcpara);
   }
+  */
 
   delete[]results;
 

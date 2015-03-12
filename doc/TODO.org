@@ -4,6 +4,13 @@
 
 *** DONE k-means
 
-*** DONE average linkage <2015-03-11 Wed>
+*** DONE average linkage <2015-03-10 Tue>
 
-** TODO Configuration-based similarity v.s. Energy-based similarity
+** DONE Configuration-based similarity v.s. Energy-based similarity <2015-03-11 Wed>
+
+*** DONE Configuration-based similarity (CMS)
+
+** DONE Energy-based similarity
+   1. eudlid distance
+   2. pearson 
+   

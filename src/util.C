@@ -38,6 +38,21 @@ extern "C" {
 
 using namespace std;
 
+/*----< euclid_dist_2() >----------------------------------------------------*/
+/* square of Euclid distance between two multi-dimensional points            */
+__inline static
+float euclid_dist_2(int    numdims,  /* no. dimensions */
+                    float *coord1,   /* [numdims] */
+                    float *coord2)   /* [numdims] */
+{
+    int i;
+    float ans=0.0;
+
+    for (i=0; i<numdims; i++)
+        ans += (coord1[i]-coord2[i]) * (coord1[i]-coord2[i]);
+
+    return(ans);
+}
 
 void
 Usage (char *bin)
@@ -288,6 +303,160 @@ OptimizeLigand (const Ligand0 * lig0, Ligand * lig, const ComplexSize complexsiz
 
 }
 
+
+float
+CalculateContactModeScore (int * ref1, int * ref2, EnePara * enepara, Ligand * mylig, Protein * myprt)
+{
+  int tp = 0;
+  int fn = 0;
+  int fp = 0;
+  int tn = 0;
+
+  int lna = mylig->lna;
+  int pnp = myprt->pnp;
+
+  for (int l = 0; l < lna; l++) {
+    for (int p = 0; p < pnp; p++) {
+      const int ref_val1 = ref1[l * pnp + p];
+      const int ref_val2 = ref2[l * pnp + p];
+
+      tp += (ref_val1 == 1 && ref_val2 == 1);
+      fn += (ref_val1 == 1 && ref_val2 == 0);
+      fp += (ref_val1 == 0 && ref_val2 == 1);
+      tn += (ref_val1 == 0 && ref_val2 == 0);
+    }
+  }
+
+  const float dividend = sqrtf ((float)(tp + fp) * (tp + fn) * (tn + fp) * (tn + fn));
+
+  if (dividend != 0.)
+    return (float)(tp * tn - fp * fn) / dividend;
+  else
+    return CMCC_INVALID_VAL;
+}
+
+void
+InitContactMatrix (int * ref_matrix, Ligand * mylig, Protein * myprt, EnePara * enepara)
+{
+  int lna = mylig->lna;
+  int pnp = myprt->pnp;
+
+  for (int l = 0; l < lna; l++) {
+    const int lig_t = mylig->t[l];
+
+    for (int p = 0; p < pnp; p++) {
+      const int prt_t = myprt->t[p];
+
+      const float dx = mylig->coord_new.x[l] - myprt->x[p];
+      const float dy = mylig->coord_new.y[l] - myprt->y[p];
+      const float dz = mylig->coord_new.z[l] - myprt->z[p];
+      const float dst = sqrtf (dx * dx + dy * dy + dz * dz);
+
+      const float pmf0 = enepara->pmf0[lig_t][prt_t];
+      ref_matrix[l * pnp + p] = (dst <= pmf0);
+    }
+  }
+}
+
+
+void
+SetContactMatrix(LigRecordSingleStep * step, int * ref_matrix,
+                 Ligand * lig, Protein * prt,  EnePara * enepara)
+{
+
+    int idx_lig = step->replica.idx_lig;
+    int idx_prt = step->replica.idx_prt;
+    float* move_matrix = step->movematrix;
+    
+    Ligand* mylig = &lig[idx_lig];
+    Protein* myprt = &prt[idx_prt];
+
+    PlaceLigand(mylig, move_matrix);
+    InitContactMatrix(ref_matrix, mylig, myprt, enepara);
+}
+
+vector < float >
+CmsBetweenConfs(vector < LigRecordSingleStep > &steps, Ligand * lig, Protein * prt, EnePara * enepara)
+{
+  int total= steps.size();
+  int lna = lig->lna;
+  int pnp = prt->pnp;
+  int* previous_ref = new int[lna * pnp];
+  int* current_ref = new int[lna * pnp];
+
+  vector < float > cms_vals;
+
+  for (int i = 1; i < total; i++) {
+    LigRecordSingleStep * previous = &(steps[i-1]);
+    SetContactMatrix(previous, previous_ref, lig, prt, enepara);
+    LigRecordSingleStep * current = &(steps[i]);
+    SetContactMatrix(current, current_ref, lig, prt, enepara);
+
+    float cms = CalculateContactModeScore (current_ref, previous_ref, enepara, lig, prt);
+    cms_vals.push_back(cms);
+  }
+
+  delete[]previous_ref;
+  delete[]current_ref;
+
+  return cms_vals;
+}
+
+vector < float >
+Euclid2DistBetweenConfs(vector < LigRecordSingleStep > &steps)
+{
+  int total = steps.size();
+  vector < float > dists;
+  int numdims = MAXWEI - 1;
+  for (int i = 1; i < total; i++)
+    {
+      float* previous = steps[i-1].energy.e;
+      float* current = steps[i].energy.e;
+      float euclid_2 = euclid_dist_2(numdims, previous, current);
+      dists.push_back(euclid_2);
+    }
+
+  return dists;
+}
+
+vector < float >
+PearsonDistBetweenConfs(vector < LigRecordSingleStep > &steps)
+{
+  int total = steps.size();
+  vector < float > dists;
+  int numdims = MAXWEI - 1;
+  for (int i = 1; i < total; i++)
+    {
+      float* previous = steps[i-1].energy.e;
+      float* current = steps[i].energy.e;
+      float p = pearsonr(previous, current, numdims);
+      dists.push_back(p);
+    }
+
+  return dists;
+}
+
+vector < float >
+SimilarityBetweenConfs(vector < LigRecordSingleStep > &steps, char method,
+                       Ligand * lig, Protein * prt, EnePara * enepara)
+{
+  vector < float > similarities;
+  switch(method)
+    {
+    case 'c':
+      similarities = CmsBetweenConfs(steps, lig, prt, enepara);
+      break;
+    case 'e':
+      similarities = Euclid2DistBetweenConfs(steps);
+      break;
+    case 'p':
+      similarities = PearsonDistBetweenConfs(steps);
+      break;
+    }
+
+  return similarities;
+}
+
 // move the ligand to its center
 void
 InitLigCoord (Ligand * lig, const ComplexSize complexsize)
@@ -308,6 +477,11 @@ InitLigCoord (Ligand * lig, const ComplexSize complexsize)
     }
   }
 }
+
+
+
+
+
 
 void
 PlaceLigand (Ligand* mylig, float* movematrix_new)
@@ -1509,21 +1683,6 @@ printStates(vector < LigRecordSingleStep > &steps, const McPara * mcpara)
   myfile.close();
 }
 
-/*----< euclid_dist_2() >----------------------------------------------------*/
-/* square of Euclid distance between two multi-dimensional points            */
-__inline static
-float euclid_dist_2(int    numdims,  /* no. dimensions */
-                    float *coord1,   /* [numdims] */
-                    float *coord2)   /* [numdims] */
-{
-    int i;
-    float ans=0.0;
-
-    for (i=0; i<numdims; i++)
-        ans += (coord1[i]-coord2[i]) * (coord1[i]-coord2[i]);
-
-    return(ans);
-}
 
 bool
 medoidEnergyLessThan(const Medoid &c1, const Medoid &c2)
@@ -1691,6 +1850,12 @@ clusterOneRepResults(vector < LigRecordSingleStep > &steps, string clustering_me
     {
       cout << "using average_linkage to cluster the trajectories" << endl;
       return clusterByAveLinkage(steps);
+    }
+  else
+    {
+      printf("Please provide clustering method");
+      vector < Medoid > medoids;
+      return medoids;
     }
 }
 
