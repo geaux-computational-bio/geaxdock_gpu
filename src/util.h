@@ -98,13 +98,18 @@ void printStates(vector < Medoid > &medoids, const McPara * mcpara);
 void printHeader(const McPara * mcpara);
 
 // clustering the trajectories
-vector < Medoid > clusterOneRepResults(vector < LigRecordSingleStep > &steps, string clustering_method);
+
+vector < Medoid >
+clusterOneRepResults(vector < LigRecordSingleStep > &steps, string clustering_method,
+                     Ligand* lig, Protein* prt, EnePara* enepara);
 
 vector < float > SimilarityBetweenConfs(vector < LigRecordSingleStep > &steps, char method);
 
 vector < float > SimilarityBetweenConfs(vector < LigRecordSingleStep > &steps, char method,
                                         Ligand * lig, Protein * prt, EnePara * enepara);
 
+void SimilarityCorrelation(vector < vector < LigRecordSingleStep > > multi_reps_records,
+                           Ligand* lig, Protein* prt, EnePara* enepara);
 #endif // UTIL_H
 
 

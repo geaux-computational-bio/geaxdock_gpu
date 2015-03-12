@@ -1693,8 +1693,90 @@ medoidEnergyLessThan(const Medoid &c1, const Medoid &c2)
   return (e1 < e2);
 }
 
+void
+GenCmsSimiMat(vector < LigRecordSingleStep > & steps, Ligand* lig, Protein* prt,
+              EnePara* enepara, double** dis_mat)
+{
+  int tot = steps.size();
+  int lna = lig->lna;
+  int pnp = prt->pnp;
+
+  int* my_ref = new int[lna * pnp];
+  int* other_ref = new int[lna * pnp];
+
+
+  for (int i = 0; i < tot; i++)
+    for (int j = i; j < tot; j++)
+      {
+        LigRecordSingleStep* my = &(steps[i]);
+        LigRecordSingleStep* other = &(steps[j]);
+        SetContactMatrix(my, my_ref, lig, prt, enepara);
+        SetContactMatrix(other, other_ref, lig, prt, enepara);
+
+        float cms = CalculateContactModeScore(my_ref, other_ref, enepara, lig, prt);
+        double dividend = 1 + (double)cms;
+        if (dividend < 0.00001)
+          dividend = 0.00001;
+        double dis = 1.0 / dividend;
+        dis_mat[i][j] = dis;
+        dis_mat[j][i] = dis;
+      }
+
+  delete[]my_ref;
+  delete[]other_ref;
+}
+
 vector < Medoid >
-clusterByAveLinkage(vector < LigRecordSingleStep > &steps)
+clusterCmsByAveLinkage(vector < LigRecordSingleStep > &steps,
+                       Ligand* lig, Protein* prt, EnePara* enepara)
+{
+  // create distance matrix using cms value between two conformations
+  // dimension of the matrix is n x n, where n is the number of steps
+  // entries of the matrix should be in double precision
+  int tot = steps.size();
+  double** dis_mat = (double**) malloc(tot * sizeof(double*));
+  assert(dis_mat != NULL);
+  for (int i = 0; i < tot; i++)
+    {
+      dis_mat[i] = (double*) malloc(tot * sizeof(double));
+      assert(dis_mat[i] != NULL);
+    }
+  GenCmsSimiMat(steps, lig, prt, enepara, dis_mat);
+
+  // cluster the distance matrix using average linkage method
+  Node* tree;
+  int nrows = tot;
+  int ncols = MAXWEI - 1;
+  tree = treecluster(nrows, ncols, 0, 0, 0, 0, 'e', 's', dis_mat);
+  if (!tree)
+    printf ("treecluster routine failed due to insufficient memory\n");
+
+  // find the medoid in each cluster
+  const int nnodes = nrows -1;
+  for (int i = 0; i < nnodes; i++)
+    printf("%3d:%9d%9d      %g\n",
+           -i-1, tree[i].left, tree[i].right, tree[i].distance);
+  printf("\n");
+  printf("=============== Cutting a hierarchical clustering tree ==========\n");
+  int* clusterid = (int*) malloc(nrows*sizeof(int));
+  cuttree (nrows, tree, 10, clusterid);
+  for (int i = 0; i < nrows; i++)
+    printf("conformation %2d: cluster %2d\n", i, clusterid[i]);
+
+  vector < Medoid > medoids;
+
+  // free the memory
+  for (int i = 0; i < tot; i++) free(dis_mat[i]);
+  free(dis_mat);
+  free(clusterid);
+  free(tree);
+  
+  return medoids;
+}
+
+
+vector < Medoid >
+clusterEnerByAveLinkage(vector < LigRecordSingleStep > &steps)
 {
   int nrows = steps.size();
   int ncols = MAXWEI - 1;
@@ -1838,8 +1920,10 @@ clusterByKmeans(vector < LigRecordSingleStep > &steps)
   return medoids;
 }
 
+
 vector < Medoid >
-clusterOneRepResults(vector < LigRecordSingleStep > &steps, string clustering_method)
+clusterOneRepResults(vector < LigRecordSingleStep > &steps, string clustering_method,
+                     Ligand* lig, Protein* prt, EnePara* enepara)
 {
   if ( clustering_method.compare("k") == 0 )
     {
@@ -1849,7 +1933,12 @@ clusterOneRepResults(vector < LigRecordSingleStep > &steps, string clustering_me
   else if ( clustering_method.compare("a") == 0)
     {
       cout << "using average_linkage to cluster the trajectories" << endl;
-      return clusterByAveLinkage(steps);
+      return clusterEnerByAveLinkage(steps);
+    }
+  else if ( clustering_method.compare("c") == 0)
+    {
+      cout << "using average_linkage on cms distance matrix" << endl;
+      return clusterCmsByAveLinkage(steps, lig, prt, enepara);
     }
   else
     {
@@ -1916,7 +2005,50 @@ processOneReplica(vector < LigRecordSingleStep > &steps, SingleRepResult * rep_r
   delete[]ener_vals;
   delete[]rmsd_vals;
   delete[]cms_vals;
-  
+
+  SingleRepResult * first_rep = rep_result;
+  printf("================================================================================\n");
+  printf("Docking result\n");
+  printf("================================================================================\n");
+  printf("acceptance ratio\t\t%.3f\n", first_rep->accpt_ratio);
+  printf("initial cms\t\t\t%.3f\n", first_rep->init_cms);
+  printf("initial rmsd\t\t\t%.3f\n", first_rep->init_rmsd);
+  printf("best scored cms\t\t\t%.3f\n", first_rep->best_scored_cms);
+  printf("best scored rmsd\t\t%.3f\n", first_rep->best_scored_rmsd);
+  printf("best rmsd achieved\t\t%f\n", first_rep->best_achieved_rmsd);
+  printf("best cms achieved\t\t%f\n", first_rep->best_achieved_cms);
+  printf("pearson between score and rmsd\t%f\n", first_rep->ener_rmsd_p);
+  printf("pearson between score and cms\t%f\n", first_rep->ener_cms_p);
 }
 
+void
+SimilarityCorrelation(vector < vector < LigRecordSingleStep > > multi_reps_records,
+                      Ligand* lig, Protein* prt, EnePara* enepara)
+{
+  vector < float > cms_vals;
+  vector < float > euclid_vals;
+  vector < float > p_vals;
+  vector < float > :: iterator it_simi;
 
+  int rep_idx = 0;
+
+  cms_vals = SimilarityBetweenConfs(multi_reps_records[rep_idx],
+                                    'c', lig, prt, enepara);
+  euclid_vals = SimilarityBetweenConfs(multi_reps_records[rep_idx],
+                                       'e', lig, prt, enepara);
+  p_vals = SimilarityBetweenConfs(multi_reps_records[rep_idx],
+                                  'p', lig, prt, enepara);
+
+  float p_cms_euclid = pearsonr(cms_vals, euclid_vals);
+  float p_cms_p = pearsonr(cms_vals, p_vals);
+
+  printf("pearson between cms simi and ener disimi\t%f\n", p_cms_euclid);
+  printf("pearson between cms simi and p disimi\t\t%f\n", p_cms_p);
+
+  // for (it_simi = euclid_vals.begin(); it_simi != euclid_vals.end(); it_simi++) {
+  //   cout << (*it_simi) << endl;
+  // }
+  // for (it_simi = cms_vals.begin(); it_simi != cms_vals.end(); it_simi++) {
+  //   cout << (*it_simi) << endl;
+  // }
+}
