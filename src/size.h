@@ -99,8 +99,8 @@
 // if mcs equal to 728492, it is invalid
 #define MCS_INVALID_COORD 728492
 
-// if mcs equal to 728492, it is invalid
-#define CMCC_INVALID_VAL 10000.0f
+// if dividend is zero, two conformations are treated as randomly correlated
+#define CMCC_INVALID_VAL 0.0f
 
 // boltzman constant
 #define BOLTZMANN_CONST 1.0f
