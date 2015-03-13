@@ -54,6 +54,37 @@ float euclid_dist_2(int    numdims,  /* no. dimensions */
     return(ans);
 }
 
+
+double**
+AllocateMatrix(int nrows, int ncolumns)
+{
+  int i, j;
+  double** matrix;
+
+  if (nrows < 1) return NULL;
+
+  matrix = (double**) malloc(nrows * sizeof(double*));
+  assert(matrix != NULL);
+  matrix[0] = (double*) malloc(nrows * ncolumns * sizeof(double));
+  assert(matrix[0] != NULL);
+
+  for (i = 1; i < nrows; i++)
+    matrix[i] = matrix[i-1] + ncolumns;
+
+  for (i = 0; i < nrows; ++i)
+    for (j = 0; j < ncolumns; ++j)
+      matrix[i][j] = 0.0;
+
+  return matrix;
+}
+
+void
+FreeMatrix(double** matrix)
+{
+  free(matrix[0]);
+  free(matrix);
+}
+
 void
 Usage (char *bin)
 {

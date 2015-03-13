@@ -110,6 +110,11 @@ vector < float > SimilarityBetweenConfs(vector < LigRecordSingleStep > &steps, c
 
 void SimilarityCorrelation(vector < vector < LigRecordSingleStep > > multi_reps_records,
                            Ligand* lig, Protein* prt, EnePara* enepara);
+
+double** AllocateMatrix(int nrows, int ncolumns);
+
+void FreeMatrix(double** matrix);
+
 #endif // UTIL_H
 
 
