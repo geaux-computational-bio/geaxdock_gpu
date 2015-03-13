@@ -155,54 +155,23 @@ main (int argc, char **argv)
   //     printStates((*itr), mcpara);
   // }
 
-  vector < float > cms_vals;
-  vector < float > euclid_vals;
-  vector < float > p_vals;
-  vector < float > :: iterator it_simi;
-  cms_vals = SimilarityBetweenConfs(multi_reps_records[0], 'c', lig, prt, enepara);
-  euclid_vals = SimilarityBetweenConfs(multi_reps_records[0], 'e', lig, prt, enepara);
-  p_vals = SimilarityBetweenConfs(multi_reps_records[0], 'p', lig, prt, enepara);
-
-  float p_cms_euclid = pearsonr(cms_vals, euclid_vals);
-  float p_cms_p = pearsonr(cms_vals, p_vals);
-
-  printf("pearson between cms simi and ener disimi\t%f\n", p_cms_euclid);
-  printf("pearson between cms simi and p disimi\t%f\n", p_cms_p);
-
-  // for (it_simi = euclid_vals.begin(); it_simi != euclid_vals.end(); it_simi++) {
-  //   cout << (*it_simi) << endl;
-  // }
-  // for (it_simi = cms_vals.begin(); it_simi != cms_vals.end(); it_simi++) {
-  //   cout << (*it_simi) << endl;
-  // }
+  
+  SimilarityCorrelation(multi_reps_records, lig, prt, enepara);
   
   processOneReplica(multi_reps_records[0], &results[0]);
 
-  SingleRepResult * first_rep = &results[0];
-  printf("================================================================================\n");
-  printf("Docking result\n");
-  printf("================================================================================\n");
-  printf("acceptance ratio\t\t%.3f\n", first_rep->accpt_ratio);
-  printf("initial cms\t\t\t%.3f\n", first_rep->init_cms);
-  printf("initial rmsd\t\t\t%.3f\n", first_rep->init_rmsd);
-  printf("best scored cms\t\t\t%.3f\n", first_rep->best_scored_cms);
-  printf("best scored rmsd\t\t%.3f\n", first_rep->best_scored_rmsd);
-  printf("best rmsd achieved\t\t%f\n", first_rep->best_achieved_rmsd);
-  printf("best cms achieved\t\t%f\n", first_rep->best_achieved_cms);
-  printf("pearson between score and rmsd\t%f\n", first_rep->ener_rmsd_p);
-  printf("pearson between score and cms\t%f\n", first_rep->ener_cms_p);
-
   
   /* clustering */
-  /*
+  
   // string clustering_method = "k";
-  string clustering_method = "a";
+  // string clustering_method = "a";
+  string clustering_method = "c";
   vector < Medoid > medoids;
-  medoids = clusterOneRepResults(multi_reps_records[0], clustering_method);
+  medoids = clusterOneRepResults(multi_reps_records[0], clustering_method,
+                                 lig, prt, enepara);
   if (!(strlen(mcpara->csv_path) == 0)) {
     printStates(medoids, mcpara);
   }
-  */
 
   delete[]results;
 
