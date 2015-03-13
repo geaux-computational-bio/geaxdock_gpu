@@ -111,6 +111,8 @@
 // plus 1 because the initial state also needs recording
 #define STEPS_PER_DUMP_PLUS1 (STEPS_PER_DUMP + 1)
 
+#define MAX_DIST 1000.
+
 
 
 #endif

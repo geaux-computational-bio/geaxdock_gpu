@@ -1746,15 +1746,76 @@ GenCmsSimiMat(vector < LigRecordSingleStep > & steps, Ligand* lig, Protein* prt,
 
         float cms = CalculateContactModeScore(my_ref, other_ref, enepara, lig, prt);
         double dividend = 1 + (double)cms;
-        if (dividend < 0.00001)
-          dividend = 0.00001;
         double dis = 1.0 / dividend;
+
+        if (dividend < 0.0001)
+          dis = MAX_DIST;
+
         dis_mat[i][j] = dis;
         dis_mat[j][i] = dis;
       }
 
   delete[]my_ref;
   delete[]other_ref;
+}
+
+
+map < int, vector < int > >
+GetClusters(int* clusterid, int ncluster, int nobj)
+{
+  map < int, vector < int > > clusters;
+  for (int i = 0; i < ncluster; i++)
+    for (int j = 0; j < nobj; j++)
+      {
+        if (clusterid[j] == i)
+          clusters[i].push_back(j);
+      }
+  return clusters;
+}
+
+map < int, double >
+Distances2Others(vector < int > members, double** distmatrix)
+{
+  vector < int > :: iterator itm1;
+  vector < int > :: iterator itm2;
+
+  map < int, double > dists;
+  for (itm1 = members.begin(); itm1 != members.end(); itm1 ++) {
+    int my_idx = (*itm1);
+    double tot_dist_between = 0.0;
+
+    for (itm2 = members.begin(); itm2 != members.end(); itm2 ++) {
+      int other_idx = (*itm2);
+      double dist_between = distmatrix[my_idx][other_idx];
+      tot_dist_between += dist_between;
+    }
+
+    dists[my_idx] = tot_dist_between;
+  }
+  return dists;
+}
+
+int
+FindMedoid(map < int, double > pt_and_its_dist_to_others)
+{
+
+  map < int, double > :: iterator itp;
+  int medoid_idx = -1;
+  double min_dist = ( (double) pt_and_its_dist_to_others.size() ) * MAX_DIST;
+
+  for (itp = pt_and_its_dist_to_others.begin();
+       itp != pt_and_its_dist_to_others.end();
+       ++itp)
+    {
+      int my_idx = itp->first;
+      double dist = itp->second;
+      if (dist < min_dist) {
+        min_dist = dist;
+        medoid_idx = my_idx;
+      }
+    }
+
+  return medoid_idx;
 }
 
 vector < Medoid >
