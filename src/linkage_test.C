@@ -4,6 +4,7 @@
 #include <cstring>
 #include <cmath>
 #include <map>
+#include <algorithm>
 
 #include "size.h"
 #include "dock.h"
@@ -549,5 +550,151 @@ TEST(Linkage, medoid)
   free(tree);
   free(clusterid);
   
+  FreeMatrix(copied);
+}
+
+TEST(Linkage, KGS)
+{ int i, j;
+  const int nrows = 13;
+  const int ncols = 4;
+  double** data = (double**)malloc(nrows*sizeof(double*) );
+  int** mask = (int**)malloc(nrows*sizeof(int*));
+  double** distmatrix;
+
+  for (i = 0; i < nrows; i++)
+    { data[i] = (double*)malloc(ncols*sizeof(double));
+      mask[i] = (int*)malloc(ncols*sizeof(int));
+  }
+
+  /* Test data, roughly distributed in 0-5, 6-8, 9-12 */
+  data[ 0][ 0]=0.1; data[ 0][ 1]=0.0; data[ 0][ 2]=9.6; data[ 0][ 3] = 5.6;
+  data[ 1][ 0]=1.4; data[ 1][ 1]=1.3; data[ 1][ 2]=0.0; data[ 1][ 3] = 3.8;
+  data[ 2][ 0]=1.2; data[ 2][ 1]=2.5; data[ 2][ 2]=0.0; data[ 2][ 3] = 4.8;
+  data[ 3][ 0]=2.3; data[ 3][ 1]=1.5; data[ 3][ 2]=9.2; data[ 3][ 3] = 4.3;
+  data[ 4][ 0]=1.7; data[ 4][ 1]=0.7; data[ 4][ 2]=9.6; data[ 4][ 3] = 3.4;
+  data[ 5][ 0]=0.0; data[ 5][ 1]=3.9; data[ 5][ 2]=9.8; data[ 5][ 3] = 5.1;
+  data[ 6][ 0]=6.7; data[ 6][ 1]=3.9; data[ 6][ 2]=5.5; data[ 6][ 3] = 4.8;
+  data[ 7][ 0]=0.0; data[ 7][ 1]=6.3; data[ 7][ 2]=5.7; data[ 7][ 3] = 4.3;
+  data[ 8][ 0]=5.7; data[ 8][ 1]=6.9; data[ 8][ 2]=5.6; data[ 8][ 3] = 4.3;
+  data[ 9][ 0]=0.0; data[ 9][ 1]=2.2; data[ 9][ 2]=5.4; data[ 9][ 3] = 0.0;
+  data[10][ 0]=3.8; data[10][ 1]=3.5; data[10][ 2]=5.5; data[10][ 3] = 9.6;
+  data[11][ 0]=0.0; data[11][ 1]=2.3; data[11][ 2]=3.6; data[11][ 3] = 8.5;
+  data[12][ 0]=4.1; data[12][ 1]=4.5; data[12][ 2]=5.8; data[12][ 3] = 7.6;
+
+  /* Some data are actually missing */
+  mask[ 0][ 0]=1; mask[ 0][ 1]=1; mask[ 0][ 2]=1; mask[ 0][ 3] = 1;
+  mask[ 1][ 0]=1; mask[ 1][ 1]=1; mask[ 1][ 2]=0; mask[ 1][ 3] = 1;
+  mask[ 2][ 0]=1; mask[ 2][ 1]=1; mask[ 2][ 2]=0; mask[ 2][ 3] = 1;
+  mask[ 3][ 0]=1; mask[ 3][ 1]=1; mask[ 3][ 2]=1; mask[ 3][ 3] = 1;
+  mask[ 4][ 0]=1; mask[ 4][ 1]=1; mask[ 4][ 2]=1; mask[ 4][ 3] = 1;
+  mask[ 5][ 0]=0; mask[ 5][ 1]=1; mask[ 5][ 2]=1; mask[ 5][ 3] = 1;
+  mask[ 6][ 0]=1; mask[ 6][ 1]=1; mask[ 6][ 2]=1; mask[ 6][ 3] = 1;
+  mask[ 7][ 0]=0; mask[ 7][ 1]=1; mask[ 7][ 2]=1; mask[ 7][ 3] = 1;
+  mask[ 8][ 0]=1; mask[ 8][ 1]=1; mask[ 8][ 2]=1; mask[ 8][ 3] = 1;
+  mask[ 9][ 0]=1; mask[ 9][ 1]=1; mask[ 9][ 2]=1; mask[ 9][ 3] = 0;
+  mask[10][ 0]=1; mask[10][ 1]=1; mask[10][ 2]=1; mask[10][ 3] = 1;
+  mask[11][ 0]=0; mask[11][ 1]=1; mask[11][ 2]=1; mask[11][ 3] = 1;
+  mask[12][ 0]=1; mask[12][ 1]=1; mask[12][ 2]=1; mask[12][ 3] = 1;
+
+  show_data(nrows, ncols, data, mask);
+  example_mean_median(nrows, ncols, data, mask);
+  distmatrix = example_distance_gene(nrows, ncols, data, mask);
+
+  double** copied = AllocateMatrix(nrows, nrows);
+
+  for (i = 1; i < nrows; ++i) {
+    for (j = 0; j < i; ++j) {
+      copied [i][j] = distmatrix[i][j];
+    }
+  }
+
+  for (i = 0; i < nrows; ++i) {
+    for (j = i; j < nrows; ++j) {
+      copied[i][j] = copied[j][i];
+    }
+  }
+  
+  int* clusterid;
+  Node* tree;
+
+  // cluster
+  tree = treecluster(nrows, ncols, 0, 0, 0, 0, 'e', 's', distmatrix);
+  for (i = 1; i < nrows; i++) free(distmatrix[i]);
+  free(distmatrix);
+
+  // cut tree
+  clusterid = (int*)malloc(nrows*sizeof(int));
+  int ncluster = 3;
+  cuttree (nrows, tree, ncluster, clusterid);
+
+  for(i=0; i<nrows; i++)
+    printf("Gene %2d: cluster %2d\n", i, clusterid[i]);
+  printf("\n");
+  
+
+  // KGS and medoid
+  map < int , vector < int > > clusters;
+  map < int , vector < int > > :: iterator itc;
+  vector < int > :: iterator itm;
+
+  clusters = GetClusters(clusterid, ncluster, nrows);
+  map < int, map < int, double > > dist_to_others;
+  for (itc = clusters.begin(); itc != clusters.end(); itc ++) {
+    map < int, double > pt_and_its_dist_to_others  = Distances2Others(itc->second, copied);
+    dist_to_others[itc->first] = pt_and_its_dist_to_others;
+    if (pt_and_its_dist_to_others.size() > 1)
+      {
+        double spread = SpreadOfCluster(pt_and_its_dist_to_others);
+      }
+  }
+
+  int max_clusters = nrows - 1;
+  vector < double > ave_spreads;
+  for (ncluster = max_clusters; ncluster != 1; --ncluster)
+    {
+      cuttree (nrows, tree, ncluster, clusterid);
+      clusters = GetClusters(clusterid, ncluster, nrows);
+      double ave_spread = AveSpread(clusters, copied);
+      ave_spreads.push_back(ave_spread);
+      cout << "# clusters " << ncluster << " average spread " << ave_spread << endl;
+    }
+
+  double max_ave_spread = *max_element(ave_spreads.begin(), ave_spreads.end());
+  double min_ave_spread = *min_element(ave_spreads.begin(), ave_spreads.end());
+  double multiplier = (nrows - 2) / (max_ave_spread - min_ave_spread);
+
+  vector < double > :: iterator its;
+  vector < double > penalties;
+  for (its = ave_spreads.begin(), ncluster = max_clusters;
+       its != ave_spreads.end();
+       ++its, --ncluster)
+    {
+      double my_spread = *its;
+      double normed_spread = multiplier * (my_spread - min_ave_spread) + 1;
+      double penalty = normed_spread + ncluster;
+      penalties.push_back(penalty);
+      cout << "# clusters " << ncluster << " penalty " << penalty << endl;
+    }
+
+  printf("--------------------------------------------------------------------------------\n");
+  its = penalties.begin();
+  int lowest_penalty_cluster_num = nrows - 1;
+  double lowest_penalty = (*its);
+  for (its = penalties.begin(), ncluster = max_clusters;
+       its != penalties.end();
+       ++its, --ncluster)
+    {
+      if (*its < lowest_penalty)
+        {
+          lowest_penalty = *its;
+          lowest_penalty_cluster_num = ncluster;
+        }
+    }
+
+  cout << "with cluster # " << lowest_penalty_cluster_num << " has lowest penalty value: " << lowest_penalty << endl;
+  
+
+  free(tree);
+  free(clusterid);
   FreeMatrix(copied);
 }

@@ -10,8 +10,9 @@
 #include "size.h"
 #include "dock.h"
 
-using namespace std;
 
+
+using namespace std;
 // util.C
 
 void Usage (char *);
@@ -120,11 +121,15 @@ void FreeMatrix(double** matrix);
 map < int, vector < int > > GetClusters(int* clusterid, int ncluster, int nobj);
 
 // dictionary of a point and its total distance to others
-map < int, double > Distances2Others(vector < int > members, double** distmatrix);
+map < int, double > Distances2Others(vector < int > &members, double** distmatrix);
 
 // find the idx of the medoid in a cluster
 // defined as the point with the minimum average distance to all others
 int FindMedoid(map < int, double > pt_and_its_dist_to_others);
+
+double SpreadOfCluster(map < int, double > &pt_and_its_dist_to_others);
+
+double AveSpread(map < int, vector < int > > & clusters, double** dist_matrix);
 
 #endif // UTIL_H
 

@@ -14,6 +14,7 @@
 #include <sstream>
 #include <sys/stat.h>
 #include <assert.h>
+#include <map>
 
 #include "size.h"
 #include "toggle.h"
@@ -1774,7 +1775,7 @@ GetClusters(int* clusterid, int ncluster, int nobj)
 }
 
 map < int, double >
-Distances2Others(vector < int > members, double** distmatrix)
+Distances2Others(vector < int > & members, double** distmatrix)
 {
   vector < int > :: iterator itm1;
   vector < int > :: iterator itm2;
@@ -1817,6 +1818,52 @@ FindMedoid(map < int, double > pt_and_its_dist_to_others)
 
   return medoid_idx;
 }
+
+
+double
+AveSpread(map < int, vector < int > > & clusters, double** dist_matrix)
+{
+  map < int, map < int, double > > dist_to_others;
+  map < int , vector < int > > :: iterator itc;
+  int non_outliers = 0;
+  double tot_spread = 0.0;
+  for (itc = clusters.begin(); itc != clusters.end(); itc ++)
+    {
+    map < int, double > pt_and_its_dist_to_others  = Distances2Others(itc->second, dist_matrix);
+    if (pt_and_its_dist_to_others.size() > 1)
+      {
+        double spread = SpreadOfCluster(pt_and_its_dist_to_others);
+        tot_spread += spread;
+        non_outliers += 1;
+      }
+    }
+  assert (non_outliers != 0);
+  return tot_spread / (double) non_outliers;
+}
+
+
+double
+SpreadOfCluster(map < int, double > &pt_and_its_dist_to_others)
+{
+  assert(pt_and_its_dist_to_others.size() > 1);
+
+  map < int, double > :: iterator itp;
+  double sum = 0.0;
+  
+  for (itp = pt_and_its_dist_to_others.begin();
+       itp != pt_and_its_dist_to_others.end();
+       ++itp)
+    {
+      double dist = itp->second;
+      sum += dist;
+    }
+
+  int sz = pt_and_its_dist_to_others.size();
+  int counts = sz * (sz - 1);
+  double spread = sum / (double) counts;
+  return spread;
+}
+
 
 vector < Medoid >
 clusterCmsByAveLinkage(vector < LigRecordSingleStep > &steps,
