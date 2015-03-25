@@ -5,7 +5,7 @@
 
 complex=1a07C1
 
-bin=../src/dock
+bin=../src/trace
 input_dir=.
 parameters_dir=${input_dir}/parameters
 complex_dir=${input_dir}/${complex}

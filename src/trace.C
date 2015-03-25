@@ -18,7 +18,7 @@ using namespace std;
 int
 main (int argc, char **argv)
 {
-  Banner ();
+  TraceBanner ();
 
   srand (time (0));
 
@@ -86,64 +86,34 @@ main (int argc, char **argv)
   SetReplica (replica, lig, complexsize);
   SetMcLog (mclog);
 
-  // debug
-  //PrintDataSize (lig, prt, psp, kde, mcs, enepara);
-  //PrintLigand (lig);
-  //PrintProtein (prt);
+  // run
+  vector < vector < float > > trace_matrix = read2D(&inputfiles->trace_file);
+  for (vector < vector < float > > :: iterator it = trace_matrix.begin();
+       it != trace_matrix.end();
+       it++)
+    {
+    vector < float > conf = *it;
+    float my_conf[8];
+    for (int i = 0; i < 8; i++)
+      my_conf[i] = conf.at(i);
 
+    int lig_conf = my_conf[1];
+    float *mv_vec = &my_conf[2];
+    Ligand *my_lig = &lig[lig_conf];
 
-  vector < vector < LigRecordSingleStep > > multi_reps_records;
-  // run simulation on optimized data structure
-  printf ("Start docking\n");
-  Run (lig, prt, psp, kde, mcs, enepara, temp, replica, mcpara, mclog,
-       multi_reps_records, complexsize);
-
-  putchar ('\n');
-  printf ("================================================================================\n");
-  printf ("initial energy state\n");
-  printf ("================================================================================\n");
-  printf ("rep step vdw ele pmf psp hdb hpc kde lhm dst total\n");
-  printf ("0 0");
-  LigRecordSingleStep step = multi_reps_records[0][0];
-  for (int i = 0; i < MAXWEI; i++)
-    printf(" %.3f", step.energy.e[i]);
-  putchar ('\n');
-
-  int total_results = multi_reps_records.size();
-  SingleRepResult * results = new SingleRepResult[total_results];
-
-  /* print traces */
-  // if (!(strlen(mcpara->csv_path) == 0)) {
-  //   printHeader(mcpara);
-  //   vector < vector < LigRecordSingleStep > > :: iterator itr;
-  //   for (itr = multi_reps_records.begin(); itr != multi_reps_records.end(); itr++)
-  //     printStates((*itr), mcpara);
-  // }
-
-  
-  SimilarityCorrelation(multi_reps_records, lig, prt, enepara);
-  
-  processOneReplica(multi_reps_records[0], &results[0]);
-
-  
-  /* clustering */
-  
-  // string clustering_method = "k";
-  // string clustering_method = "a";
-  string clustering_method = "c";
-  vector < Medoid > medoids;
-  medoids = clusterOneRepResults(multi_reps_records[0], clustering_method,
-                                 lig, prt, enepara);
-  if (!(strlen(mcpara->csv_path) == 0)) {
-    printStates(medoids, mcpara);
+    PlaceLigand(my_lig, mv_vec);
+    list < string > new_sdf = replaceLigandCoords(&inputfiles->lig_file, my_lig);
+    
+    string ofn = inputfiles->lig_file.conf_path;
+    ofstream of;
+    of.open(ofn.c_str());
+    for (list < string >::iterator it = new_sdf.begin(); it != new_sdf.end(); it++)
+      of << *it << endl;
+    of.close();
+    cout << "write the new ligand conformation to " << ofn << endl;
   }
 
-  delete[]results;
-
-  PrintSummary (inputfiles, mcpara, temp, mclog, &complexsize);
-
   // clean up
-
   delete[]mcpara;
   delete[]mclog;
   delete[]inputfiles;
