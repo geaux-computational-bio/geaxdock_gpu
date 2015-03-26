@@ -88,9 +88,10 @@ main (int argc, char **argv)
 
   // run
   vector < vector < float > > trace_matrix = read2D(&inputfiles->trace_file);
+  int config_idx = 0;
   for (vector < vector < float > > :: iterator it = trace_matrix.begin();
        it != trace_matrix.end();
-       it++)
+       it++, config_idx++)
     {
     vector < float > conf = *it;
     float my_conf[8];
@@ -104,7 +105,11 @@ main (int argc, char **argv)
     PlaceLigand(my_lig, mv_vec);
     list < string > new_sdf = replaceLigandCoords(&inputfiles->lig_file, my_lig);
     
-    string ofn = inputfiles->lig_file.conf_path;
+    string prefix = inputfiles->lig_file.conf_path;
+    char c[10];
+    sprintf(c, "%d", config_idx);
+    string ofn = prefix + "_" + string(c);  // to_string does not work
+                                            // with this compiler
     ofstream of;
     of.open(ofn.c_str());
     for (list < string >::iterator it = new_sdf.begin(); it != new_sdf.end(); it++)
