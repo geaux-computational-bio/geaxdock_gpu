@@ -359,12 +359,19 @@ CalculateContactModeScore (int * ref1, int * ref2, EnePara * enepara, Ligand * m
     }
   }
 
-  const float dividend = sqrtf ((float)(tp + fp) * (tp + fn) * (tn + fp) * (tn + fn));
+  double d_tp = (double) tp;
+  double d_fn = (double) fn ;
+  double d_fp = (double) fp ;
+  double d_tn = (double) tn ; 
 
-  if (dividend != 0.)
-    return (float)(tp * tn - fp * fn) / dividend;
-  else
-    return CMCC_INVALID_VAL;
+  double cms = CMCC_INVALID_VAL;
+  double tmp = (d_tp + d_fp) * (d_tp + d_fn) *
+    (d_tn + d_fp) * (d_tn + d_fn);
+
+  if (tmp != 0.)
+    cms = (d_tp * d_tn - d_fp * d_fn) / sqrtf(tmp);
+
+  return cms;
 }
 
 void
