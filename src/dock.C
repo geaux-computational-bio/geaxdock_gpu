@@ -121,9 +121,9 @@ main (int argc, char **argv)
   // }
 
   
-  SimilarityCorrelation(multi_reps_records, lig, prt, enepara);
+  // SimilarityCorrelation(multi_reps_records, lig, prt, enepara);
   
-  processOneReplica(multi_reps_records[0], &results[0]);
+  // processOneReplica(multi_reps_records[0], &results[0]);
 
   
   /* clustering */

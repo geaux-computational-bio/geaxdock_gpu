@@ -22,13 +22,11 @@
 #include "util.h"
 #include "load.h"
 #include "stats.h"
+#include "kgs.h"
+
 
 extern "C" {
 #include "kmeans.h"
-}
-
-extern "C" {
-#include "./modules/cluster-1.52a/src/cluster.h" /* The C Clustering Library */
 }
 
 #include <yeah/quicksort.h>
@@ -1793,19 +1791,26 @@ clusterCmsByAveLinkage(vector < LigRecordSingleStep > &steps,
   if (!tree)
     printf ("treecluster routine failed due to insufficient memory\n");
 
-  // find the medoid in each cluster
-  const int nnodes = nrows -1;
-  for (int i = 0; i < nnodes; i++)
-    printf("%3d:%9d%9d      %g\n",
-           -i-1, tree[i].left, tree[i].right, tree[i].distance);
-  printf("\n");
-  printf("=============== Cutting a hierarchical clustering tree ==========\n");
+  printf("=============== Cutting a hierarchical clustering tree using KGS method ==========\n");
   int* clusterid = (int*) malloc(nrows*sizeof(int));
-  cuttree (nrows, tree, 10, clusterid);
-  for (int i = 0; i < nrows; i++)
-    printf("conformation %2d: cluster %2d\n", i, clusterid[i]);
+  bool show_penalties = 1;
+  int lowest_penalty_cluster_num = KGS(tree, clusterid, dis_mat, nrows, show_penalties);
+  cuttree (nrows, tree, lowest_penalty_cluster_num, clusterid);
 
+  // to find the medoids;
   vector < Medoid > medoids;
+  map < int , vector < int > > clusters;
+  map < int , vector < int > > :: iterator itc;
+  clusters = GetClusters(clusterid, lowest_penalty_cluster_num, nrows);
+  for (itc = clusters.begin(); itc != clusters.end(); itc ++) {
+    map < int, double > pt_and_its_dist_to_others = Distances2Others(itc->second, dis_mat);
+    int medoid_idx = FindMedoid(pt_and_its_dist_to_others);
+    LigRecordSingleStep step = steps[medoid_idx];
+    Medoid medoid;
+    medoid.step = step;
+    medoid.cluster_sz = itc->second.size();
+    medoids.push_back(medoid);
+  }
 
   // free the memory
   for (int i = 0; i < tot; i++) free(dis_mat[i]);
@@ -1979,7 +1984,6 @@ clusterOneRepResults(vector < LigRecordSingleStep > &steps, string clustering_me
     }
   else if ( clustering_method.compare("c") == 0)
     {
-      cout << "using average_linkage on cms distance matrix" << endl;
       return clusterCmsByAveLinkage(steps, lig, prt, enepara);
     }
   else

@@ -695,3 +695,89 @@ TEST(Linkage, KGS)
   free(clusterid);
   FreeMatrix(copied);
 }
+
+TEST(Linkage, call_KGS)
+{ int i, j;
+  const int nrows = 13;
+  const int ncols = 4;
+  double** data = (double**)malloc(nrows*sizeof(double*) );
+  int** mask = (int**)malloc(nrows*sizeof(int*));
+  double** distmatrix;
+
+  for (i = 0; i < nrows; i++)
+    { data[i] = (double*)malloc(ncols*sizeof(double));
+      mask[i] = (int*)malloc(ncols*sizeof(int));
+  }
+
+  /* Test data, roughly distributed in 0-5, 6-8, 9-12 */
+  data[ 0][ 0]=0.1; data[ 0][ 1]=0.0; data[ 0][ 2]=9.6; data[ 0][ 3] = 5.6;
+  data[ 1][ 0]=1.4; data[ 1][ 1]=1.3; data[ 1][ 2]=0.0; data[ 1][ 3] = 3.8;
+  data[ 2][ 0]=1.2; data[ 2][ 1]=2.5; data[ 2][ 2]=0.0; data[ 2][ 3] = 4.8;
+  data[ 3][ 0]=2.3; data[ 3][ 1]=1.5; data[ 3][ 2]=9.2; data[ 3][ 3] = 4.3;
+  data[ 4][ 0]=1.7; data[ 4][ 1]=0.7; data[ 4][ 2]=9.6; data[ 4][ 3] = 3.4;
+  data[ 5][ 0]=0.0; data[ 5][ 1]=3.9; data[ 5][ 2]=9.8; data[ 5][ 3] = 5.1;
+  data[ 6][ 0]=6.7; data[ 6][ 1]=3.9; data[ 6][ 2]=5.5; data[ 6][ 3] = 4.8;
+  data[ 7][ 0]=0.0; data[ 7][ 1]=6.3; data[ 7][ 2]=5.7; data[ 7][ 3] = 4.3;
+  data[ 8][ 0]=5.7; data[ 8][ 1]=6.9; data[ 8][ 2]=5.6; data[ 8][ 3] = 4.3;
+  data[ 9][ 0]=0.0; data[ 9][ 1]=2.2; data[ 9][ 2]=5.4; data[ 9][ 3] = 0.0;
+  data[10][ 0]=3.8; data[10][ 1]=3.5; data[10][ 2]=5.5; data[10][ 3] = 9.6;
+  data[11][ 0]=0.0; data[11][ 1]=2.3; data[11][ 2]=3.6; data[11][ 3] = 8.5;
+  data[12][ 0]=4.1; data[12][ 1]=4.5; data[12][ 2]=5.8; data[12][ 3] = 7.6;
+
+  /* Some data are actually missing */
+  mask[ 0][ 0]=1; mask[ 0][ 1]=1; mask[ 0][ 2]=1; mask[ 0][ 3] = 1;
+  mask[ 1][ 0]=1; mask[ 1][ 1]=1; mask[ 1][ 2]=0; mask[ 1][ 3] = 1;
+  mask[ 2][ 0]=1; mask[ 2][ 1]=1; mask[ 2][ 2]=0; mask[ 2][ 3] = 1;
+  mask[ 3][ 0]=1; mask[ 3][ 1]=1; mask[ 3][ 2]=1; mask[ 3][ 3] = 1;
+  mask[ 4][ 0]=1; mask[ 4][ 1]=1; mask[ 4][ 2]=1; mask[ 4][ 3] = 1;
+  mask[ 5][ 0]=0; mask[ 5][ 1]=1; mask[ 5][ 2]=1; mask[ 5][ 3] = 1;
+  mask[ 6][ 0]=1; mask[ 6][ 1]=1; mask[ 6][ 2]=1; mask[ 6][ 3] = 1;
+  mask[ 7][ 0]=0; mask[ 7][ 1]=1; mask[ 7][ 2]=1; mask[ 7][ 3] = 1;
+  mask[ 8][ 0]=1; mask[ 8][ 1]=1; mask[ 8][ 2]=1; mask[ 8][ 3] = 1;
+  mask[ 9][ 0]=1; mask[ 9][ 1]=1; mask[ 9][ 2]=1; mask[ 9][ 3] = 0;
+  mask[10][ 0]=1; mask[10][ 1]=1; mask[10][ 2]=1; mask[10][ 3] = 1;
+  mask[11][ 0]=0; mask[11][ 1]=1; mask[11][ 2]=1; mask[11][ 3] = 1;
+  mask[12][ 0]=1; mask[12][ 1]=1; mask[12][ 2]=1; mask[12][ 3] = 1;
+
+  show_data(nrows, ncols, data, mask);
+  example_mean_median(nrows, ncols, data, mask);
+  distmatrix = example_distance_gene(nrows, ncols, data, mask);
+
+  double** copied = AllocateMatrix(nrows, nrows);
+
+  for (i = 1; i < nrows; ++i) {
+    for (j = 0; j < i; ++j) {
+      copied [i][j] = distmatrix[i][j];
+    }
+  }
+
+  for (i = 0; i < nrows; ++i) {
+    for (j = i; j < nrows; ++j) {
+      copied[i][j] = copied[j][i];
+    }
+  }
+  
+  int* clusterid;
+  Node* tree;
+
+  // cluster
+  tree = treecluster(nrows, ncols, 0, 0, 0, 0, 'e', 's', distmatrix);
+  for (i = 1; i < nrows; i++) free(distmatrix[i]);
+  free(distmatrix);
+
+  // cut tree
+  clusterid = (int*)malloc(nrows*sizeof(int));
+  int ncluster = 3;
+  cuttree (nrows, tree, ncluster, clusterid);
+
+  for(i=0; i<nrows; i++)
+    printf("Gene %2d: cluster %2d\n", i, clusterid[i]);
+  printf("\n");
+
+  KGS(tree, clusterid, copied, nrows);
+  
+
+  free(tree);
+  free(clusterid);
+  FreeMatrix(copied);
+}

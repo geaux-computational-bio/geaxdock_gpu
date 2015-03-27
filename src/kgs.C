@@ -1,4 +1,7 @@
+#include <iostream>
 #include "kgs.h"
+
+using namespace std;
 
 map < int, vector < int > >
 GetClusters(int* clusterid, int ncluster, int nobj)
@@ -36,7 +39,7 @@ Distances2Others(vector < int > & members, double** distmatrix)
 }
 
 int
-FindMedoid(map < int, double > pt_and_its_dist_to_others)
+FindMedoid(map < int, double > & pt_and_its_dist_to_others)
 {
 
   map < int, double > :: iterator itp;
@@ -102,7 +105,7 @@ AveSpread(map < int, vector < int > > & clusters, double** dist_matrix)
 }
 
 int
-KGS(Node* tree, int* clusterid, double** dist_matrix, int nobj)
+KGS(Node* tree, int* clusterid, double** dist_matrix, int nobj, bool show_penalties)
 {
   int ncluster;
   int max_clusters = nobj - 1;
@@ -133,7 +136,8 @@ KGS(Node* tree, int* clusterid, double** dist_matrix, int nobj)
       double normed_spread = multiplier * (my_spread - min_ave_spread) + 1;
       double penalty = normed_spread + ncluster;
       penalties.push_back(penalty);
-      // cout << "# clusters " << ncluster << " penalty " << penalty << endl;
+      if (show_penalties)
+        cout << "# clusters " << ncluster << " penalty " << penalty << endl;
     }
 
   // printf("--------------------------------------------------------------------------------\n");

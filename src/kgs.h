@@ -23,13 +23,13 @@ map < int, double > Distances2Others(vector < int > &members, double** distmatri
 
 // find the idx of the medoid in a cluster
 // defined as the point with the minimum average distance to all others
-int FindMedoid(map < int, double > pt_and_its_dist_to_others);
+int FindMedoid(map < int, double > & pt_and_its_dist_to_others);
 
 double SpreadOfCluster(map < int, double > &pt_and_its_dist_to_others);
 
 double AveSpread(map < int, vector < int > > & clusters, double** dist_matrix);
 
 // find the number of clusters that gives the smallest KGS penalty
-int KGS(Node* tree, int* clusterid, double** dist_matrix, int nobj);
+int KGS(Node* tree, int* clusterid, double** dist_matrix, int nobj, bool show_penalties);
 
 #endif // UTIL_H
