@@ -109,7 +109,11 @@ int
 KGS(Node* tree, int* clusterid, double** dist_matrix, int nobj, bool show_penalties)
 {
   int ncluster;
-  int max_clusters = nobj - 1;
+  int max_clusters = MAXIMUM_CLUSTERS;
+  if (nobj - 1 < MAXIMUM_CLUSTERS) {
+    max_clusters = nobj - 1;
+  }
+
   vector < double > ave_spreads;
   map < int , vector < int > > clusters;
 

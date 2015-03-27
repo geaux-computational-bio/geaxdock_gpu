@@ -114,6 +114,7 @@
 #define MAX_DIST 1000.
 
 #define MINIMUM_CLUSTERS 4
+#define MAXIMUM_CLUSTERS 20
 
 
 
