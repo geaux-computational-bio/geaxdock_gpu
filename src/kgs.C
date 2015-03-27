@@ -1,5 +1,6 @@
 #include <iostream>
 #include "kgs.h"
+#include "size.h"
 
 using namespace std;
 
@@ -145,7 +146,7 @@ KGS(Node* tree, int* clusterid, double** dist_matrix, int nobj, bool show_penalt
   int lowest_penalty_cluster_num = nobj - 1;
   double lowest_penalty = (*its);
   for (its = penalties.begin(), ncluster = max_clusters;
-       its != penalties.end();
+       its != penalties.end() && ncluster > MINIMUM_CLUSTERS;
        ++its, --ncluster)
     {
       if (*its < lowest_penalty)
