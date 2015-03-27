@@ -1055,8 +1055,8 @@ int FilterRow(int Row, int bStd, int bPercent, int bAbsVal, int bMaxMin,
       Sum += value;
       Sum2 += value*value;
       Count++;
-      Min = min(value,Min);
-      Max = max(value,Max);
+      Min = cluster_min(value,Min);
+      Max = cluster_max(value,Max);
       if (fabs(value) >= absVal) CountAbs++;
     }
   }
@@ -1164,7 +1164,7 @@ int HierarchicalCluster(FILE* file, char metric, int transpose, char method)
       order1 = nodeorder[index1];
       counts1 = nodecounts[index1];
       ID1 = nodeID[index1];
-      tree[i].distance = max(tree[i].distance, tree[index1].distance);
+      tree[i].distance = cluster_max(tree[i].distance, tree[index1].distance);
     }
     else
     { order1 = order[min1];
@@ -1176,7 +1176,7 @@ int HierarchicalCluster(FILE* file, char metric, int transpose, char method)
       order2 = nodeorder[index2];
       counts2 = nodecounts[index2];
       ID2 = nodeID[index2];
-      tree[i].distance = max(tree[i].distance, tree[index2].distance);
+      tree[i].distance = cluster_max(tree[i].distance, tree[index2].distance);
     }
     else
     { order2 = order[min2];
@@ -1272,7 +1272,7 @@ const char* PerformGenePCA(FILE* coordinatefile, FILE* pcfile)
 {
   int i = 0;
   int j = 0;
-  const int nmin = min(_rows,_columns);
+  const int nmin = cluster_min(_rows,_columns);
   double** u = malloc(_rows*sizeof(double*));
   double** v = malloc(nmin*sizeof(double*));
   double* w = malloc(nmin*sizeof(double));
@@ -1373,7 +1373,7 @@ const char* PerformArrayPCA(FILE* coordinatefile, FILE* pcfile)
 {
   int i = 0;
   int j = 0;
-  const int nmin = min(_rows,_columns);
+  const int nmin = cluster_min(_rows,_columns);
   double** u = malloc(_columns*sizeof(double*));
   double** v = malloc(nmin*sizeof(double*));
   double* w = malloc(nmin*sizeof(double));
