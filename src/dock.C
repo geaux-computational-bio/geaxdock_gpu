@@ -123,7 +123,6 @@ main (int argc, char **argv)
   
   // SimilarityCorrelation(multi_reps_records, lig, prt, enepara);
   
-  // processOneReplica(multi_reps_records[0], &results[0]);
 
   
   /* clustering */
@@ -132,11 +131,18 @@ main (int argc, char **argv)
   // string clustering_method = "a";
   string clustering_method = "c";
   vector < Medoid > medoids;
-  medoids = clusterOneRepResults(multi_reps_records[0], clustering_method,
-                                 lig, prt, enepara);
-  if (!(strlen(mcpara->csv_path) == 0)) {
-    printStates(medoids, mcpara);
+
+  vector < vector < LigRecordSingleStep > > ::iterator iter;
+  for (iter = multi_reps_records.begin(); iter != multi_reps_records.end(); iter++) {
+    medoids = clusterOneRepResults(*iter, clustering_method,
+                                   lig, prt, enepara);
+    if (!(strlen(mcpara->csv_path) == 0)) {
+      printStates(medoids, mcpara);
+    }
   }
+
+
+  processOneReplica(multi_reps_records[0], &results[0]);
 
   delete[]results;
 

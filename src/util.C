@@ -1791,7 +1791,10 @@ clusterCmsByAveLinkage(vector < LigRecordSingleStep > &steps,
   if (!tree)
     printf ("treecluster routine failed due to insufficient memory\n");
 
+  Replica* rep = &steps[0].replica;
+  int idx_rep = rep->idx_rep;
   printf("=============== Cutting a hierarchical clustering tree using KGS method ==========\n");
+  printf("Replica %d\n", idx_rep);
   int* clusterid = (int*) malloc(nrows*sizeof(int));
   bool show_penalties = 1;
   int lowest_penalty_cluster_num = KGS(tree, clusterid, dis_mat, nrows, show_penalties);

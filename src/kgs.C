@@ -141,9 +141,22 @@ KGS(Node* tree, int* clusterid, double** dist_matrix, int nobj, bool show_penalt
       double normed_spread = multiplier * (my_spread - min_ave_spread) + 1;
       double penalty = normed_spread + ncluster;
       penalties.push_back(penalty);
-      if (show_penalties)
-        cout << "# clusters " << ncluster << " penalty " << penalty << endl;
     }
+
+  if (show_penalties) {
+    for (its = penalties.begin(), ncluster = max_clusters;
+         its != penalties.end();
+         ++its, --ncluster) {
+      cout << ncluster << " ";
+    }
+    cout << endl;
+    for (its = penalties.begin(), ncluster = max_clusters;
+         its != penalties.end();
+         ++its, --ncluster) {
+      cout << *its << " ";
+    }
+    cout << endl;
+  }
 
   // printf("--------------------------------------------------------------------------------\n");
   its = penalties.begin();
