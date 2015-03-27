@@ -79,7 +79,7 @@ LIBPATH := -L/usr/local/packages/cuda/5.0/lib64 -L/usr/local/packages/hdf5/1.8.1
 LINKFLAGS = -lhdf5
 
 HOSTFLAGS += -Wall $(HEADPATH)
-OBJ_CPU := load.o data.o util.o hdf5io.o seq_kmeans.o file_io.o stats.o cluster.o
+OBJ_CPU := load.o data.o util.o hdf5io.o seq_kmeans.o file_io.o stats.o cluster.o kgs.o
 
 
 load_test.o : $(USER_DIR)/load_test.C $(GTEST_HEADERS)

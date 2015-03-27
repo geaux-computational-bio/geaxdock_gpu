@@ -10,15 +10,12 @@
 #include "dock.h"
 #include "load.h"
 #include "util.h"
+#include "kgs.h"
 #include "hdf5io.h"
 #include "hdf5io.h"
 #include "stats.h"
 #include "gtest/gtest.h"
 #include "gtest/internal/gtest-internal.h"
-
-extern "C" {
-#include "./modules/cluster-1.52a/src/cluster.h" /* The C Clustering Library */
-}
 
 using namespace std;
 

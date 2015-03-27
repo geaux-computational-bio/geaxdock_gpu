@@ -117,19 +117,6 @@ double** AllocateMatrix(int nrows, int ncolumns);
 
 void FreeMatrix(double** matrix);
 
-// map between each cluster to its members
-map < int, vector < int > > GetClusters(int* clusterid, int ncluster, int nobj);
-
-// dictionary of a point and its total distance to others
-map < int, double > Distances2Others(vector < int > &members, double** distmatrix);
-
-// find the idx of the medoid in a cluster
-// defined as the point with the minimum average distance to all others
-int FindMedoid(map < int, double > pt_and_its_dist_to_others);
-
-double SpreadOfCluster(map < int, double > &pt_and_its_dist_to_others);
-
-double AveSpread(map < int, vector < int > > & clusters, double** dist_matrix);
 
 #endif // UTIL_H
 
