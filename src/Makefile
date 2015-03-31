@@ -17,7 +17,7 @@ NGPU := 1
 
 
 EXE := dock
-OBJ_CPU := dock.o load.o data.o rmsd.o util.o hdf5io.o stats.o seq_kmeans.o file_io.o cluster.o kgs.o
+OBJ_CPU := dock.o load.o data.o rmsd.o util.o hdf5io.o stats.o seq_kmeans.o file_io.o cluster.o kgs.o post_mc.o
 OBJ_GPU := run.o
 SH := sh
 CPP_HOST := g++
@@ -35,7 +35,7 @@ GPU := GPU_NA
 
 
 # HOST: mike, shelob, qb, smic las07
-HOST := qb
+HOST := shelob
 
 ifeq ($(HOST), mike)
 # edit include/yeah/cudautil.h, locate "CUDA_LDG_P", enable the second branch
