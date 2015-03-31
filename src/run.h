@@ -1,6 +1,7 @@
 #ifndef  RUN_H
 #define  RUN_H
 
+#include <map>
 #include <vector>
 #include "dock.h"
 
@@ -17,7 +18,7 @@ Run (const Ligand *,
      const Replica *,
      const McPara *,
      McLog *,
-     vector < vector < LigRecordSingleStep > > &,
+     map < int, vector < LigRecordSingleStep > > & multi_reps_records,
      const ComplexSize);
 
 

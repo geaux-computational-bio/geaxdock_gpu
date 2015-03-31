@@ -350,6 +350,7 @@ struct McLog
   int ac_temp_exchg;
   int acs_temp_exchg[MAXREP]; 
   int ac_mc;
+  float ar;
   
   // int ac_lig_exchg;
   // int acs_lig_exchg[MAXREP];

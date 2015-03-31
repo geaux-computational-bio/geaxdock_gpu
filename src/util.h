@@ -103,7 +103,7 @@ void printHeader(const McPara * mcpara);
 
 vector < Medoid >
 clusterOneRepResults(vector < LigRecordSingleStep > &steps, string clustering_method,
-                     Ligand* lig, Protein* prt, EnePara* enepara);
+                     Ligand* lig, const Protein* const prt, const EnePara* const enepara);
 
 vector < float > SimilarityBetweenConfs(vector < LigRecordSingleStep > &steps, char method);
 
@@ -117,6 +117,8 @@ double** AllocateMatrix(int nrows, int ncolumns);
 
 void FreeMatrix(double** matrix);
 
+int
+CountValidRecords(const map < int, vector < LigRecordSingleStep > > &multi_reps_records);
 
 #endif // UTIL_H
 

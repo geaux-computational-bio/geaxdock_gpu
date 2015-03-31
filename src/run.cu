@@ -40,7 +40,7 @@ Run (const Ligand * lig,
      const Replica * replica,
      const McPara * mcpara,
      McLog * mclog,
-     vector < vector < LigRecordSingleStep > > &multi_reps_records,
+     map < int, vector < LigRecordSingleStep > > &multi_reps_records,
      const ComplexSize complexsize)
 {
   //Parameter para;
@@ -257,31 +257,6 @@ Run (const Ligand * lig,
 #elif NGPU == 1
 #include "kernel_cuda_lancher_siglegpu.cu"
 #endif
-
-
-  mclog->ac_mc = 0;
-  vector < vector < LigRecordSingleStep > > :: iterator it_rec;
-  for (it_rec = multi_reps_records.begin(); it_rec != multi_reps_records.end(); it_rec++)
-    mclog->ac_mc += (*it_rec).size();
-
-  // calcuate acceptance counters
-  for (int i = 0; i < NGPU; ++i) {
-    cudaSetDevice (i);
-    CUDAMEMCPY (acs_temp_exchg, acs_temp_exchg_d[i], acs_temp_exchg_sz, cudaMemcpyDeviceToHost);
-    for (int j = 0; j < n_rep; ++j) {
-      mclog->acs_temp_exchg[j] += acs_temp_exchg[j];
-    }
-  }
-  for (int j = 0; j < n_rep; ++j) {
-    mclog->ac_temp_exchg += mclog->acs_temp_exchg[j];
-  }
-
-
-
-
-
-
-
 
   // free memories
   for (int i = 0; i < NGPU; ++i) {

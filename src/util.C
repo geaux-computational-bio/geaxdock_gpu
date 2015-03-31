@@ -335,7 +335,8 @@ OptimizeLigand (const Ligand0 * lig0, Ligand * lig, const ComplexSize complexsiz
 
 
 float
-CalculateContactModeScore (int * ref1, int * ref2, EnePara * enepara, Ligand * mylig, Protein * myprt)
+CalculateContactModeScore (int * ref1, int * ref2, const EnePara * const enepara, 
+                           Ligand * mylig, const Protein * const myprt)
 {
   int tp = 0;
   int fn = 0;
@@ -373,7 +374,9 @@ CalculateContactModeScore (int * ref1, int * ref2, EnePara * enepara, Ligand * m
 }
 
 void
-InitContactMatrix (int * ref_matrix, Ligand * mylig, Protein * myprt, EnePara * enepara)
+InitContactMatrix (int * ref_matrix, Ligand * mylig, 
+                   const Protein * const myprt, 
+                   const EnePara * const enepara)
 {
   int lna = mylig->lna;
   int pnp = myprt->pnp;
@@ -398,7 +401,7 @@ InitContactMatrix (int * ref_matrix, Ligand * mylig, Protein * myprt, EnePara * 
 
 void
 SetContactMatrix(LigRecordSingleStep * step, int * ref_matrix,
-                 Ligand * lig, Protein * prt,  EnePara * enepara)
+                 Ligand * lig, const Protein * const prt,  const EnePara * const enepara)
 {
 
     int idx_lig = step->replica.idx_lig;
@@ -406,7 +409,7 @@ SetContactMatrix(LigRecordSingleStep * step, int * ref_matrix,
     float* move_matrix = step->movematrix;
     
     Ligand* mylig = &lig[idx_lig];
-    Protein* myprt = &prt[idx_prt];
+    const Protein* const myprt = &prt[idx_prt];
 
     PlaceLigand(mylig, move_matrix);
     InitContactMatrix(ref_matrix, mylig, myprt, enepara);
@@ -1461,12 +1464,8 @@ PrintSummary (const InputFiles * inputfiles, const McPara * mcpara, const Temp *
   printf ("size_prt\t\t\t%d\n", complexsize->pnp);
   printf ("size_pnk\t\t\t%d\n", complexsize->pnk);
   printf ("size_mcs\t\t\t%d\n", complexsize->pos);
-
-
-  printf ("AR of MC \t\t\t%d / %d \t%f\n",
-	  mclog->ac_mc,
-	  mcpara->steps_total * complexsize->n_rep,
-	  (float) mclog->ac_mc / (mcpara->steps_total * complexsize->n_rep));
+  
+  printf ("AR of MC\t\t\t%.3f\n", mclog->ar);
 
 #if 0
   for (int t = 0; t < complexsize->n_tmp; ++t) {
@@ -1731,8 +1730,9 @@ medoidEnergyLessThan(const Medoid &c1, const Medoid &c2)
 }
 
 void
-GenCmsSimiMat(vector < LigRecordSingleStep > & steps, Ligand* lig, Protein* prt,
-              EnePara* enepara, double** dis_mat)
+GenCmsSimiMat(vector < LigRecordSingleStep > & steps, Ligand* lig, 
+              const Protein* const prt,
+              const EnePara* const enepara, double** dis_mat)
 {
   int tot = steps.size();
   int lna = lig->lna;
@@ -1768,7 +1768,7 @@ GenCmsSimiMat(vector < LigRecordSingleStep > & steps, Ligand* lig, Protein* prt,
 
 vector < Medoid >
 clusterCmsByAveLinkage(vector < LigRecordSingleStep > &steps,
-                       Ligand* lig, Protein* prt, EnePara* enepara)
+                       Ligand* lig, const Protein* const prt, const EnePara* const enepara)
 {
   // create distance matrix using cms value between two conformations
   // dimension of the matrix is n x n, where n is the number of steps
@@ -1796,7 +1796,7 @@ clusterCmsByAveLinkage(vector < LigRecordSingleStep > &steps,
   printf("=============== Cutting a hierarchical clustering tree using KGS method ==========\n");
   printf("Replica %d\n", idx_rep);
   int* clusterid = (int*) malloc(nrows*sizeof(int));
-  bool show_penalties = 1;
+  bool show_penalties = 0;
   int lowest_penalty_cluster_num = KGS(tree, clusterid, dis_mat, nrows, show_penalties);
   cuttree (nrows, tree, lowest_penalty_cluster_num, clusterid);
 
@@ -1973,7 +1973,7 @@ clusterByKmeans(vector < LigRecordSingleStep > &steps)
 
 vector < Medoid >
 clusterOneRepResults(vector < LigRecordSingleStep > &steps, string clustering_method,
-                     Ligand* lig, Protein* prt, EnePara* enepara)
+                     Ligand* lig, const Protein* const prt, const EnePara* const enepara)
 {
   if ( clustering_method.compare("k") == 0 )
     {
@@ -2100,4 +2100,16 @@ SimilarityCorrelation(vector < vector < LigRecordSingleStep > > multi_reps_recor
   // for (it_simi = cms_vals.begin(); it_simi != cms_vals.end(); it_simi++) {
   //   cout << (*it_simi) << endl;
   // }
+}
+
+int
+CountValidRecords(const map < int, vector < LigRecordSingleStep > > &multi_reps_records)
+{
+  int cnt = 0;
+  map < int, vector < LigRecordSingleStep > > :: const_iterator it;
+  for (it = multi_reps_records.begin();
+       it != multi_reps_records.end(); ++it)
+      cnt += it->second.size();
+
+  return cnt;
 }

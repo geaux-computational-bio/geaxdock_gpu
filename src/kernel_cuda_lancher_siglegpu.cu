@@ -3,15 +3,19 @@
 
 
 
-  int i = 0;
-  cudaSetDevice (i);
-  CUDAKERNELSYNC (ResetCounter_d, dim_grid, dim_block, rep_begin[i], rep_end[i]);
-  CUDAKERNELSYNC (MonteCarlo_Init_d, dim_grid, dim_block, rep_begin[i], rep_end[i]);
+int i = 0;
+cudaSetDevice (i);
+CUDAKERNELSYNC (ResetCounter_d, dim_grid, dim_block, rep_begin[i], rep_end[i]);
+CUDAKERNELSYNC (MonteCarlo_Init_d, dim_grid, dim_block, rep_begin[i], rep_end[i]);
 
-  for (int s1 = 0; s1 < mcpara->steps_total; s1 += mcpara->steps_per_dump) {
+double t0 = HostTimeNow ();
+fflush (stdout);
 
-    double t0 = HostTimeNow ();
-    fflush (stdout);
+int s1 = 0;
+int est_tot_rec = mcpara->steps_per_dump * complexsize.n_rep;
+while((CountValidRecords(multi_reps_records) < est_tot_rec))
+  {
+
 
     // the reset has been done before MC_init, skip it
     if (s1 != 0)
@@ -34,14 +38,13 @@
 
     // gather ligand record
     for (int rep = rep_begin[i]; rep <= rep_end[i]; ++rep) {
-      vector < LigRecordSingleStep > single_rep_records;
       for (int s = 0; s < ligrecord[rep].next_ptr; ++s) {
         LigRecordSingleStep my_step = ligrecord[rep].step[s];
-        single_rep_records.push_back (my_step);
+        multi_reps_records[rep].push_back(my_step);
       }
-      multi_reps_records.push_back(single_rep_records);
     }
 
+    printf("valid points: %d\n", CountValidRecords(multi_reps_records));
 
 
 #if IS_OUTPUT == 1
@@ -53,6 +56,12 @@
 #endif
     
     // accumulate for wall time (compute time plus I/O time)
-    mclog->t1 += HostTimeNow () - t0;
+    s1 += mcpara->steps_per_dump;
   }
+
+mclog->t1 += HostTimeNow () - t0;
+
+int trials = complexsize.n_rep * s1;
+mclog->ar = (float) CountValidRecords(multi_reps_records) / (float) trials;
+
 
