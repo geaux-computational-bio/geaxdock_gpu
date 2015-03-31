@@ -36,7 +36,7 @@ void SetReplica (Replica *, Ligand *, const ComplexSize);
 void SetMcLog (McLog *);
 
 // move one ligand conf to a certain config based on the movematrix
-void PlaceLigand(Ligand*, float*);
+void PlaceLigand(Ligand*, const float* const);
 
 // replace ligand coordinates
 list < string > replaceLigandCoords(LigandFile *, Ligand *);
@@ -119,6 +119,10 @@ void FreeMatrix(double** matrix);
 
 int
 CountValidRecords(const map < int, vector < LigRecordSingleStep > > &multi_reps_records);
+
+vector < Medoid >
+clusterCmsByAveLinkage(const vector < LigRecordSingleStep > &steps, int cluster_num,
+                       Ligand* lig, const Protein* const prt, const EnePara* const enepara);
 
 #endif // UTIL_H
 

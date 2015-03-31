@@ -400,13 +400,13 @@ InitContactMatrix (int * ref_matrix, Ligand * mylig,
 
 
 void
-SetContactMatrix(LigRecordSingleStep * step, int * ref_matrix,
+SetContactMatrix(const LigRecordSingleStep * const step, int * ref_matrix,
                  Ligand * lig, const Protein * const prt,  const EnePara * const enepara)
 {
 
     int idx_lig = step->replica.idx_lig;
     int idx_prt = step->replica.idx_prt;
-    float* move_matrix = step->movematrix;
+    const float* const move_matrix = step->movematrix;
     
     Ligand* mylig = &lig[idx_lig];
     const Protein* const myprt = &prt[idx_prt];
@@ -524,7 +524,7 @@ InitLigCoord (Ligand * lig, const ComplexSize complexsize)
 
 
 void
-PlaceLigand (Ligand* mylig, float* movematrix_new)
+PlaceLigand (Ligand* mylig, const float* const movematrix_new)
 {
   float rot[3][3];
   
@@ -1730,7 +1730,7 @@ medoidEnergyLessThan(const Medoid &c1, const Medoid &c2)
 }
 
 void
-GenCmsSimiMat(vector < LigRecordSingleStep > & steps, Ligand* lig, 
+GenCmsSimiMat(const vector < LigRecordSingleStep > & steps, Ligand* lig, 
               const Protein* const prt,
               const EnePara* const enepara, double** dis_mat)
 {
@@ -1745,8 +1745,8 @@ GenCmsSimiMat(vector < LigRecordSingleStep > & steps, Ligand* lig,
   for (int i = 0; i < tot; i++)
     for (int j = i; j < tot; j++)
       {
-        LigRecordSingleStep* my = &(steps[i]);
-        LigRecordSingleStep* other = &(steps[j]);
+        const LigRecordSingleStep* const my = &(steps[i]);
+        const LigRecordSingleStep* const other = &(steps[j]);
         SetContactMatrix(my, my_ref, lig, prt, enepara);
         SetContactMatrix(other, other_ref, lig, prt, enepara);
 
@@ -1767,7 +1767,7 @@ GenCmsSimiMat(vector < LigRecordSingleStep > & steps, Ligand* lig,
 
 
 vector < Medoid >
-clusterCmsByAveLinkage(vector < LigRecordSingleStep > &steps,
+clusterCmsByAveLinkage(const vector < LigRecordSingleStep > &steps, int cluster_num,
                        Ligand* lig, const Protein* const prt, const EnePara* const enepara)
 {
   // create distance matrix using cms value between two conformations
@@ -1791,20 +1791,26 @@ clusterCmsByAveLinkage(vector < LigRecordSingleStep > &steps,
   if (!tree)
     printf ("treecluster routine failed due to insufficient memory\n");
 
-  Replica* rep = &steps[0].replica;
+  const Replica* const rep = &steps[0].replica;
   int idx_rep = rep->idx_rep;
   printf("=============== Cutting a hierarchical clustering tree using KGS method ==========\n");
   printf("Replica %d\n", idx_rep);
   int* clusterid = (int*) malloc(nrows*sizeof(int));
   bool show_penalties = 0;
-  int lowest_penalty_cluster_num = KGS(tree, clusterid, dis_mat, nrows, show_penalties);
-  cuttree (nrows, tree, lowest_penalty_cluster_num, clusterid);
+  
+  int my_cluster_num;
+  if (-1 == cluster_num )
+    my_cluster_num = KGS(tree, clusterid, dis_mat, nrows, show_penalties);
+  else
+    my_cluster_num = cluster_num;
+    
+  cuttree (nrows, tree, my_cluster_num, clusterid);
 
   // to find the medoids;
   vector < Medoid > medoids;
   map < int , vector < int > > clusters;
   map < int , vector < int > > :: iterator itc;
-  clusters = GetClusters(clusterid, lowest_penalty_cluster_num, nrows);
+  clusters = GetClusters(clusterid, my_cluster_num, nrows);
   for (itc = clusters.begin(); itc != clusters.end(); itc ++) {
     map < int, double > pt_and_its_dist_to_others = Distances2Others(itc->second, dis_mat);
     int medoid_idx = FindMedoid(pt_and_its_dist_to_others);
@@ -1987,7 +1993,7 @@ clusterOneRepResults(vector < LigRecordSingleStep > &steps, string clustering_me
     }
   else if ( clustering_method.compare("c") == 0)
     {
-      return clusterCmsByAveLinkage(steps, lig, prt, enepara);
+      return clusterCmsByAveLinkage(steps, -1, lig, prt, enepara);
     }
   else
     {
