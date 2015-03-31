@@ -124,6 +124,25 @@ vector < Medoid >
 clusterCmsByAveLinkage(const vector < LigRecordSingleStep > &steps, int cluster_num,
                        Ligand* lig, const Protein* const prt, const EnePara* const enepara);
 
+void
+GenCmsSimiMat(const vector < LigRecordSingleStep > & steps, Ligand* lig, 
+              const Protein* const prt,
+              const EnePara* const enepara, double** dis_mat);
+
+void
+ParallelGenCmsSimiMat(const vector < LigRecordSingleStep > & steps, Ligand* lig, 
+                      const Protein* const prt, const EnePara* const enepara, 
+                      int n_lig, double** dis_mat);
+
+void
+FreeSquareMatrix(double** mat, int tot);
+
+double**
+AllocSquareMatrix(int tot);
+
+double 
+get_wall_time();
+
 #endif // UTIL_H
 
 

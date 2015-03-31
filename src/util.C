@@ -1,3 +1,4 @@
+#include <sys/time.h>
 #include <iostream>
 #include <fstream>
 #include <iomanip>
@@ -15,6 +16,9 @@
 #include <sys/stat.h>
 #include <assert.h>
 #include <map>
+
+#include <omp.h>
+
 
 #include "size.h"
 #include "toggle.h"
@@ -1730,6 +1734,70 @@ medoidEnergyLessThan(const Medoid &c1, const Medoid &c2)
 }
 
 void
+ParallelGenCmsSimiMat(const vector < LigRecordSingleStep > & steps, Ligand* lig, 
+                      const Protein* const prt, const EnePara* const enepara, 
+                      int n_lig, double** dis_mat)
+{
+  int tot = steps.size();
+  int lna = lig->lna;
+  int pnp = prt->pnp;
+
+  int tot_threads = omp_get_max_threads();
+  
+  Ligand* copied_lig = (Ligand*) calloc(tot_threads * n_lig, sizeof(Ligand));
+  assert(copied_lig != NULL);
+
+  for (int i = 0; i < tot_threads; ++i) {
+    Ligand* dest = &copied_lig[i * n_lig];
+    memcpy(dest, lig, n_lig * sizeof(Ligand));
+  }
+
+  int num_iters = tot / tot_threads;
+  cout << "tot_threads " << tot_threads << endl;
+  cout << "num_iters " << num_iters << endl;
+#pragma omp parallel num_threads(tot_threads) 
+  {
+#pragma omp for schedule(dynamic, num_iters)
+    for (int i = 0; i < tot; i++) {
+    
+      int tid = omp_get_thread_num();
+      Ligand* mylig = &copied_lig[tid * n_lig];
+
+      int* my_ref = (int*) calloc(lna * pnp, sizeof(int));
+      int* other_ref = (int*) calloc(lna * pnp, sizeof(int));
+    
+      for (int j = i; j < tot; j++)
+        {
+          const LigRecordSingleStep* const my = &(steps[i]);
+          const LigRecordSingleStep* const other = &(steps[j]);
+          SetContactMatrix(my, my_ref, mylig, prt, enepara);
+          SetContactMatrix(other, other_ref, mylig, prt, enepara);
+
+          float cms = CalculateContactModeScore(my_ref, other_ref, enepara, mylig, prt);
+          double dividend = 1 + (double)cms;
+          double dis = 1.0 / dividend;
+
+          if (dividend < 0.0001)
+            dis = MAX_DIST;
+
+          dis_mat[i][j] = dis;
+        }
+      free(my_ref);
+      free(other_ref);
+    }
+  }
+  
+  for (int i = 0; i < tot; i++)
+    {
+      for (int j = 0; j < i; j++) {
+        dis_mat[i][j] = dis_mat[j][i];
+      }
+    }
+  
+  free(copied_lig);
+}
+
+void
 GenCmsSimiMat(const vector < LigRecordSingleStep > & steps, Ligand* lig, 
               const Protein* const prt,
               const EnePara* const enepara, double** dis_mat)
@@ -1738,9 +1806,8 @@ GenCmsSimiMat(const vector < LigRecordSingleStep > & steps, Ligand* lig,
   int lna = lig->lna;
   int pnp = prt->pnp;
 
-  int* my_ref = new int[lna * pnp];
-  int* other_ref = new int[lna * pnp];
-
+  int* my_ref = (int*) calloc(lna * pnp, sizeof(int));
+  int* other_ref = (int*) calloc(lna * pnp, sizeof(int));
 
   for (int i = 0; i < tot; i++)
     for (int j = i; j < tot; j++)
@@ -1760,14 +1827,14 @@ GenCmsSimiMat(const vector < LigRecordSingleStep > & steps, Ligand* lig,
         dis_mat[i][j] = dis;
         dis_mat[j][i] = dis;
       }
-
-  delete[]my_ref;
-  delete[]other_ref;
+  
+  free(my_ref);
+  free(other_ref);
 }
 
 
 vector < Medoid >
-clusterCmsByAveLinkage(const vector < LigRecordSingleStep > &steps, int cluster_num,
+clusterCmsByAveLinkage(const vector < LigRecordSingleStep > & steps, int cluster_num,
                        Ligand* lig, const Protein* const prt, const EnePara* const enepara)
 {
   // create distance matrix using cms value between two conformations
@@ -1791,10 +1858,6 @@ clusterCmsByAveLinkage(const vector < LigRecordSingleStep > &steps, int cluster_
   if (!tree)
     printf ("treecluster routine failed due to insufficient memory\n");
 
-  const Replica* const rep = &steps[0].replica;
-  int idx_rep = rep->idx_rep;
-  printf("=============== Cutting a hierarchical clustering tree using KGS method ==========\n");
-  printf("Replica %d\n", idx_rep);
   int* clusterid = (int*) malloc(nrows*sizeof(int));
   bool show_penalties = 0;
   
@@ -2111,10 +2174,40 @@ int
 CountValidRecords(const map < int, vector < LigRecordSingleStep > > &multi_reps_records)
 {
   int cnt = 0;
-  map < int, vector < LigRecordSingleStep > > :: const_iterator it;
-  for (it = multi_reps_records.begin();
+  for (auto it = multi_reps_records.begin();
        it != multi_reps_records.end(); ++it)
       cnt += it->second.size();
 
   return cnt;
+}
+
+double**
+AllocSquareMatrix(int tot)
+{
+  double** mat = (double**) malloc(tot * sizeof(double*));
+  assert(mat != NULL);
+  for (int i = 0; i < tot; i++)
+    {
+      mat[i] = (double*) calloc(tot, sizeof(double));
+      assert(mat[i] != NULL);
+    }
+  return mat;
+}
+
+void
+FreeSquareMatrix(double** mat, int tot)
+{
+  for (int i = 0; i < tot; i++) free(mat[i]);
+  free(mat);
+}
+
+
+double get_wall_time()
+{
+  struct timeval time;
+  if (gettimeofday(&time,NULL)){
+    //  Handle error
+    return 0;
+  }
+  return (double)time.tv_sec + (double)time.tv_usec * .000001;
 }
