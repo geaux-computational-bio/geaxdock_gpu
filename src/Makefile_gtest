@@ -30,7 +30,7 @@ CXXFLAGS += -g -Wall -Wextra
 # All tests produced by this Makefile.  Remember to add new tests you
 # created to the list.
 
-TESTS = load_test h5_test analysis_test cluster_test
+TESTS = load_test h5_test analysis_test cluster_test parallel_cms_mat_test
 
 # All Google Test headers.  Usually you shouldn't change this
 # definition.
@@ -78,7 +78,7 @@ HEADPATH := -I./modules -I./modules/nvidia_gpucomputingsdk_4.2.9_c_common_inc
 LIBPATH := -L/usr/local/packages/cuda/5.0/lib64 -L/usr/local/packages/hdf5/1.8.10/gcc-4.4.6-openmpi-1.6.2/lib
 LINKFLAGS = -lhdf5
 
-HOSTFLAGS += -Wall $(HEADPATH)
+HOSTFLAGS += -std=c++0x -Wall $(HEADPATH)
 OBJ_CPU := load.o data.o util.o hdf5io.o seq_kmeans.o file_io.o stats.o cluster.o kgs.o
 
 
@@ -96,6 +96,9 @@ cluster_test.o : $(USER_DIR)/cluster_test.C $(GTEST_HEADERS)
 
 linkage_test.o : $(USER_DIR)/linkage_test.C $(GTEST_HEADERS)
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $(USER_DIR)/linkage_test.C
+
+parallel_cms_mat_test.o : $(USER_DIR)/parallel_cms_mat_test.C $(GTEST_HEADERS)
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $(USER_DIR)/parallel_cms_mat_test.C
 
 hdf5io.o: hdf5io.C
 	h5c++ -c $<
@@ -128,3 +131,5 @@ cluster_test : $(OBJ_CPU) cluster_test.o gtest_main.a
 linkage_test : $(OBJ_CPU) linkage_test.o gtest_main.a
 	$(CXX) $(LIBPATH) $(CPPFLAGS) $(CXXFLAGS) -lpthread $^ -o $@ $(LINKFLAGS)
 
+parallel_cms_mat_test : $(OBJ_CPU) parallel_cms_mat_test.o gtest_main.a
+	$(CXX) $(LIBPATH) $(CPPFLAGS) $(CXXFLAGS) -lpthread $^ -o $@ $(LINKFLAGS)
