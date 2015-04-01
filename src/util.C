@@ -1658,7 +1658,9 @@ printStates(vector < Medoid > &medoids, const McPara * mcpara)
 {
   ofstream myfile;
   myfile.open(mcpara->csv_path);
-  myfile << "lig prt t0 t1 t2 r0 r1 r2 cms rmsd ener cluster_sz"  << endl;
+  myfile << "lig prt t0 t1 t2 r0 r1 r2 ";
+  myfile << "vdw ele pmf psp hdb hpc kde lhm edst ";
+  myfile << "cms rmsd ener cluster_sz"  << endl;
   myfile.close();
 
   myfile.open(mcpara->csv_path, ios::app);
@@ -1672,6 +1674,7 @@ printStates(vector < Medoid > &medoids, const McPara * mcpara)
       int cluster_sz = (*itc).cluster_sz;
       Replica * rep = &s->replica;
       float * mv = s->movematrix;
+      float * e = s->energy.e;
       float ener = getTotalEner(s);
       float cms = getCMS(s);
       float rmsd = getRMSD(s);
@@ -1681,6 +1684,8 @@ printStates(vector < Medoid > &medoids, const McPara * mcpara)
 
       for (int i = 0; i < 6; i++)
         myfile << mv[i] << " ";
+      for (int i = 0; i < MAXWEI - 1; i++)
+        myfile << e[i] << " ";
 
       myfile << cms << " ";
       myfile << rmsd << " ";
