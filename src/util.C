@@ -1665,7 +1665,7 @@ printStates(vector < Medoid > &medoids, const McPara * mcpara)
 
   myfile.open(mcpara->csv_path, ios::app);
   myfile << fixed;
-  myfile << setprecision(4);
+  // myfile << setprecision(4);
 
   vector < Medoid > :: iterator itc;
   for (itc = medoids.begin(); itc != medoids.end(); itc++)

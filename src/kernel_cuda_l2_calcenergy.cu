@@ -386,12 +386,14 @@ if (bidx == 0)
   }
 
 
-  // calculate the total energy from energy terms
-  CombineEnergy_d (bidx, &e);
-
-
   if (bidx == 0)
     mylig->energy_new = e;
+
+  // calculate the total energy from energy terms
+  CombineEnergy_d (bidx, &e);
+  
+  if (bidx == 0)
+    mylig->energy_new.e[MAXWEI - 1] = e.e[MAXWEI - 1];
 }
 
 

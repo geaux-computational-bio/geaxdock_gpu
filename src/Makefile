@@ -118,7 +118,7 @@ DMARCRO_GPU := -DGD=$(GD) -DBDy=$(BDy) -DBDx=$(BDx) -DTperB=$(TperB) -DNGPU=$(NG
 HOSTFLAGS :=
 HEADPATH := -I./modules -I./modules/nvidia_gpucomputingsdk_4.2.9_c_common_inc
 # OPTFLAGS := -O3
-OPTFLAGS := -O0
+OPTFLAGS := -O3
 LINKFLAGS := -lcudart -lhdf5 -lm
 
 
@@ -158,6 +158,7 @@ cluster.o: $(SRCDIR)/cluster.c $(SRCDIR)/cluster.h
 
 install:
 	@cp $(EXE) ~/local/bin/
+	@echo "cp $(EXE) ~/local/bin/"
 
 clean:
 	@(rm -f ${EXE} ${OBJ_CPU} ${OBJ_GPU} count *i *cubin* *.ptx *cudafe* *.fatbin* *.hash count count.o ../bin/dock)
