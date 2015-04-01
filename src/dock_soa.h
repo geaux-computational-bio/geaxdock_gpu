@@ -30,8 +30,8 @@ struct Ligand
 
 
   // confusion matrix
-  int native_confusion_matx[MAXLIG][MAXPRO];
-  int decoy_confusion_matx[MAXLIG][MAXPRO];
+  /* int native_confusion_matx[MAXLIG][MAXPRO]; */
+  /* int decoy_confusion_matx[MAXLIG][MAXPRO]; */
 };
 
 
