@@ -1760,10 +1760,9 @@ ParallelGenCmsSimiMat(const vector < LigRecordSingleStep > & steps,
 
   int num_iters = tot / tot_threads;
   cout << "tot_threads " << tot_threads << endl;
-  cout << "num_iters " << num_iters << endl;
 #pragma omp parallel num_threads(tot_threads) 
   {
-#pragma omp for schedule(dynamic, num_iters)
+#pragma omp for schedule(dynamic)
     for (int i = 0; i < tot; i++) {
     
       int tid = omp_get_thread_num();
