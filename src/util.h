@@ -102,7 +102,7 @@ void printHeader(const McPara * mcpara);
 // clustering the trajectories
 
 vector < Medoid >
-clusterOneRepResults(vector < LigRecordSingleStep > &steps, string clustering_method,
+clusterOneRepResults(vector < LigRecordSingleStep > &steps, string clustering_method, int n_lig,
                      Ligand* lig, const Protein* const prt, const EnePara* const enepara);
 
 vector < float > SimilarityBetweenConfs(vector < LigRecordSingleStep > &steps, char method);
@@ -121,7 +121,7 @@ int
 CountValidRecords(const map < int, vector < LigRecordSingleStep > > &multi_reps_records);
 
 vector < Medoid >
-clusterCmsByAveLinkage(const vector < LigRecordSingleStep > &steps, int cluster_num,
+clusterCmsByAveLinkage(const vector < LigRecordSingleStep > & steps, int cluster_num, int n_lig,
                        Ligand* lig, const Protein* const prt, const EnePara* const enepara);
 
 void
@@ -130,9 +130,10 @@ GenCmsSimiMat(const vector < LigRecordSingleStep > & steps, Ligand* lig,
               const EnePara* const enepara, double** dis_mat);
 
 void
-ParallelGenCmsSimiMat(const vector < LigRecordSingleStep > & steps, Ligand* lig, 
+ParallelGenCmsSimiMat(const vector < LigRecordSingleStep > & steps, 
+                      Ligand* lig, int n_lig,
                       const Protein* const prt, const EnePara* const enepara, 
-                      int n_lig, double** dis_mat);
+                      double** dis_mat);
 
 void
 FreeSquareMatrix(double** mat, int tot);

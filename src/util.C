@@ -1734,9 +1734,10 @@ medoidEnergyLessThan(const Medoid &c1, const Medoid &c2)
 }
 
 void
-ParallelGenCmsSimiMat(const vector < LigRecordSingleStep > & steps, Ligand* lig, 
+ParallelGenCmsSimiMat(const vector < LigRecordSingleStep > & steps, 
+                      Ligand* lig, int n_lig,
                       const Protein* const prt, const EnePara* const enepara, 
-                      int n_lig, double** dis_mat)
+                      double** dis_mat)
 {
   int tot = steps.size();
   int lna = lig->lna;
@@ -1834,7 +1835,7 @@ GenCmsSimiMat(const vector < LigRecordSingleStep > & steps, Ligand* lig,
 
 
 vector < Medoid >
-clusterCmsByAveLinkage(const vector < LigRecordSingleStep > & steps, int cluster_num,
+clusterCmsByAveLinkage(const vector < LigRecordSingleStep > & steps, int cluster_num, int n_lig,
                        Ligand* lig, const Protein* const prt, const EnePara* const enepara)
 {
   // create distance matrix using cms value between two conformations
@@ -1848,7 +1849,8 @@ clusterCmsByAveLinkage(const vector < LigRecordSingleStep > & steps, int cluster
       dis_mat[i] = (double*) malloc(tot * sizeof(double));
       assert(dis_mat[i] != NULL);
     }
-  GenCmsSimiMat(steps, lig, prt, enepara, dis_mat);
+  // GenCmsSimiMat(steps, lig, prt, enepara, dis_mat);
+  ParallelGenCmsSimiMat (steps, lig, n_lig, prt, enepara, dis_mat);
 
   // cluster the distance matrix using average linkage method
   Node* tree;
@@ -2041,7 +2043,7 @@ clusterByKmeans(vector < LigRecordSingleStep > &steps)
 
 
 vector < Medoid >
-clusterOneRepResults(vector < LigRecordSingleStep > &steps, string clustering_method,
+clusterOneRepResults(vector < LigRecordSingleStep > &steps, string clustering_method, int n_lig,
                      Ligand* lig, const Protein* const prt, const EnePara* const enepara)
 {
   if ( clustering_method.compare("k") == 0 )
@@ -2056,7 +2058,7 @@ clusterOneRepResults(vector < LigRecordSingleStep > &steps, string clustering_me
     }
   else if ( clustering_method.compare("c") == 0)
     {
-      return clusterCmsByAveLinkage(steps, -1, lig, prt, enepara);
+      return clusterCmsByAveLinkage(steps, -1, n_lig, lig, prt, enepara);
     }
   else
     {

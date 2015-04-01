@@ -105,9 +105,6 @@
 // boltzman constant
 #define BOLTZMANN_CONST 1.0f
 
-// monte carlo steps
-#define STEPS_PER_DUMP 100
-
 // plus 1 because the initial state also needs recording
 #define STEPS_PER_DUMP_PLUS1 (STEPS_PER_DUMP + 1)
 
@@ -115,6 +112,15 @@
 
 #define MINIMUM_CLUSTERS 4
 #define MAXIMUM_CLUSTERS 20
+
+// monte carlo steps
+/* #define STEPS_PER_DUMP 100 */
+
+/* #define MINIMUM_REC 100000 */
+
+#define MINIMUM_REC 10000
+#define STEPS_PER_DUMP 10
+
 
 
 

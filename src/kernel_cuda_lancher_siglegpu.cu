@@ -13,6 +13,7 @@ fflush (stdout);
 
 int s1 = 0;
 int est_tot_rec = mcpara->steps_per_dump * complexsize.n_rep;
+est_tot_rec = MINIMUM_REC;
 while((CountValidRecords(multi_reps_records) < est_tot_rec))
   {
 
@@ -44,7 +45,7 @@ while((CountValidRecords(multi_reps_records) < est_tot_rec))
       }
     }
 
-    printf("valid points: %d\n", CountValidRecords(multi_reps_records));
+    printf("# points\t\t\t%d\n", CountValidRecords(multi_reps_records));
 
 
 #if IS_OUTPUT == 1
