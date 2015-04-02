@@ -156,7 +156,7 @@ readme file would be “/home/smith/dock/README.txt”.
        initial energy state
        ================================================================================
        rep step vdw ele pmf psp hdb hpc kde lhm dst total
-       0 0 0.868 -0.032 -0.258 -0.057 0.905 -0.842 0.078 0.214 458.420 7.931
+       0 0 0.868 -0.032 -0.258 -0.057 0.905 -0.842 0.078 0.214 -1.000 7.931
 
 
 === Documentation of Features
