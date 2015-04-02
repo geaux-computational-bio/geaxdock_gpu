@@ -133,7 +133,7 @@ TEST(load, complex)
   // OpenMp version
   int total_threads = 4;
   int n_lig = complexsize.n_lig;
-  ParallelGenCmsSimiMat(steps, lig, prt, enepara, n_lig, p_dis_mat);
+  ParallelGenCmsSimiMat(steps, lig, n_lig, prt, enepara, p_dis_mat);
   double second_now = get_wall_time();
   cout << "OpenMp version takes: " << second_now - first_now << endl;
 
