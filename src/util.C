@@ -1511,13 +1511,13 @@ PrintSummary (const InputFiles * inputfiles, const McPara * mcpara, const Temp *
   printf ("Performance\n");
   printf ("================================================================================\n");
 
-  const float mcpersec0 = mcpara->steps_total * complexsize->n_rep / mclog->t0;
+  const float mcpersec0 = mclog->steps_total * complexsize->n_rep / mclog->t0;
   printf ("compute time\t\t\t%.3f seconds\n", mclog->t0);
   printf ("time per MC sweep per replica\t%.3f * 1e-6 seconds\n", 1e6 / mcpersec0);
   printf ("MC sweeps per second\t\t%.3f\n", mcpersec0);
   printf ("speedup over 843.75\t\t%.3f X\n", mcpersec0 / 843.75);
 
-  const float mcpersec1 = mcpara->steps_total * complexsize->n_rep / mclog->t1;
+  const float mcpersec1 = mclog->steps_total * complexsize->n_rep / mclog->t1;
   printf ("wall time\t\t\t%.3f seconds\n", mclog->t1);
   printf ("time per MC sweep per replica\t%.3f * 1e-6 seconds \n", 1e6 / mcpersec1);
   printf ("MC sweeps per second\t\t%.3f\n", mcpersec1);

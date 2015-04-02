@@ -351,6 +351,7 @@ struct McLog
   int acs_temp_exchg[MAXREP]; 
   int ac_mc;
   float ar;
+  int steps_total;
   
   // int ac_lig_exchg;
   // int acs_lig_exchg[MAXREP];

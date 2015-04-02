@@ -100,7 +100,7 @@ main (int argc, char **argv)
        multi_reps_records, complexsize);
 
   // post_mc(multi_reps_records, lig, prt, enepara, mcpara);
-  opt_ff(multi_reps_records, lig, complexsize.n_lig, prt, enepara, mcpara);
+  // opt_ff(multi_reps_records, lig, complexsize.n_lig, prt, enepara, mcpara);
 
   PrintSummary (inputfiles, mcpara, temp, mclog, &complexsize);
 
