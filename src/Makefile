@@ -20,7 +20,7 @@ EXE := dock
 OBJ_CPU := dock.o load.o data.o rmsd.o util.o hdf5io.o stats.o seq_kmeans.o file_io.o cluster.o kgs.o post_mc.o
 OBJ_GPU := run.o
 SH := sh
-CPP_HOST := g++
+CPP_HOST := g++ -std=c++0x 
 CPP_DEV := nvcc
 FC := gfortran
 
@@ -122,7 +122,7 @@ OPTFLAGS := -O3
 LINKFLAGS := -lcudart -lhdf5 -lm
 
 
-HOSTFLAGS += -std=c++0x -fopenmp -Wall $(OPTFLAGS) $(HEADPATH) $(DMARCRO)
+HOSTFLAGS += -fopenmp -Wall $(OPTFLAGS) $(HEADPATH) $(DMARCRO)
 DEVFLAGS += $(OPTFLAGS) $(HEADPATH) $(DMARCRO) $(DMARCRO_GPU)
 FFLAGS := $(OPTFLAGS)
 
