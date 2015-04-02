@@ -348,11 +348,7 @@ CalcEnergy_d (const int bidx, Ligand * __restrict__ mylig, const Protein * __res
 
 
 
-__shared__ float edst;
-if (bidx == 0)
-  edst = 9.9;
-#if 0
-
+#if 1
   // energy edst e[8]
   __shared__ float edst;
 
@@ -360,7 +356,7 @@ if (bidx == 0)
     const float dx = mylig->coord_new.center[0] - myprt->pocket_center[0];
     const float dy = mylig->coord_new.center[1] - myprt->pocket_center[1];
     const float dz = mylig->coord_new.center[2] - myprt->pocket_center[2];
-    dst = sqrtf (dx * dx + dy * dy + dz * dz);
+    edst = sqrtf (dx * dx + dy * dy + dz * dz);
   }
   __syncthreads ();
 
