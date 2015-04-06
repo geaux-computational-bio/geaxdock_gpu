@@ -35,7 +35,7 @@ CalcEnergy_d (const int bidx, Ligand * __restrict__ mylig, const Protein * __res
 
   // reduce through only x axis
   __shared__ float a_val[BDy][BDx]; // reused by hpc, kde, lhm
-  __shared__ float a_sz[BDy][BDx];
+  __shared__ int a_sz[BDy][BDx];
 
   __shared__ float ehpc[BDy]; // e[5]
   __shared__ float ekde[BDy]; // e[6]
@@ -252,7 +252,7 @@ CalcEnergy_d (const int bidx, Ligand * __restrict__ mylig, const Protein * __res
   // lig loop, ~30
   for (int i = 0; i < lna_dc; i += blockDim.y) {
     a_val[threadIdx.y][threadIdx.x] = 0.0f;
-    a_sz[threadIdx.y][threadIdx.x] = 0.0f;
+    a_sz[threadIdx.y][threadIdx.x] = 0;
     const int l = i + threadIdx.y;
     if (l < lna_dc) {
 
@@ -267,7 +267,7 @@ CalcEnergy_d (const int bidx, Ligand * __restrict__ mylig, const Protein * __res
 	    const float dz = mylig->coord_new.z[l] - kde_dc->z[k];
 	    const float kde_dst_pow2 = dx * dx + dy * dy + dz * dz;
 	    a_val[threadIdx.y][threadIdx.x] += expf (enepara_kde2_dc * kde_dst_pow2);
-	    a_sz[threadIdx.y][threadIdx.x] += 1.0f;
+	    a_sz[threadIdx.y][threadIdx.x]++;
 	  }
 
 	} // if (k < pnk_dc)
@@ -276,8 +276,8 @@ CalcEnergy_d (const int bidx, Ligand * __restrict__ mylig, const Protein * __res
 
     SumReduction2D_2_d (a_val, a_sz);
 
-    if (threadIdx.x == 0 && l < lna_dc && a_sz[threadIdx.y][0] != 0.0f)
-      ekde[threadIdx.y] += (a_val[threadIdx.y][0] / a_sz[threadIdx.y][0]);
+    if (threadIdx.x == 0 && l < lna_dc && a_sz[threadIdx.y][0] != 0)
+      ekde[threadIdx.y] += (a_val[threadIdx.y][0] / (float) a_sz[threadIdx.y][0]);
 
   } // lig loop
 
@@ -301,7 +301,7 @@ CalcEnergy_d (const int bidx, Ligand * __restrict__ mylig, const Protein * __res
   // lhm loop, ~11
   for (int i = 0; i < pos_dc; i += blockDim.y) {
     a_val[threadIdx.y][threadIdx.x] = 0.0f;
-    a_sz[threadIdx.y][threadIdx.x] = 0.0f;
+    a_sz[threadIdx.y][threadIdx.x] = 0;
     const int m = i + threadIdx.y;
 
     if (m < pos_dc) {
@@ -316,7 +316,7 @@ CalcEnergy_d (const int bidx, Ligand * __restrict__ mylig, const Protein * __res
 	    const float dy = mylig->coord_new.y[l] - mcs_dc[m].y[lig_n];
 	    const float dz = mylig->coord_new.z[l] - mcs_dc[m].z[lig_n];
 	    a_val[threadIdx.y][threadIdx.x] += dx * dx + dy * dy + dz * dz;
-	    a_sz[threadIdx.y][threadIdx.x] += 1.0f;
+	    a_sz[threadIdx.y][threadIdx.x]++;
 	  }
 	} // if (l < lna_dc)
       } // lig loop
@@ -325,12 +325,11 @@ CalcEnergy_d (const int bidx, Ligand * __restrict__ mylig, const Protein * __res
 
     SumReduction2D_2_d (a_val, a_sz);
 
-    if (threadIdx.x == 0 && m < pos_dc)
-      if (a_sz[threadIdx.y][0] > 0.) {
+    if (threadIdx.x == 0 && m < pos_dc && a_sz[threadIdx.y][0] != 0) {
         elhm[threadIdx.y] +=
           mcs_dc[m].tcc *
-          sqrtf (a_val[threadIdx.y][0] / a_sz[threadIdx.y][0]);
-      }
+          sqrtf (a_val[threadIdx.y][0] / (float) a_sz[threadIdx.y][0]);
+    }
   } // lhm loop
 
   __syncthreads ();
