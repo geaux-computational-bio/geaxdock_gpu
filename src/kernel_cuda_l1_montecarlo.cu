@@ -26,7 +26,7 @@ MonteCarlo_Init_d (const int rep_begin, const int rep_end)
         // mcc ref matrix generated from the first replica
 
 #if IS_AWAY == 1
-      Move_d (bidx, mylig, 44.5f);
+      Move_d (bidx, mylig, 100.5f);
 #endif 
       CalcEnergy_d (bidx, mylig, myprt);
 	   

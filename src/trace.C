@@ -108,7 +108,7 @@ main (int argc, char **argv)
     string prefix = inputfiles->lig_file.conf_path;
     char c[10];
     sprintf(c, "%d", config_idx);
-    string ofn = prefix + "_" + string(c);  // to_string does not work
+    string ofn = prefix + "_" + string(c) + ".sdf";  // to_string does not work
                                             // with this compiler
     ofstream of;
     of.open(ofn.c_str());

@@ -35,7 +35,7 @@ GPU := GPU_NA
 
 
 # HOST: mike, shelob, qb, smic las07
-HOST := shelob
+HOST := qb
 
 ifeq ($(HOST), mike)
 # edit include/yeah/cudautil.h, locate "CUDA_LDG_P", enable the second branch
