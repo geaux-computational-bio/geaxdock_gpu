@@ -20,7 +20,7 @@ EXE := trace
 OBJ_CPU := load.o data.o rmsd.o util.o hdf5io.o stats.o seq_kmeans.o file_io.o cluster.o trace.o kgs.o
 OBJ_GPU := run.o
 SH := sh
-CPP_HOST := g++ -std=c++0x
+CPP_HOST := g++ -std=c++11 -fopenmp
 CPP_DEV := nvcc
 FC := gfortran
 
@@ -35,7 +35,7 @@ GPU := GPU_NA
 
 
 # HOST: mike, shelob, qb, smic las07
-HOST := qb
+HOST := mike
 
 ifeq ($(HOST), mike)
 # edit include/yeah/cudautil.h, locate "CUDA_LDG_P", enable the second branch
@@ -139,11 +139,11 @@ FFLAGS := $(OPTFLAGS)
 
 default: $(EXE)
 
-$(EXE): $(OBJ_CPU) $(OBJ_GPU) 
-	$(CPP_HOST) $(HOSTFLAGS) $(LIBPATH) $(OBJ_CPU) $(OBJ_GPU) -o $@ $(LINKFLAGS)
+$(EXE): $(OBJ_CPU)
+	$(CPP_HOST) $(HOSTFLAGS) $(LIBPATH) $(OBJ_CPU) -o $@ $(LINKFLAGS)
 
-trace: $(OBJ_CPU) $(OBJ_GPU) 
-	$(CPP_HOST) $(HOSTFLAGS) $(LIBPATH) $(OBJ_CPU) $(OBJ_GPU) -o $@ $(LINKFLAGS)
+# trace: $(OBJ_CPU) $(OBJ_GPU) 
+# 	$(CPP_HOST) $(HOSTFLAGS) $(LIBPATH) $(OBJ_CPU) $(OBJ_GPU) -o $@ $(LINKFLAGS)
 
 hdf5io.o: hdf5io.C
 	h5c++ -c $<
@@ -164,8 +164,8 @@ cluster.o: $(SRCDIR)/cluster.c $(SRCDIR)/cluster.h
 %.o: %.cu
 	$(CPP_DEV) $(DEVFLAGS) -c $<
 
-install:
-	@cp $(EXE) ~/local/bin/
+install_trace: trace
+	@cp trace ~/bin
 
 clean:
 	@(rm -f ${EXE} ${OBJ_CPU} ${OBJ_GPU} count *i *cubin* *.ptx *cudafe* *.fatbin* *.hash count count.o ../bin/dock)
