@@ -20,7 +20,7 @@ EXE := trace
 OBJ_CPU := load.o data.o rmsd.o util.o hdf5io.o stats.o seq_kmeans.o file_io.o cluster.o trace.o kgs.o
 OBJ_GPU := run.o
 SH := sh
-CPP_HOST := g++ -std=c++11 -fopenmp
+CPP_HOST := g++ -std=c++0x -fopenmp
 CPP_DEV := nvcc
 FC := gfortran
 
@@ -42,7 +42,7 @@ ifeq ($(HOST), mike)
 # edit ~/.soft
 # +cuda-5.0
 # +hdf5-1.8.10-gcc-4.4.6-openmpi-1.6.2
-	LIBPATH := -L/usr/local/packages/cuda/5.0/lib64 -L/usr/local/packages/hdf5/1.8.10/gcc-4.4.6-openmpi-1.6.2/lib
+	LIBPATH := -L/usr/local/packages/hdf5/1.8.10/gcc-4.4.6-openmpi-1.6.2/lib
 	DMARCRO += -DTARGET_DEVICE=$(TARGET_GPU)
 	GPU := GF110
 
@@ -124,7 +124,7 @@ HOSTFLAGS :=
 HEADPATH := -I./modules -I./modules/nvidia_gpucomputingsdk_4.2.9_c_common_inc
 # OPTFLAGS := -O3
 OPTFLAGS := -O0
-LINKFLAGS := -lcudart -lhdf5 -lm
+LINKFLAGS := -lhdf5 -lm
 
 
 HOSTFLAGS += -Wall $(OPTFLAGS) $(HEADPATH) $(DMARCRO)
