@@ -1,0 +1,7 @@
+/src/kernel_cuda_lancher_single.cu
+/*.o
+*.o
+*.out
+/src/GPATH
+/src/GRTAGS
+/src/GTAGS
