@@ -33,7 +33,6 @@ GPU := GPU_NA
 
 
 
-
 # HOST: mike, shelob, qb, smic las07
 HOST := qb
 
@@ -114,14 +113,15 @@ DMARCRO_GPU := -DGD=$(GD) -DBDy=$(BDy) -DBDx=$(BDx) -DTperB=$(TperB)
 DMARCRO_GPU += -DBDx_POWER2=$(BDx_POWER2) -DTperB_POWER2=$(TperB_POWER2)
 DMARCRO_GPU += -DNGPU=$(NGPU)
 
+BOOST_BASE=/usr/local/packages/boost/1.55.0/INTEL-14.0.2-python-2.7.7-anaconda
 
-
+LIBPATH += -L${BOOST_BASE}/lib
 
 HOSTFLAGS :=
-HEADPATH := -I./modules -I./modules/nvidia_gpucomputingsdk_4.2.9_c_common_inc
+HEADPATH := -I./modules -I./modules/nvidia_gpucomputingsdk_4.2.9_c_common_inc -I${BOOST_BASE}/include
 # OPTFLAGS := -O3
-OPTFLAGS := -O3
-LINKFLAGS := -lcudart -lhdf5 -lm
+OPTFLAGS := -O0
+LINKFLAGS := -lcudart -lhdf5 -lm -lboost_program_options -lboost_filesystem
 
 
 HOSTFLAGS += -fopenmp -Wall $(OPTFLAGS) $(HEADPATH) $(DMARCRO)

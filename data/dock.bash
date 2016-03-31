@@ -24,19 +24,20 @@ python $TO_ADD_CENTER -l $sdf_file -f $ff_file
 
 cmd="\
 ${bin} \
--id ${complex} \
+--id ${complex} \
 -p ${pdb_file} \
 -l ${sdf_file} \
 -s ${ff_file} \
 \
--para ${para_file} \
+--para ${para_file} \
 \
--nc 10 \
--floor_temp 0.004f \
--ceiling_temp 0.036f \
--nt 1 \
--t 0.02f \
--r 0.08f \
+--csv ./1a07C1.csv \
+--nc 10 \
+--floor_temp 0.004 \
+--ceiling_temp 0.036 \
+--nt 1 \
+-t 0.02 \
+-r 0.08 \
 "
 
 

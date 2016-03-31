@@ -95,6 +95,8 @@ void processOneReplica(vector < LigRecordSingleStep > &steps, SingleRepResult * 
 
 void printStates(vector < LigRecordSingleStep > &steps, const McPara * mcpara);
 
+void printStates(vector < LigRecordSingleStep > &steps, std::string &path);
+
 void printStates(vector < Medoid > &medoids, const McPara * mcpara);
 
 void printHeader(const McPara * mcpara);
