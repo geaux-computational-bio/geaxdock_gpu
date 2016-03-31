@@ -1696,6 +1696,39 @@ printStates(vector < Medoid > &medoids, const McPara * mcpara)
   myfile.close();
 }
 
+
+void
+printStates(vector < LigRecordSingleStep > &steps, std::string &ofn)
+{
+  ofstream myfile;
+  myfile.open(ofn, ios::app);
+  myfile << fixed;
+  myfile << setprecision(4);
+
+  vector < LigRecordSingleStep > :: iterator its;
+  for (its = steps.begin(); its != steps.end(); its++) {
+    LigRecordSingleStep *s = &(*its);
+    Replica * rep = &s->replica;
+    float * mv = s->movematrix;
+    float ener = getTotalEner(s);
+    float cms = getCMS(s);
+    float rmsd = getRMSD(s);
+
+    myfile << rep->idx_lig << " ";
+    myfile << rep->idx_prt << " ";
+
+    for (int i = 0; i < 6; i++)
+      myfile << mv[i] << " ";
+
+    myfile << cms << " ";
+    myfile << rmsd << " ";
+    myfile << ener << " ";
+    myfile << endl;
+  } 
+
+  myfile.close();
+}
+
 void
 printStates(vector < LigRecordSingleStep > &steps, const McPara * mcpara)
 {
