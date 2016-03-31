@@ -12,7 +12,7 @@
 #define IS_EXCHANGE 0
 
 // move ligand away from center
-#define IS_AWAY 0
+#define IS_AWAY 1
 
 // control the purterbation be 2.0f
 #define IS_CONTROL_MOVE 0

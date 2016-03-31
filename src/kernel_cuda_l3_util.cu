@@ -128,37 +128,25 @@ MyRand_d ()
 
 
 
-/*
-__forceinline__
-__device__ int
-Mininal_int_d (const int a, const int b)
-{
- return a < b ? a : b;
-}
-*/
 
 
 
-
-
-__forceinline__ __device__ void
-SumReduction1D_d (const int bidx, float *a)
-{
-  __syncthreads ();
-
-  for (int stride = TperB / 2; stride >= 1; stride >>= 1) {
-    if (bidx < stride)
-      a[bidx] += a[stride + bidx];
-    __syncthreads ();
-  }
-}
 
 __forceinline__ __device__ void
 SumReduction_int_1D_4_d (const int bidx, int *a, int *b, int *c, int *d)
 {
   __syncthreads ();
 
-  for (int stride = TperB / 2; stride >= 1; stride >>= 1) {
+  if (bidx < TperB - TperB_POWER2) {
+      a[bidx] += a[TperB_POWER2 + bidx];
+      b[bidx] += b[TperB_POWER2 + bidx];
+      c[bidx] += c[TperB_POWER2 + bidx];
+      d[bidx] += d[TperB_POWER2 + bidx];
+  }
+
+  __syncthreads ();
+
+  for (int stride = TperB_POWER2 >> 1; stride >= 1; stride >>= 1) {
     if (bidx < stride) {
       a[bidx] += a[stride + bidx];
       b[bidx] += b[stride + bidx];
@@ -169,13 +157,31 @@ SumReduction_int_1D_4_d (const int bidx, int *a, int *b, int *c, int *d)
   }
 }
 
+
+
+
+
+
+
+
+
 __forceinline__ __device__ void
 SumReduction1D_5_d (const int bidx, float *a, float *b, float *c, float *d,
 		    float *e)
 {
   __syncthreads ();
 
-  for (int stride = TperB / 2; stride >= 1; stride >>= 1) {
+  if (bidx < TperB - TperB_POWER2) {
+      a[bidx] += a[TperB_POWER2 + bidx];
+      b[bidx] += b[TperB_POWER2 + bidx];
+      c[bidx] += c[TperB_POWER2 + bidx];
+      d[bidx] += d[TperB_POWER2 + bidx];
+      e[bidx] += e[TperB_POWER2 + bidx];
+  }
+
+  __syncthreads ();
+
+  for (int stride = TperB_POWER2 >> 1; stride >= 1; stride >>= 1) {
     if (bidx < stride) {
       a[bidx] += a[stride + bidx];
       b[bidx] += b[stride + bidx];
@@ -185,7 +191,17 @@ SumReduction1D_5_d (const int bidx, float *a, float *b, float *c, float *d,
     }
     __syncthreads ();
   }
+
+
 }
+
+
+
+
+
+
+
+
 
 
 __forceinline__ __device__ void
@@ -193,7 +209,13 @@ SumReduction2D_d (float a[BDy][BDx])
 {
   __syncthreads ();
 
-  for (int stride = BDx / 2; stride >= 1; stride >>= 1) {
+  if (threadIdx.x < BDx - BDx_POWER2) {
+    a[threadIdx.y][threadIdx.x] += a[threadIdx.y][BDx_POWER2 + threadIdx.x];
+  }
+
+  __syncthreads ();
+
+  for (int stride = BDx_POWER2 >> 1; stride >= 1; stride >>= 1) {
     if (threadIdx.x < stride) {
       a[threadIdx.y][threadIdx.x] += a[threadIdx.y][stride + threadIdx.x];
     }
@@ -202,12 +224,21 @@ SumReduction2D_d (float a[BDy][BDx])
 }
 
 
+
+
 __forceinline__ __device__ void
-SumReduction2D_2_d (float a[BDy][BDx], float b[BDy][BDx])
+SumReduction2D_2_d (float a[BDy][BDx], int b[BDy][BDx])
 {
   __syncthreads ();
 
-  for (int stride = BDx / 2; stride >= 1; stride >>= 1) {
+  if (threadIdx.x < BDx - BDx_POWER2) {
+    a[threadIdx.y][threadIdx.x] += a[threadIdx.y][BDx_POWER2 + threadIdx.x];
+    b[threadIdx.y][threadIdx.x] += b[threadIdx.y][BDx_POWER2 + threadIdx.x];
+  }
+
+  __syncthreads ();
+
+  for (int stride = BDx_POWER2 >> 1; stride >= 1; stride >>= 1) {
     if (threadIdx.x < stride) {
       a[threadIdx.y][threadIdx.x] += a[threadIdx.y][stride + threadIdx.x];
       b[threadIdx.y][threadIdx.x] += b[threadIdx.y][stride + threadIdx.x];
@@ -215,6 +246,7 @@ SumReduction2D_2_d (float a[BDy][BDx], float b[BDy][BDx])
     __syncthreads ();
   }
 }
+
 
 
 __forceinline__ __device__ float

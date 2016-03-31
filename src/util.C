@@ -2259,3 +2259,23 @@ double get_wall_time()
   }
   return (double)time.tv_sec + (double)time.tv_usec * .000001;
 }
+
+
+void
+printLigandTrajectories(const vector < LigRecordSingleStep > &records)
+{
+  printf("PrtIdx LigIdx v1 v2 v3 v4 v5 v6 cms ener\n");
+  for (auto it = records.begin(); it != records.end(); it++) {
+    Replica replica = it->replica;
+    Energy energy = it->energy;
+    float cms = energy.cms;
+    float ener = energy.e[MAXWEI - 1];
+    const float* movematrix = it->movematrix;
+    printf("%d %d", replica.idx_prt, replica.idx_lig);
+    for (int i = 0; i < 6; i++)
+      printf(" %f", movematrix[i]);
+    printf(" %f", cms);
+    printf(" %f", ener);
+    printf("\n");
+  }
+}

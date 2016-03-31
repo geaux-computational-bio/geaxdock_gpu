@@ -99,7 +99,10 @@ main (int argc, char **argv)
   Run (lig, prt, psp, kde, mcs, enepara, temp, replica, mcpara, mclog,
        multi_reps_records, complexsize);
 
+  printLigandTrajectories(multi_reps_records[0]);
+
   // post_mc(multi_reps_records, lig, prt, enepara, mcpara);
+  // printf ("0 0 0.643 -0.037 -0.208 -0.184 0.852 -0.888 0.052 0.174 -1.000 0.774 Ref result\n");
   // opt_ff(multi_reps_records, lig, complexsize.n_lig, prt, enepara, mcpara);
 
   PrintSummary (inputfiles, mcpara, temp, mclog, &complexsize);

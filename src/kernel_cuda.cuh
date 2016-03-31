@@ -49,7 +49,6 @@ __forceinline__ __device__ float MyRand_d ();
 
 //__forceinline__ __device__ int Minimal_int_d (const int, const int);
 
-__forceinline__ __device__ void SumReduction1D_d (const int, float *);
 
 __forceinline__ __device__ void SumReduction1D_5_d (const int, float *, float *, float *, float *, float *);
 
@@ -57,7 +56,7 @@ __forceinline__ __device__ void SumReduction_int_1D_4_d (const int, int *, int *
 
 __forceinline__ __device__ void SumReduction2D_d (float a[BDy][BDx]);
 
-__forceinline__ __device__ void SumReduction2D_2_d (float a[BDy][BDx], float b[BDy][BDx]);
+__forceinline__ __device__ void SumReduction2D_2_d (float a[BDy][BDx], int b[BDy][BDx]);
 
 
 

@@ -35,7 +35,7 @@ GPU := GPU_NA
 
 
 # HOST: mike, shelob, qb, smic las07
-HOST := shelob
+HOST := qb
 
 ifeq ($(HOST), mike)
 # edit include/yeah/cudautil.h, locate "CUDA_LDG_P", enable the second branch
@@ -89,28 +89,30 @@ ifeq ($(GPU), GF110)
 	GD := 16
 	BDy := 8
 	BDx := 64
-	TperB := 512
 else ifeq ($(GPU), GK110)
 	DEVFLAGS := -gencode arch=compute_35,code=sm_35 -Xptxas -dlcm=ca
 	GD := 28
 	BDy := 4
 	BDx := 96
-	TperB := 384
 else ifeq ($(GPU), GM204)
 	DEVFLAGS := -gencode arch=compute_52,code=compute_52 -Xptxas -dlcm=ca
 	GD := 64
 	BDy := 8
 	BDx := 16
-	TperB := 128
 else
 	GD := 16
 	BDy := 8
 	BDx := 32
-	TperB := 256
 endif
 
-DMARCRO_GPU := -DGD=$(GD) -DBDy=$(BDy) -DBDx=$(BDx) -DTperB=$(TperB) -DNGPU=$(NGPU)
-
+# Threads Per Block
+TperB := $(shell echo $(BDx)\*$(BDy) | bc)
+# rounding up to nearest power of 2
+BDx_POWER2 := $(shell echo "from math import log; a=2**int(log($(BDx),2)); print a" | python)
+TperB_POWER2 := $(shell echo "from math import log; a=2**int(log($(TperB),2)); print a" | python)
+DMARCRO_GPU := -DGD=$(GD) -DBDy=$(BDy) -DBDx=$(BDx) -DTperB=$(TperB)
+DMARCRO_GPU += -DBDx_POWER2=$(BDx_POWER2) -DTperB_POWER2=$(TperB_POWER2)
+DMARCRO_GPU += -DNGPU=$(NGPU)
 
 
 
@@ -159,6 +161,12 @@ cluster.o: $(SRCDIR)/cluster.c $(SRCDIR)/cluster.h
 install:
 	@cp $(EXE) ~/local/bin/
 	@echo "cp $(EXE) ~/local/bin/"
+run:
+	cd ../data && ./dock.bash
+
+calc:
+	echo $(BDx) $(BDy) $(TperB) $(BDx_POWER2) $(TperB_POWER2)
+
 
 clean:
 	@(rm -f ${EXE} ${OBJ_CPU} ${OBJ_GPU} count *i *cubin* *.ptx *cudafe* *.fatbin* *.hash count count.o ../bin/dock)

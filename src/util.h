@@ -146,6 +146,9 @@ AllocSquareMatrix(int tot);
 double 
 get_wall_time();
 
+void
+printLigandTrajectories(const vector < LigRecordSingleStep > &records);
+
 #endif // UTIL_H
 
 

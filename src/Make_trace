@@ -17,10 +17,10 @@ NGPU := 1
 
 
 EXE := trace
-OBJ_CPU := load.o data.o rmsd.o util.o hdf5io.o stats.o seq_kmeans.o file_io.o cluster.o trace.o
+OBJ_CPU := load.o data.o rmsd.o util.o hdf5io.o stats.o seq_kmeans.o file_io.o cluster.o trace.o kgs.o
 OBJ_GPU := run.o
 SH := sh
-CPP_HOST := g++
+CPP_HOST := g++ -std=c++0x
 CPP_DEV := nvcc
 FC := gfortran
 
@@ -109,9 +109,14 @@ else
 	TperB := 256
 endif
 
-DMARCRO_GPU := -DGD=$(GD) -DBDy=$(BDy) -DBDx=$(BDx) -DTperB=$(TperB) -DNGPU=$(NGPU)
-
-
+# Threads Per Block
+TperB := $(shell echo $(BDx)\*$(BDy) | bc)
+# rounding up to nearest power of 2
+BDx_POWER2 := $(shell echo "from math import log; a=2**int(log($(BDx),2)); print a" | python)
+TperB_POWER2 := $(shell echo "from math import log; a=2**int(log($(TperB),2)); print a" | python)
+DMARCRO_GPU := -DGD=$(GD) -DBDy=$(BDy) -DBDx=$(BDx) -DTperB=$(TperB)
+DMARCRO_GPU += -DBDx_POWER2=$(BDx_POWER2) -DTperB_POWER2=$(TperB_POWER2)
+DMARCRO_GPU += -DNGPU=$(NGPU)
 
 
 
