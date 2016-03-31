@@ -1701,7 +1701,7 @@ void
 printStates(vector < LigRecordSingleStep > &steps, std::string &ofn)
 {
   ofstream myfile;
-  myfile.open(ofn, ios::app);
+  myfile.open(ofn);
   myfile << fixed;
   myfile << setprecision(4);
 
@@ -1716,13 +1716,23 @@ printStates(vector < LigRecordSingleStep > &steps, std::string &ofn)
 
     myfile << rep->idx_lig << " ";
     myfile << rep->idx_prt << " ";
+    myfile << s->energy.e[0] << " ";
+    myfile << s->energy.e[1] << " ";
+    myfile << s->energy.e[2] << " ";
+    myfile << s->energy.e[3] << " ";
+    myfile << s->energy.e[4] << " ";
+    myfile << s->energy.e[5] << " ";
+    myfile << s->energy.e[6] << " ";
+    myfile << s->energy.e[7] << " ";
+    myfile << s->energy.e[8] << " ";
+    myfile << s->energy.e[9];
 
-    for (int i = 0; i < 6; i++)
-      myfile << mv[i] << " ";
+    // for (int i = 0; i < 6; i++)
+    //   myfile << mv[i] << " ";
 
-    myfile << cms << " ";
-    myfile << rmsd << " ";
-    myfile << ener << " ";
+    // myfile << cms << " ";
+    // myfile << rmsd << " ";
+    // myfile << ener << " ";
     myfile << endl;
   } 
 
