@@ -95,11 +95,11 @@ post_mc(map < int, vector < LigRecordSingleStep > > & multi_reps_records,
   delete[]results;
 }
 
-void opt_ff(map < int, vector < LigRecordSingleStep > > & multi_reps_records,
-            Ligand* lig, int n_lig,
-            const Protein* const prt, 
-            const EnePara* const enepara, 
-            const McPara* const mcpara)
+vector<Medoid>
+cluster_trajectories(map < int, vector < LigRecordSingleStep > > & multi_reps_records,
+                     Ligand* lig, int n_lig,
+                     const Protein* const prt, 
+                     const EnePara* const enepara)
 {
   vector < LigRecordSingleStep > records;
 
@@ -152,6 +152,6 @@ void opt_ff(map < int, vector < LigRecordSingleStep > > & multi_reps_records,
                        make_move_iterator(medoids.end()));
   }
 
-  printStates(all_medoids, mcpara);
+  return all_medoids;
 }
 

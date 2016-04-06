@@ -161,7 +161,8 @@ int main(int argc, char **argv) {
 
     // post_mc(multi_reps_records, lig, prt, enepara, mcpara);
 #ifdef IS_OPT == 1
-    opt_ff(multi_reps_records, lig, complexsize.n_lig, prt, enepara, &mcpara);
+    auto medoids = cluster_trajectories(multi_reps_records, lig, complexsize.n_lig, prt, enepara);
+    printStates(medoids, inputfiles.trace_file.path);
 #endif // IS_OPT == 1
     // printStates(multi_reps_records[0], inputfiles.trace_file.path);
 

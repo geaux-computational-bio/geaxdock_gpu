@@ -97,7 +97,7 @@ void printStates(vector < LigRecordSingleStep > &steps, const McPara * mcpara);
 
 void printStates(vector < LigRecordSingleStep > &steps, std::string &path);
 
-void printStates(vector < Medoid > &medoids, const McPara * mcpara);
+void printStates(vector < Medoid > &medoids, const std::string& ofn);
 
 void printHeader(const McPara * mcpara);
 
