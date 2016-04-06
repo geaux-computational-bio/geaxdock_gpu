@@ -1716,6 +1716,10 @@ printStates(vector < LigRecordSingleStep > &steps, std::string &ofn)
 
     myfile << rep->idx_lig << " ";
     myfile << rep->idx_prt << " ";
+
+    for (int i = 0; i < 6; i++)
+      myfile << mv[i] << " ";
+
     myfile << s->energy.e[0] << " ";
     myfile << s->energy.e[1] << " ";
     myfile << s->energy.e[2] << " ";
@@ -1725,15 +1729,10 @@ printStates(vector < LigRecordSingleStep > &steps, std::string &ofn)
     myfile << s->energy.e[6] << " ";
     myfile << s->energy.e[7] << " ";
     myfile << s->energy.e[8] << " ";
-    myfile << s->energy.e[9];
+    myfile << s->energy.e[9] << " ";
 
-    // for (int i = 0; i < 6; i++)
-    //   myfile << mv[i] << " ";
-
-    // myfile << cms << " ";
-    // myfile << rmsd << " ";
-    // myfile << ener << " ";
-    myfile << endl;
+    myfile << cms << " ";
+    myfile << rmsd << endl;
   } 
 
   myfile.close();
