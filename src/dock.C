@@ -160,8 +160,10 @@ int main(int argc, char **argv) {
          multi_reps_records, complexsize);
 
     // post_mc(multi_reps_records, lig, prt, enepara, mcpara);
-    // opt_ff(multi_reps_records, lig, complexsize.n_lig, prt, enepara, mcpara);
-    printStates(multi_reps_records[0], inputfiles.trace_file.path);
+#ifdef IS_OPT == 1
+    opt_ff(multi_reps_records, lig, complexsize.n_lig, prt, enepara, &mcpara);
+#endif // IS_OPT == 1
+    // printStates(multi_reps_records[0], inputfiles.trace_file.path);
 
     PrintSummary (&inputfiles, &mcpara, temp, mclog, &complexsize);
 

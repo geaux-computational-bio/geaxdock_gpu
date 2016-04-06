@@ -112,7 +112,9 @@ void opt_ff(map < int, vector < LigRecordSingleStep > > & multi_reps_records,
     it->second.clear();
   }
 
-  sort(records.begin(), records.end(), cmsLargerThan);
+  // sort(records.begin(), records.end(), cmsLargerThan);
+  std::random_shuffle(records.begin(), records.end());
+
 
   // for (auto it = records.begin(); it != records.end(); ++it) {
   //   LigRecordSingleStep* s = &(*it);
@@ -120,7 +122,7 @@ void opt_ff(map < int, vector < LigRecordSingleStep > > & multi_reps_records,
   // }
   
   assert(records.size() > MINIMUM_REC);
-  size_t num_grp = 10;
+  size_t num_grp = 20;
   size_t total_samples = 5000;
   int num_cluster_each_grp = (int) (total_samples / num_grp);
   size_t num_samples_each_grp = MINIMUM_REC / num_grp;
