@@ -36,6 +36,10 @@ CombineEnergy_d (const int bidx, Energy * e)
     e->e[MAXWEI - 1] = etotal;
 #endif
 
+#ifdef IS_OPT == 1              // consider only vdw and dst energy
+    e->e[MAXWEI - 1] = e->e[0] + e->e[8];
+#endif // IS_OPT == 1
+
 
   // calculate the total energy using Bayes' formula
 #if IS_BAYE == 1

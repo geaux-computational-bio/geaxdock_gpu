@@ -380,6 +380,14 @@ CalcEnergy_d (const int bidx, Ligand * __restrict__ mylig, const Protein * __res
       e.e[i] = CUDA_LDG_D (enepara_dc->a_para[i]) * e.e[i] + CUDA_LDG_D (enepara_dc->b_para[i]);
   }
 
+  #if IS_LINEAR == 1
+  if (bidx == 0) {
+    // normalization
+    for (int i = 0; i < MAXWEI - 1; ++i)
+      e.e[i] = CUDA_LDG_D (enepara_dc->a_para[i]) * e.e[i] + CUDA_LDG_D (enepara_dc->b_para[i]);
+  }
+  #endif
+
 
   if (bidx == 0)
     mylig->energy_new = e;

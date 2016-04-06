@@ -24,7 +24,10 @@
 #define IS_CALCU_RMSD 1
 
 // calculate the total energy using linear combination
-#define IS_LINEAR 1
+#define IS_LINEAR 0
+
+// force field optimization
+#define IS_OPT 1
 
 // use bayesian force field
 #define IS_BAYE 0
