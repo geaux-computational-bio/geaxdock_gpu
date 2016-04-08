@@ -7,7 +7,6 @@
 
 #include "size.h"
 #include "dock.h"
-#include "run.h"
 #include "util.h"
 #include "toggle.h"
 #include "load.h"
@@ -40,7 +39,6 @@ main (int argc, char **argv)
   loadProtein (&inputfiles->prt_file, prt0);
   loadLHM (&inputfiles->lhm_file, psp0, kde0, mcs0);
   loadEnePara (&inputfiles->enepara_file, enepara0);
-  
 
   // sizes
   ComplexSize complexsize;
@@ -54,7 +52,7 @@ main (int argc, char **argv)
   complexsize.pos = inputfiles->lhm_file.pos;	// number of MCS positions
 
 
-  // data structure optimizations 
+  // data structure optimizations
   Ligand *lig = new Ligand[complexsize.n_rep];
   Protein *prt = new Protein[complexsize.n_prt];
   Psp *psp = new Psp;
@@ -104,7 +102,7 @@ main (int argc, char **argv)
 
     PlaceLigand(my_lig, mv_vec);
     list < string > new_sdf = replaceLigandCoords(&inputfiles->lig_file, my_lig);
-    
+
     string prefix = inputfiles->lig_file.conf_path;
     char c[10];
     sprintf(c, "%d", config_idx);
