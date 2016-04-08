@@ -112,8 +112,8 @@ cluster_trajectories(map < int, vector < LigRecordSingleStep > > & multi_reps_re
     it->second.clear();
   }
 
-  // sort(records.begin(), records.end(), cmsLargerThan);
-  std::random_shuffle(records.begin(), records.end());
+  sort(records.begin(), records.end(), cmsLargerThan);
+  // std::random_shuffle(records.begin(), records.end());
 
 
   // for (auto it = records.begin(); it != records.end(); ++it) {
