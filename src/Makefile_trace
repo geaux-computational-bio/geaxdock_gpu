@@ -166,6 +166,7 @@ cluster.o: $(SRCDIR)/cluster.c $(SRCDIR)/cluster.h
 
 install_trace: trace
 	@cp trace ~/bin
+	@echo "cp trace ~/bin"
 
 clean:
 	@(rm -f ${EXE} ${OBJ_CPU} ${OBJ_GPU} count *i *cubin* *.ptx *cudafe* *.fatbin* *.hash count count.o ../bin/dock)
