@@ -98,7 +98,7 @@ main (int argc, char **argv)
     for (int i = 0; i < 8; i++)
       my_conf[i] = conf.at(i);
 
-    int lig_conf = my_conf[1];
+    int lig_conf = my_conf[0];
     float *mv_vec = &my_conf[2];
     Ligand *my_lig = &lig[lig_conf];
 
