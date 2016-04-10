@@ -188,15 +188,29 @@ getLigEnsembleCoords (vector < string > sect ) {
 void 
 loadLigand (InputFiles * inputfiles, Ligand0 * lig)
 {
-  LigandFile * lig_file = &inputfiles->lig_file;
-  vector < vector < string > > sections = readLigandSections(lig_file->path);
+  try {
+    LigandFile * lig_file = &inputfiles->lig_file;
+    vector < vector < string > > sections = readLigandSections(lig_file->path);
 
-  // TODO for astex sdf file, only one compounds in one sdf file
-  vector < string > sect = sections.at(0);
-  lig_file->conf_total = loadOneLigand(sect, lig);
-  lig_file->lna = lig->lna;
+    // TODO for astex sdf file, only one compounds in one sdf file
+    vector < string > sect = sections.at(0);
+    lig_file->conf_total = loadOneLigand(sect, lig);
+    lig_file->lna = lig->lna;
+  } catch (std::exception &e) {
+    std::cerr << "Unhandled Exception in loading one ligand section: " << e.what()
+              << std::endl
+              << "GeauxDock will now exit" << std::endl;
+    exit (EXIT_FAILURE);
+  }
 
-  trimLigand (inputfiles, lig);
+  try {
+    trimLigand (inputfiles, lig);
+  } catch (std::exception &e) {
+    std::cerr << "Unhandled Exception in trim ligand: " << e.what()
+              << std::endl
+              << "GeauxDock will now exit" << std::endl;
+    exit (EXIT_FAILURE);
+  }
 }
 
 void
