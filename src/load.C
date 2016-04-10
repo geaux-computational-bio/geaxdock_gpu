@@ -133,31 +133,33 @@ read2D(TraceFile *trace_file)
   return matrix;
 }
 
-// string
-vector < float >
-getLigEnsembleRmsd (vector < string > sect) {
-  string rmsd_line;
-
+vector <float>
+getLigEnsembleRmsd(vector<string> sect) {
   int lnum = 0;
-  vector < string > :: iterator iter_sdf;
-  for (iter_sdf = sect.begin(); iter_sdf != sect.end(); iter_sdf++) {
-    string line = (*iter_sdf);
-    if (line.find("ENSEMBLE_RMSD") != string::npos)
-      rmsd_line = sect.at(lnum + 1);
+  std::vector<float> rmsds;
+
+  for (auto iter_sdf = sect.begin(); iter_sdf != sect.end(); ++iter_sdf) {
+    if (iter_sdf->find("ENSEMBLE_RMSD") != string::npos) {
+      while (true) {
+        string rmsd_line = sect.at(lnum + 1);
+        if (!isdigit(rmsd_line[0])) {
+          break;
+        }
+        else {
+          auto rmsd_strs = splitByWhiteSpace(rmsd_line);
+          for (auto rmsd_str = rmsd_strs.begin(); rmsd_str != rmsd_strs.end(); ++rmsd_str) {
+            rmsds.push_back(atof(rmsd_str->c_str()));
+          }
+        }
+        lnum += 1;
+      }
+    }
     lnum += 1;
-  }
-
-  vector < float > rmsds;
-
-  if (!rmsd_line.empty()) {
-    vector < string > rmsd_strs = splitByWhiteSpace(rmsd_line);
-    for (vector < string > :: iterator i = rmsd_strs.begin();
-         i != rmsd_strs.end(); i++)
-      rmsds.push_back(atof((*i).c_str()));
   }
 
   return rmsds;
 }
+
 
 vector < string >
 getLigEnsembleCoords (vector < string > sect ) {
