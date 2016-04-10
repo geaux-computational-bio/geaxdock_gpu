@@ -101,10 +101,42 @@ int main(int argc, char **argv) {
     Mcs0 *mcs0 = new Mcs0[MAXPOS];
     EnePara0 *enepara0 = new EnePara0;
 
-    loadLigand (&inputfiles, lig0);
-    loadProtein (&inputfiles.prt_file, prt0);
-    loadLHM (&inputfiles.lhm_file, psp0, kde0, mcs0);
-    loadEnePara (&inputfiles.enepara_file, enepara0);
+    try {
+      loadLigand (&inputfiles, lig0);
+    } catch (std::exception &e) {
+      std::cerr << "Unhandled Exception in loading ligand: " << e.what()
+                << std::endl
+                << "GeauxDock will now exit" << std::endl;
+      return ERROR_UNHANDLED_EXCEPTION;
+    }
+
+    try {
+      loadProtein (&inputfiles.prt_file, prt0);
+    } catch (std::exception &e) {
+      std::cerr << "Unhandled Exception in loading protein: " << e.what()
+                << std::endl
+                << "GeauxDock will now exit" << std::endl;
+      return ERROR_UNHANDLED_EXCEPTION;
+    }
+
+    try {
+      loadLHM (&inputfiles.lhm_file, psp0, kde0, mcs0);
+    } catch (std::exception &e) {
+      std::cerr << "Unhandled Exception in loading force field: " << e.what()
+                << std::endl
+                << "GeauxDock will now exit" << std::endl;
+      return ERROR_UNHANDLED_EXCEPTION;
+    }
+
+
+    try {
+      loadEnePara (&inputfiles.enepara_file, enepara0);
+    } catch (std::exception &e) {
+      std::cerr << "Unhandled Exception in loading energy parameters: " << e.what()
+                << std::endl
+                << "GeauxDock will now exit" << std::endl;
+      return ERROR_UNHANDLED_EXCEPTION;
+    }
 
     // sizes
     ComplexSize complexsize;
@@ -182,6 +214,7 @@ int main(int argc, char **argv) {
   }
   catch (std::exception & e) {
     std::cerr << "Unhandled Exception reached the top of main: " << e.what()
+              << std::endl
               << "GeauxDock will now exit" << std::endl;
     return ERROR_UNHANDLED_EXCEPTION;
   }
