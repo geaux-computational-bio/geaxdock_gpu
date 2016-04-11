@@ -1701,9 +1701,12 @@ void
 printStates(vector < LigRecordSingleStep > &steps, std::string &ofn)
 {
   ofstream myfile;
-  myfile.open(ofn);
+  myfile.open(ofn, std::ofstream::out);
   myfile << fixed;
   myfile << setprecision(4);
+
+  myfile << "lig prt ";
+  myfile << "vdw ele pmf psp hdb hpc kde lhm edst ener" << endl;
 
   vector < LigRecordSingleStep > :: iterator its;
   for (its = steps.begin(); its != steps.end(); its++) {
@@ -1735,6 +1738,7 @@ printStates(vector < LigRecordSingleStep > &steps, std::string &ofn)
     // myfile << ener << " ";
     myfile << endl;
   } 
+  myfile.flush();
 
   myfile.close();
 }
