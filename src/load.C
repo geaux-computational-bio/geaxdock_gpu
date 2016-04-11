@@ -1243,7 +1243,8 @@ void loadProtein(ProteinFile * prt_file, Protein0 * prt)
 						}
 					}
 				}
-			} else if ((*p1_i).substr(0, 6) == "ENDMDL") {
+			} else if ((*p1_i).substr(0, 6) == "ENDMDL" ||
+                 (*p1_i).substr(0, 3) == "TER" ) {
 				if (tn1 > 0.0) {
 					tx1 /= tn1;
 					ty1 /= tn1;

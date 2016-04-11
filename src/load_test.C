@@ -211,3 +211,30 @@ TEST (Load_Ligands, 1e66)
   delete[]lig0;
 
 }
+
+
+TEST (Load_Ligands, 10gsA00)
+{
+
+  InputFiles inputfiles;
+  inputfiles.lig_file.path = "../data/10gs/10gs_ligand.sdf";
+  inputfiles.lhm_file.path = "../data/10gs/10gsA00.ff";
+
+  Ligand0 *lig0 = new Ligand0[MAXEN2];
+  loadLigand (&inputfiles, lig0);
+  delete[]lig0;
+}
+
+
+TEST (Load_Protein, 10gsA00)
+{
+  InputFiles inputfiles;
+  inputfiles.prt_file.path = "../data/10gs/10gsA00.pdb";
+
+  Protein0 *prt0 = new Protein0[MAXEN1];
+
+  loadProtein (&inputfiles.prt_file, prt0);
+  EXPECT_EQ(1, inputfiles.prt_file.conf_total);
+
+  delete[]prt0;
+}
