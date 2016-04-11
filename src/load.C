@@ -410,7 +410,8 @@ writeLigAtomProperty (vector < string > sect, Ligand0 * mylig)
       }
     }
 
-    else if (lines[lnum].find("OB_ATOMIC_CHARGES") != string::npos) {
+    else if (lines[lnum].find("OB_ATOMIC_CHARGES") != string::npos ||
+             lines[lnum].find("OB_CHARGES") != string::npos) {
       int tmp4 = 0;
 
       istringstream tmp5(lines[lnum + 1]);
