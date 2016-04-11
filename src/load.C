@@ -1165,7 +1165,7 @@ void loadProtein(ProteinFile *prt_file, Protein0 *prt) {
 
           myprt = &prt[prt_conf]; // address of the protein with conformation
                                   // number prt_conf
-          myprt->x[p2_i] = tx1; // set the x,y,z coords
+          myprt->x[p2_i] = tx1;   // set the x,y,z coords
           myprt->y[p2_i] = ty1;
           myprt->z[p2_i] = tz1;
 
@@ -1342,6 +1342,15 @@ void loadPocketCenter(string lhm_path, float *center) {
   }
 }
 
+bool is_float(const std::string &myString) {
+  std::istringstream iss(myString);
+  float f;
+  iss >> noskipws >> f; // noskipws considers leading whitespace invalid
+  // Check the entire string was consumed and if either failbit or badbit is set
+  return iss.eof() && !iss.fail();
+
+}
+
 void loadLHM(LhmFile *lhm_file, Psp0 *psp, Kde0 *kde, Mcs0 *mcs) {
 
   for (int i = 0; i < MAXPOS; ++i) {
@@ -1422,7 +1431,7 @@ void loadLHM(LhmFile *lhm_file, Psp0 *psp, Kde0 *kde, Mcs0 *mcs) {
         while (dat3)
           dat3 >> dat1[dat2++];
 
-        if (dat1[1] == ligand_id) {
+        if (dat1[1] == ligand_id && is_float(dat1[2])) {
           mymcs->tcc = atof(dat1[2].c_str());
           mymcs->total = atoi(dat1[3].c_str());
 
@@ -1437,6 +1446,18 @@ void loadLHM(LhmFile *lhm_file, Psp0 *psp, Kde0 *kde, Mcs0 *mcs) {
 
           //        if (ligand_mcs.size () < (int) MAXPOS)
           //          ligand_mcs.push_back (tmp_mcs);
+        } else {
+          mymcs->tcc = atof(dat1[3].c_str());
+          mymcs->total = atoi(dat1[4].c_str());
+
+          for (int ia = 0; ia < mymcs->total; ia++) {
+            mymcs->x[atoi(dat1[ia * 4 + 5].c_str())] =
+                atof(dat1[ia * 4 + 6].c_str());
+            mymcs->y[atoi(dat1[ia * 4 + 5].c_str())] =
+                atof(dat1[ia * 4 + 7].c_str());
+            mymcs->z[atoi(dat1[ia * 4 + 5].c_str())] =
+                atof(dat1[ia * 4 + 8].c_str());
+          }
         }
         *mcs_ip += 1;
         num_mcs_conf = max(num_mcs_conf, *mcs_ip);
