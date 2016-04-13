@@ -532,7 +532,8 @@ void loadLigand_bk(LigandFile *lig_file, Ligand0 *lig) {
         if (tmp6.length() > 0)
           tmp3[tmp4++] = getLigCode(tmp6);
       }
-    } else if (llib1[i1].find("OB_ATOMIC_CHARGES") != string::npos) {
+    } else if (llib1[i1].find("OB_ATOMIC_CHARGES") != string::npos ||
+               llib1[i1].find("OB_CHARGES") != string::npos) {
       int tmp4 = 0;
 
       istringstream tmp5(llib1[i1 + 1]);
