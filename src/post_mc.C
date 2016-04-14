@@ -5,16 +5,15 @@
 #include <climits>
 #include <cassert>
 
-
 #include "dock.h"
 #include "util.h"
 #include "post_mc.h"
 
 template <class Key, class Value>
-static
-unsigned long mapSize(const std::map<Key,Value> &map){
+static unsigned long mapSize(const std::map<Key, Value> &map) {
   unsigned long size = sizeof(map);
-  for(typename std::map<Key,Value>::const_iterator it = map.begin(); it != map.end(); ++it){
+  for (typename std::map<Key, Value>::const_iterator it = map.begin();
+       it != map.end(); ++it) {
     size += it->first.size();
     size += it->second.size();
   }
@@ -22,9 +21,7 @@ unsigned long mapSize(const std::map<Key,Value> &map){
 }
 
 template <class Value>
-static
-unsigned long vecSize(const std::vector<Value> &vec)
-{
+static unsigned long vecSize(const std::vector<Value> &vec) {
   unsigned long size = sizeof(vec);
   for (auto it = vec.begin(); it != vec.end(); ++it) {
     size += sizeof(*it);
@@ -32,81 +29,86 @@ unsigned long vecSize(const std::vector<Value> &vec)
   return size;
 }
 
-
 template <class Key, class Value>
-static
-unsigned long mapSize(const std::map<Key, std::vector<Value>> & map)
-{
+static unsigned long mapSize(const std::map<Key, std::vector<Value> > &map) {
   unsigned long size = sizeof(map);
-  for(auto it = map.begin(); it != map.end(); ++it)
+  for (auto it = map.begin(); it != map.end(); ++it)
     size += vecSize(it->second);
   return size;
 }
 
+std::vector<Medoid>
+post_mc(map<int, vector<LigRecordSingleStep> > multi_reps_records, Ligand *lig,
+        const Protein *const prt, const EnePara *const enepara,
+        const McPara *const mcpara) {
+  // putchar ('\n');
+  // printf
+  // ("================================================================================\n");
+  // printf ("initial energy state\n");
+  // printf
+  // ("================================================================================\n");
+  // printf ("rep step vdw ele pmf psp hdb hpc kde lhm dst total\n");
+  // printf ("0 0");
+  // LigRecordSingleStep step = multi_reps_records[0][0];
+  // for (int i = 0; i < MAXWEI; i++)
+  //   printf(" %.3f", step.energy.e[i]);
+  // putchar ('\n');
 
-void 
-post_mc(map < int, vector < LigRecordSingleStep > > & multi_reps_records,
-        Ligand* lig, 
-        const Protein* const prt, 
-        const EnePara* const enepara, 
-        const McPara* const mcpara)
-{
-  putchar ('\n');
-  printf ("================================================================================\n");
-  printf ("initial energy state\n");
-  printf ("================================================================================\n");
-  printf ("rep step vdw ele pmf psp hdb hpc kde lhm dst total\n");
-  printf ("0 0");
-  LigRecordSingleStep step = multi_reps_records[0][0];
-  for (int i = 0; i < MAXWEI; i++)
-    printf(" %.3f", step.energy.e[i]);
-  putchar ('\n');
-
-  int total_results = multi_reps_records.size();
-  SingleRepResult * results = new SingleRepResult[total_results];
+  // int total_results = multi_reps_records.size();
+  // SingleRepResult * results = new SingleRepResult[total_results];
 
   /* print traces */
-  if (!(strlen(mcpara->csv_path) == 0)) {
-    printHeader(mcpara);
-    map < int, vector < LigRecordSingleStep > > :: iterator itr;
-    for (itr = multi_reps_records.begin(); itr != multi_reps_records.end(); itr++)
-      printStates(itr->second, mcpara);
+  // if (!(strlen(mcpara->csv_path) == 0)) {
+  //   printHeader(mcpara);
+  //   map < int, vector < LigRecordSingleStep > > :: iterator itr;
+  //   for (itr = multi_reps_records.begin(); itr != multi_reps_records.end();
+  // itr++)
+  //     printStates(itr->second, mcpara);
+  // }
+
+  std::vector<LigRecordSingleStep> records;
+  for (auto it = multi_reps_records.begin(); it != multi_reps_records.end(); ++it) {
+    records.insert(records.end(),
+                   it->second.begin(),
+                   it->second.end());
   }
 
-  
   /* clustering */
-  
+
   // string clustering_method = "k";
   // string clustering_method = "a";
   // string clustering_method = "c";
   // vector < Medoid > medoids;
-  
-  // for(size_t i = 0; i < multi_reps_records.size(); ++i) {
-  //   medoids = clusterOneRepResults(multi_reps_records[i],
-  //                                  clustering_method, lig, prt, enepara);
-  //   // if (!(strlen(mcpara->csv_path) == 0)) {
-  //   //   printStates(medoids, mcpara);
-  //   // }
-  // }
 
+  std::vector<LigRecordSingleStep> first_clusted;
+  for (size_t i = 0; i < multi_reps_records.size(); ++i) {
+    // cluster within each replica using kmeans
+    auto medoids = clusterByKmeans(multi_reps_records[i], 50);
+
+    for (auto it = medoids.begin(); it != medoids.end(); ++it) {
+      first_clusted.push_back(it->step);
+    }
+    medoids.clear();
+  }
+
+  auto medoids = clusterByKmeans(first_clusted, 500);
+
+  return medoids;
 
   // processOneReplica(multi_reps_records[0], &results[0]);
 
-  delete[]results;
+  // delete[]results;
 }
 
-void opt_ff(map < int, vector < LigRecordSingleStep > > & multi_reps_records,
-            Ligand* lig, int n_lig,
-            const Protein* const prt, 
-            const EnePara* const enepara, 
-            const McPara* const mcpara)
-{
-  vector < LigRecordSingleStep > records;
+void opt_ff(map<int, vector<LigRecordSingleStep> > &multi_reps_records,
+            Ligand *lig, int n_lig, const Protein *const prt,
+            const EnePara *const enepara, const McPara *const mcpara) {
+  vector<LigRecordSingleStep> records;
 
-  for (auto it = multi_reps_records.begin(); it != multi_reps_records.end(); ++it) {
+  for (auto it = multi_reps_records.begin(); it != multi_reps_records.end();
+       ++it) {
 
-    records.insert(records.end(), 
-                   make_move_iterator(it->second.begin()),
+    records.insert(records.end(), make_move_iterator(it->second.begin()),
                    make_move_iterator(it->second.end()));
 
     it->second.clear();
@@ -118,38 +120,41 @@ void opt_ff(map < int, vector < LigRecordSingleStep > > & multi_reps_records,
   //   LigRecordSingleStep* s = &(*it);
   //   cout << getCMS(s) << endl;
   // }
-  
+
   assert(records.size() > MINIMUM_REC);
   size_t num_grp = 10;
   size_t total_samples = 5000;
-  int num_cluster_each_grp = (int) (total_samples / num_grp);
+  int num_cluster_each_grp = (int)(total_samples / num_grp);
   size_t num_samples_each_grp = MINIMUM_REC / num_grp;
-  
-  cout << "================================================================================" << endl;
+
+  cout << "===================================================================="
+          "============" << endl;
   cout << "clustering" << endl;
-  cout << "================================================================================" << endl;
+  cout << "===================================================================="
+          "============" << endl;
   cout << "# samples\t\t\t" << MINIMUM_REC << endl;
   cout << "# groups\t\t\t" << num_grp << endl;
   cout << "# samples each group\t\t" << num_samples_each_grp << endl;
   cout << "# cluster each group\t\t" << num_cluster_each_grp << endl;
-  cout << "clustering ratio\t\t" << (float) num_samples_each_grp / num_cluster_each_grp << endl;
+  cout << "clustering ratio\t\t"
+       << (float) num_samples_each_grp / num_cluster_each_grp << endl;
 
-  vector < Medoid > all_medoids;
-  
+  vector<Medoid> all_medoids;
+
   for (size_t grp_idx = 0; grp_idx < num_grp; ++grp_idx) {
     cout << "clustering group\t\t" << grp_idx << endl;
-    vector<LigRecordSingleStep> steps(records.begin() + grp_idx * num_samples_each_grp, 
-                                      records.begin() + (grp_idx + 1) * num_samples_each_grp);
+    vector<LigRecordSingleStep> steps(
+        records.begin() + grp_idx * num_samples_each_grp,
+        records.begin() + (grp_idx + 1) * num_samples_each_grp);
     assert(steps.size() > 0);
     assert(steps.size() < INT_MAX);
 
-    vector < Medoid > medoids = clusterCmsByAveLinkage(steps, num_cluster_each_grp, n_lig, lig, prt, enepara);
+    vector<Medoid> medoids = clusterCmsByAveLinkage(steps, num_cluster_each_grp,
+                                                    n_lig, lig, prt, enepara);
 
-    all_medoids.insert(all_medoids.end(),
-                       make_move_iterator(medoids.begin()),
+    all_medoids.insert(all_medoids.end(), make_move_iterator(medoids.begin()),
                        make_move_iterator(medoids.end()));
   }
 
   printStates(all_medoids, mcpara);
 }
-

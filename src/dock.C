@@ -191,10 +191,15 @@ int main(int argc, char **argv) {
     Run (lig, prt, psp, kde, mcs, enepara, temp, replica, &mcpara, mclog,
          multi_reps_records, complexsize);
 
-    // post_mc(multi_reps_records, lig, prt, enepara, mcpara);
+    auto medoids = post_mc(multi_reps_records, lig, prt, enepara, &mcpara);
+    std::vector<LigRecordSingleStep> medoids_steps;
+    for (auto it = medoids.begin(); it != medoids.end(); ++it) {
+      medoids_steps.push_back(it->step);
+    }
     // opt_ff(multi_reps_records, lig, complexsize.n_lig, prt, enepara, mcpara);
     // printf ("0 0 0.643 -0.037 -0.208 -0.184 0.852 -0.888 0.052 0.174 -1.000 0.774 Ref result\n");
-    printStates(multi_reps_records[0], inputfiles.trace_file.path);
+    // printStates(multi_reps_records[0], inputfiles.trace_file.path);
+    printStates(medoids_steps, inputfiles.trace_file.path);
 
     PrintSummary (&inputfiles, &mcpara, temp, mclog, &complexsize);
 

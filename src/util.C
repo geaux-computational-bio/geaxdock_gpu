@@ -254,13 +254,6 @@ ParseArguments (int argc, char **argv, McPara * mcpara, ExchgPara * exchgpara,
       strcpy(mcpara->hdf_path, hdf_path.c_str());
     }
 
-    // output csv file
-    if (!strcmp (argv[i], "-csv") && i < argc) {
-      string path = argv[i + 1];
-      strcpy(mcpara->csv_path, path.c_str());
-    }
-    
-    
     // trace file
     if (!strcmp (argv[i], "-tr") && i < argc) {
       inputfiles->trace_file.path = argv[i + 1];
@@ -1706,6 +1699,7 @@ printStates(vector < LigRecordSingleStep > &steps, std::string &ofn)
   myfile << setprecision(4);
 
   myfile << "lig prt ";
+  myfile << "cms rmsd ";
   myfile << "vdw ele pmf psp hdb hpc kde lhm edst ener" << endl;
 
   vector < LigRecordSingleStep > :: iterator its;
@@ -1719,6 +1713,14 @@ printStates(vector < LigRecordSingleStep > &steps, std::string &ofn)
 
     myfile << rep->idx_lig << " ";
     myfile << rep->idx_prt << " ";
+
+    // for (int i = 0; i < 6; i++)
+    //   myfile << mv[i] << " ";
+
+    myfile << cms << " ";
+    myfile << rmsd << " ";
+    // myfile << ener << " ";
+
     myfile << s->energy.e[0] << " ";
     myfile << s->energy.e[1] << " ";
     myfile << s->energy.e[2] << " ";
@@ -1730,12 +1732,6 @@ printStates(vector < LigRecordSingleStep > &steps, std::string &ofn)
     myfile << s->energy.e[8] << " ";
     myfile << s->energy.e[9];
 
-    // for (int i = 0; i < 6; i++)
-    //   myfile << mv[i] << " ";
-
-    // myfile << cms << " ";
-    // myfile << rmsd << " ";
-    // myfile << ener << " ";
     myfile << endl;
   } 
   myfile.flush();
@@ -2010,9 +2006,9 @@ clusterEnerByAveLinkage(vector < LigRecordSingleStep > &steps)
 }
 
 vector < Medoid >
-clusterByKmeans(vector < LigRecordSingleStep > &steps)
+clusterByKmeans(vector < LigRecordSingleStep > &steps, int numClusters)
 {
-  int     numClusters, numCoords, numObjs;
+  int     numCoords, numObjs;
   int    *membership;    /* [numObjs] */
   float **objects;       /* [numObjs][numCoords] data objects */
   float **clusters;      /* [numClusters][numCoords] cluster center */
@@ -2043,10 +2039,6 @@ clusterByKmeans(vector < LigRecordSingleStep > &steps)
   
   /* some default values */
   threshold        = 0.001;
-  numClusters      = 0;
-
-  // user defined
-  numClusters = 20;
 
   /* membership: the cluster id for each data object */
   membership = (int*) malloc(numObjs * sizeof(int));
@@ -2096,14 +2088,8 @@ vector < Medoid >
 clusterOneRepResults(vector < LigRecordSingleStep > &steps, string clustering_method, int n_lig,
                      Ligand* lig, const Protein* const prt, const EnePara* const enepara)
 {
-  if ( clustering_method.compare("k") == 0 )
+  if ( clustering_method.compare("a") == 0)
     {
-      cout << "using k-means to cluster the trajectories" << endl;
-      return clusterByKmeans(steps);
-    }
-  else if ( clustering_method.compare("a") == 0)
-    {
-      cout << "using average_linkage to cluster the trajectories" << endl;
       return clusterEnerByAveLinkage(steps);
     }
   else if ( clustering_method.compare("c") == 0)

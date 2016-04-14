@@ -10,8 +10,8 @@ CUDAKERNELSYNC (ResetCounter_d, dim_grid, dim_block, rep_begin[i], rep_end[i]);
 CUDAKERNELSYNC (MonteCarlo_Init_d, dim_grid, dim_block, rep_begin[i], rep_end[i]);
 
 int s1 = 0;
-//int est_tot_rec = mcpara->steps_per_dump * complexsize.n_rep;
-int est_tot_rec = MINIMUM_REC;
+int est_tot_rec = mcpara->steps_per_dump * complexsize.n_rep;
+// int est_tot_rec = MINIMUM_REC;
 
 while(CountValidRecords(multi_reps_records) < est_tot_rec) {
 

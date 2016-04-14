@@ -119,7 +119,7 @@
 /* #define MINIMUM_REC 100000 */
 
 #define MINIMUM_REC 80000
-#define STEPS_PER_DUMP 10000
+#define STEPS_PER_DUMP 2000
 
 
 
