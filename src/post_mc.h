@@ -14,6 +14,12 @@ std::vector<Medoid>
             Ligand *lig, const Protein *const prt, const EnePara *const enepara,
             const McPara *const mcpara);
 
+vector<Medoid>
+cluster_trajectories(map < int, vector < LigRecordSingleStep > > & multi_reps_records,
+                     Ligand* lig, int n_lig,
+                     const Protein* const prt, 
+                     const EnePara* const enepara);
+
 void opt_ff(map<int, vector<LigRecordSingleStep> > &multi_reps_records,
             Ligand *lig, int n_lig, const Protein *const prt,
             const EnePara *const enepara, const McPara *const mcpara);

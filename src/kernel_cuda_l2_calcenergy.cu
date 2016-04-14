@@ -341,10 +341,12 @@ __device__ void CalcEnergy_d(const int bidx, Ligand *__restrict__ mylig,
     e.e[7] = logf(elhm[0] / pos_dc); // 7 - lhm (MCS)
     e.e[8] = edst;                   // 8 - dst (DST)
 
+#if IS_OPT != 1
     // normalization
     for (int i = 0; i < MAXWEI - 1; ++i)
       e.e[i] = CUDA_LDG_D(enepara_dc->a_para[i]) * e.e[i] +
-               CUDA_LDG_D(enepara_dc->b_para[i]);
+        CUDA_LDG_D(enepara_dc->b_para[i]);
+#endif
   }
 
   if (bidx == 0)

@@ -25,8 +25,8 @@ CombineEnergy_d (const int bidx, Energy * e)
 {
   if (bidx == 0) {
 
-  // calculate the total energy using linear combination
-#if IS_LINEAR == 1
+#if IS_OPT != 1
+    // calculate the total energy using linear combination
     float etotal = 0.0f;
     for (int i = 0; i < MAXWEI - 1; ++i) {
       float * ener = &e->e[i];
@@ -36,9 +36,13 @@ CombineEnergy_d (const int bidx, Energy * e)
     e->e[MAXWEI - 1] = etotal;
 #endif
 
+#if IS_OPT == 1              // consider only vdw and dst energy
+    e->e[MAXWEI - 1] = e->e[0] + e->e[8];
+#endif // IS_OPT == 1
 
-  // calculate the total energy using Bayes' formula
+
 #if IS_BAYE == 1
+    // calculate the total energy using Bayes' formula
 #include "distribution.h"
     float eh[MAXWEI], el[MAXWEI]; //conditional prob belonging to high decoy
 

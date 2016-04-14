@@ -196,10 +196,23 @@ int main(int argc, char **argv) {
     for (auto it = medoids.begin(); it != medoids.end(); ++it) {
       medoids_steps.push_back(it->step);
     }
-    // opt_ff(multi_reps_records, lig, complexsize.n_lig, prt, enepara, mcpara);
+
+#if IS_OPT != 1
+    printStates(medoids_steps, inputfiles.trace_file.path);
+#endif
+
     // printf ("0 0 0.643 -0.037 -0.208 -0.184 0.852 -0.888 0.052 0.174 -1.000 0.774 Ref result\n");
     // printStates(multi_reps_records[0], inputfiles.trace_file.path);
-    printStates(medoids_steps, inputfiles.trace_file.path);
+
+#if IS_OPT == 1
+    auto opt_medoids = cluster_trajectories(multi_reps_records, lig, complexsize.n_lig, prt, enepara);
+
+    std::vector<LigRecordSingleStep> opt_medoids_steps;
+    for (auto it = opt_medoids.begin(); it != opt_medoids.end(); ++it) {
+      opt_medoids_steps.push_back(it->step);
+    }
+    printStates(opt_medoids_steps, inputfiles.trace_file.path);
+#endif // IS_OPT == 1
 
     PrintSummary (&inputfiles, &mcpara, temp, mclog, &complexsize);
 

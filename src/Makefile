@@ -119,8 +119,8 @@ LIBPATH += -L${BOOST_BASE}/lib
 
 HOSTFLAGS :=
 HEADPATH := -I./modules -I./modules/nvidia_gpucomputingsdk_4.2.9_c_common_inc -I${BOOST_BASE}/include
-# OPTFLAGS := -O3
-OPTFLAGS := -O0
+OPTFLAGS := -O3
+# OPTFLAGS := -O0
 LINKFLAGS := -lcudart -lhdf5 -lm -lboost_program_options -lboost_filesystem
 
 

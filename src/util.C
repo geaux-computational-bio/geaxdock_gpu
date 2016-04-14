@@ -1461,15 +1461,15 @@ void printHeader(const McPara *mcpara) {
   myfile.close();
 }
 
-void printStates(vector<Medoid> &medoids, const McPara *mcpara) {
+void printStates(vector<Medoid> &medoids, const std::string &ofn) {
   ofstream myfile;
-  myfile.open(mcpara->csv_path);
+  myfile.open(ofn);
   myfile << "lig prt t0 t1 t2 r0 r1 r2 ";
   myfile << "vdw ele pmf psp hdb hpc kde lhm edst ";
   myfile << "cms rmsd ener cluster_sz" << endl;
   myfile.close();
 
-  myfile.open(mcpara->csv_path, ios::app);
+  myfile.open(ofn, ios::app);
   myfile << fixed;
   // myfile << setprecision(4);
 
