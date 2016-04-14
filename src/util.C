@@ -1510,6 +1510,7 @@ void printStates(vector<LigRecordSingleStep> &steps, std::string &ofn) {
 
   myfile << "lig prt ";
   myfile << "cms rmsd ";
+  myfile << "mv1 mv2 mv3 mv4 mv5 mv6 ";
   myfile << "vdw ele pmf psp hdb hpc kde lhm edst ener" << endl;
 
   vector<LigRecordSingleStep>::iterator its;
@@ -1524,12 +1525,11 @@ void printStates(vector<LigRecordSingleStep> &steps, std::string &ofn) {
     myfile << rep->idx_lig << " ";
     myfile << rep->idx_prt << " ";
 
-    // for (int i = 0; i < 6; i++)
-    //   myfile << mv[i] << " ";
-
     myfile << cms << " ";
     myfile << rmsd << " ";
     // myfile << ener << " ";
+    for (int i = 0; i < 6; i++)
+      myfile << mv[i] << " ";
 
     myfile << s->energy.e[0] << " ";
     myfile << s->energy.e[1] << " ";
