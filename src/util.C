@@ -19,7 +19,6 @@
 
 #include <omp.h>
 
-
 #include "size.h"
 #include "toggle.h"
 #include "dock.h"
@@ -28,7 +27,6 @@
 #include "stats.h"
 #include "kgs.h"
 
-
 extern "C" {
 #include "kmeans.h"
 }
@@ -36,43 +34,37 @@ extern "C" {
 #include <yeah/quicksort.h>
 #include <yeah/mkdir.h>
 
-
-
-
 using namespace std;
 
 /*----< euclid_dist_2() >----------------------------------------------------*/
 /* square of Euclid distance between two multi-dimensional points            */
-__inline static
-float euclid_dist_2(int    numdims,  /* no. dimensions */
-                    float *coord1,   /* [numdims] */
-                    float *coord2)   /* [numdims] */
-{
-    int i;
-    float ans=0.0;
+__inline static float euclid_dist_2(int numdims,   /* no. dimensions */
+                                    float *coord1, /* [numdims] */
+                                    float *coord2) /* [numdims] */
+    {
+  int i;
+  float ans = 0.0;
 
-    for (i=0; i<numdims; i++)
-        ans += (coord1[i]-coord2[i]) * (coord1[i]-coord2[i]);
+  for (i = 0; i < numdims; i++)
+    ans += (coord1[i] - coord2[i]) * (coord1[i] - coord2[i]);
 
-    return(ans);
+  return (ans);
 }
 
-
-double**
-AllocateMatrix(int nrows, int ncolumns)
-{
+double **AllocateMatrix(int nrows, int ncolumns) {
   int i, j;
-  double** matrix;
+  double **matrix;
 
-  if (nrows < 1) return NULL;
+  if (nrows < 1)
+    return NULL;
 
-  matrix = (double**) malloc(nrows * sizeof(double*));
+  matrix = (double **)malloc(nrows * sizeof(double *));
   assert(matrix != NULL);
-  matrix[0] = (double*) malloc(nrows * ncolumns * sizeof(double));
+  matrix[0] = (double *)malloc(nrows * ncolumns * sizeof(double));
   assert(matrix[0] != NULL);
 
   for (i = 1; i < nrows; i++)
-    matrix[i] = matrix[i-1] + ncolumns;
+    matrix[i] = matrix[i - 1] + ncolumns;
 
   for (i = 0; i < nrows; ++i)
     for (j = 0; j < ncolumns; ++j)
@@ -81,61 +73,44 @@ AllocateMatrix(int nrows, int ncolumns)
   return matrix;
 }
 
-void
-FreeMatrix(double** matrix)
-{
+void FreeMatrix(double **matrix) {
   free(matrix[0]);
   free(matrix);
 }
 
-void
-Usage (char *bin)
-{
-  fprintf (stderr, "usage: %s [options]\n", bin);
-  exit (1);
+void Usage(char *bin) {
+  fprintf(stderr, "usage: %s [options]\n", bin);
+  exit(1);
 }
 
-
-
-
-
-
-void
-Banner ()
-{
+void Banner() {
   cout << "------------------------------------------------------------" << endl
        << "                         GeauxDock                          " << endl
-       << "                        version 0.1                         " << endl << endl
-       << "   GPU-accelerated mixed-resolution ligand docking using    " << endl
-       << "                Replica Exchange Monte Carlo                " << endl
-       << "------------------------------------------------------------" << endl << endl;
+       << "                        version 0.1                         " << endl
+       << endl << "   GPU-accelerated mixed-resolution ligand docking using    "
+       << endl << "                Replica Exchange Monte Carlo                "
+       << endl << "------------------------------------------------------------"
+       << endl << endl;
   cout << "GeauxDock ... begin" << endl;
 }
 
-
-void
-TraceBanner ()
-{
+void TraceBanner() {
   cout << "------------------------------------------------------------" << endl
        << "                         GeauxDock                          " << endl
-       << "                        version 0.1                         " << endl << endl
-       << "         Generate ligand conformation in sdf format     " << endl
-       << "                    given the move vector" << endl
-       << "------------------------------------------------------------" << endl << endl;
+       << "                        version 0.1                         " << endl
+       << endl << "         Generate ligand conformation in sdf format     "
+       << endl << "                    given the move vector" << endl
+       << "------------------------------------------------------------" << endl
+       << endl;
 }
 
-
-
-
-void
-ParseArguments (int argc, char **argv, McPara * mcpara, ExchgPara * exchgpara,
-		InputFiles * inputfiles)
-{
+void ParseArguments(int argc, char **argv, McPara *mcpara, ExchgPara *exchgpara,
+                    InputFiles *inputfiles) {
 
   ////////////////////////////////////////////////////////////////////////////////
   // default settings
-  float ts = 0.001f;		// translational scale
-  float rs = 3.1415f;		// rotational scale
+  float ts = 0.001f;  // translational scale
+  float rs = 3.1415f; // rotational scale
 
   exchgpara->floor_temp = 0.3f;
   exchgpara->ceiling_temp = 0.3f;
@@ -144,20 +119,18 @@ ParseArguments (int argc, char **argv, McPara * mcpara, ExchgPara * exchgpara,
   mcpara->steps_per_dump = STEPS_PER_DUMP;
   mcpara->steps_per_exchange = 5;
 
-
 #if IS_BAYE == 1
   inputfiles->norpara_file.path_a = "baye_nor_a";
   inputfiles->norpara_file.path_b = "baye_nor_b";
 #elif IS_BAYE == 0
   inputfiles->norpara_file.path_a = "08_nor_a";
   inputfiles->norpara_file.path_b = "08_nor_b";
-  // inputfiles->norpara_file.path_a = "08_nor_a";
-  // inputfiles->norpara_file.path_b = "08_nor_b";
+// inputfiles->norpara_file.path_a = "08_nor_a";
+// inputfiles->norpara_file.path_b = "08_nor_b";
 #endif
 
   inputfiles->enepara_file.path = "gpudocksm.ff";
   inputfiles->lig_file.molid = "MOLID";
-
 
   bool protein_on = false;
   bool compounds_on = false;
@@ -167,126 +140,117 @@ ParseArguments (int argc, char **argv, McPara * mcpara, ExchgPara * exchgpara,
 
     // complex files
 
-    if (!strcmp (argv[i], "-id") && i < argc) {
+    if (!strcmp(argv[i], "-id") && i < argc) {
       inputfiles->lhm_file.ligand_id = argv[i + 1];
     }
-	// *.pdb
-    if (!strcmp (argv[i], "-p") && i < argc) {
+    // *.pdb
+    if (!strcmp(argv[i], "-p") && i < argc) {
       inputfiles->prt_file.path = argv[i + 1];
       protein_on = true;
     }
-	// *.sdf
-    if (!strcmp (argv[i], "-l") && i < argc) {
+    // *.sdf
+    if (!strcmp(argv[i], "-l") && i < argc) {
       inputfiles->lig_file.path = argv[i + 1];
       compounds_on = true;
     }
-	// *.ff
-    if (!strcmp (argv[i], "-s") && i < argc) {
+    // *.ff
+    if (!strcmp(argv[i], "-s") && i < argc) {
       inputfiles->lhm_file.path = argv[i + 1];
       lhm_one = true;
     }
 
+    // parameter files
 
-
-	// parameter files
-
-    if (!strcmp (argv[i], "-opt") && i < argc) {
+    if (!strcmp(argv[i], "-opt") && i < argc) {
       inputfiles->weight_file.path = argv[i + 1];
     }
-    if (!strcmp (argv[i], "-na") && i < argc) {
+    if (!strcmp(argv[i], "-na") && i < argc) {
       inputfiles->norpara_file.path_a = argv[i + 1];
     }
-    if (!strcmp (argv[i], "-nb") && i < argc) {
+    if (!strcmp(argv[i], "-nb") && i < argc) {
       inputfiles->norpara_file.path_b = argv[i + 1];
     }
-    if (!strcmp (argv[i], "-para") && i < argc) {
+    if (!strcmp(argv[i], "-para") && i < argc) {
       inputfiles->enepara_file.path = argv[i + 1];
     }
 
-
-
     // MC steps
 
-    if (!strcmp (argv[i], "-ns") && i < argc) {
-      mcpara->steps_total = atoi (argv[i + 1]);
+    if (!strcmp(argv[i], "-ns") && i < argc) {
+      mcpara->steps_total = atoi(argv[i + 1]);
     }
 
-    if (!strcmp (argv[i], "-nc") && i < argc) {
-      mcpara->steps_per_exchange = atoi (argv[i + 1]);
+    if (!strcmp(argv[i], "-nc") && i < argc) {
+      mcpara->steps_per_exchange = atoi(argv[i + 1]);
     }
-
-
-
 
     // temperatures
 
-    if (!strcmp (argv[i], "-floor_temp") && i < argc) {
-      exchgpara->floor_temp = atof (argv[i + 1]);
+    if (!strcmp(argv[i], "-floor_temp") && i < argc) {
+      exchgpara->floor_temp = atof(argv[i + 1]);
     }
-    if (!strcmp (argv[i], "-ceiling_temp") && i < argc) {
-      exchgpara->ceiling_temp = atof (argv[i + 1]);
+    if (!strcmp(argv[i], "-ceiling_temp") && i < argc) {
+      exchgpara->ceiling_temp = atof(argv[i + 1]);
     }
-    if (!strcmp (argv[i], "-nt") && i < argc) {
-      int num_temp = atoi (argv[i + 1]);
+    if (!strcmp(argv[i], "-nt") && i < argc) {
+      int num_temp = atoi(argv[i + 1]);
       if (num_temp == 0) {
-	cout << "number of temperature cannot set to be zero" << endl;
-	cout << "docking exiting ..." << endl;
-	exit (1);
-      }
-      else if (num_temp == 1) {
-	exchgpara->num_temp = num_temp;
-      }
-      else {
-	if ((num_temp <= MAXTMP) && (num_temp > 1))
-	  exchgpara->num_temp = num_temp;
-	else {
-	  cout << "setting number of temperatures exceeds MAXTMP" << endl;
-	  cout << "try modifying MAXTMP in size.h and compile again" << endl;
-	  cout << "docking exiting ..." << endl;
-	  exit (1);
-	}
+        cout << "number of temperature cannot set to be zero" << endl;
+        cout << "docking exiting ..." << endl;
+        exit(1);
+      } else if (num_temp == 1) {
+        exchgpara->num_temp = num_temp;
+      } else {
+        if ((num_temp <= MAXTMP) && (num_temp > 1))
+          exchgpara->num_temp = num_temp;
+        else {
+          cout << "setting number of temperatures exceeds MAXTMP" << endl;
+          cout << "try modifying MAXTMP in size.h and compile again" << endl;
+          cout << "docking exiting ..." << endl;
+          exit(1);
+        }
       }
     }
 
     // trajectory file
-    if (!strcmp (argv[i], "-d") && i < argc) {
+    if (!strcmp(argv[i], "-d") && i < argc) {
       string hdf_path = argv[i + 1];
       strcpy(mcpara->hdf_path, hdf_path.c_str());
     }
 
     // trace file
-    if (!strcmp (argv[i], "-tr") && i < argc) {
+    if (!strcmp(argv[i], "-tr") && i < argc) {
       inputfiles->trace_file.path = argv[i + 1];
     }
 
     // ligand conformation sdf file corresponding to the trace file
-    if (!strcmp (argv[i], "-lc") && i < argc) {
+    if (!strcmp(argv[i], "-lc") && i < argc) {
       inputfiles->lig_file.conf_path = argv[i + 1];
     }
 
     // move scale
 
-    if (!strcmp (argv[i], "-t") && i < argc) {
-      ts = atof (argv[i + 1]);
+    if (!strcmp(argv[i], "-t") && i < argc) {
+      ts = atof(argv[i + 1]);
     }
-    if (!strcmp (argv[i], "-r") && i < argc) {
-      rs = atof (argv[i + 1]);
+    if (!strcmp(argv[i], "-r") && i < argc) {
+      rs = atof(argv[i + 1]);
     }
   }
 
   if (!protein_on) {
     cout << "Provide target protein structure" << endl;
-    exit (EXIT_FAILURE);
+    exit(EXIT_FAILURE);
   }
 
   if (!compounds_on) {
     cout << "Provide compound library in SD format" << endl;
-    exit (EXIT_FAILURE);
+    exit(EXIT_FAILURE);
   }
 
   if (!lhm_one) {
     cout << "Provide LHM potentials" << endl;
-    exit (EXIT_FAILURE);
+    exit(EXIT_FAILURE);
   }
 
   mcpara->move_scale[0] = ts;
@@ -297,13 +261,8 @@ ParseArguments (int argc, char **argv, McPara * mcpara, ExchgPara * exchgpara,
   mcpara->move_scale[5] = rs;
 }
 
-
-
-
-
-void
-OptimizeLigand (const Ligand0 * lig0, Ligand * lig, const ComplexSize complexsize)
-{
+void OptimizeLigand(const Ligand0 *lig0, Ligand *lig,
+                    const ComplexSize complexsize) {
 
   // data structure translation
   for (int i = 0; i < complexsize.n_lig; ++i) {
@@ -317,24 +276,19 @@ OptimizeLigand (const Ligand0 * lig0, Ligand * lig, const ComplexSize complexsiz
     }
     dst->lna = src->lna;
 
-
-
     // generate coord_orig
     dst->coord_orig = src->coord_orig;
     dst->coord_orig.center[0] = src->pocket_center[0];
     dst->coord_orig.center[1] = src->pocket_center[1];
     dst->coord_orig.center[2] = src->pocket_center[2];
 
-
   }
 
 }
 
-
-float
-CalculateContactModeScore (int * ref1, int * ref2, const EnePara * const enepara, 
-                           Ligand * mylig, const Protein * const myprt)
-{
+float CalculateContactModeScore(int *ref1, int *ref2,
+                                const EnePara *const enepara, Ligand *mylig,
+                                const Protein *const myprt) {
   int tp = 0;
   int fn = 0;
   int fp = 0;
@@ -356,13 +310,12 @@ CalculateContactModeScore (int * ref1, int * ref2, const EnePara * const enepara
   }
 
   double d_tp = (double) tp;
-  double d_fn = (double) fn ;
-  double d_fp = (double) fp ;
-  double d_tn = (double) tn ; 
+  double d_fn = (double) fn;
+  double d_fp = (double) fp;
+  double d_tn = (double) tn;
 
   double cms = CMCC_INVALID_VAL;
-  double tmp = (d_tp + d_fp) * (d_tp + d_fn) *
-    (d_tn + d_fp) * (d_tn + d_fn);
+  double tmp = (d_tp + d_fp) * (d_tp + d_fn) * (d_tn + d_fp) * (d_tn + d_fn);
 
   if (tmp != 0.)
     cms = (d_tp * d_tn - d_fp * d_fn) / sqrtf(tmp);
@@ -370,11 +323,9 @@ CalculateContactModeScore (int * ref1, int * ref2, const EnePara * const enepara
   return cms;
 }
 
-void
-InitContactMatrix (int * ref_matrix, Ligand * mylig, 
-                   const Protein * const myprt, 
-                   const EnePara * const enepara)
-{
+void InitContactMatrix(int *ref_matrix, Ligand *mylig,
+                       const Protein *const myprt,
+                       const EnePara *const enepara) {
   int lna = mylig->lna;
   int pnp = myprt->pnp;
 
@@ -387,7 +338,7 @@ InitContactMatrix (int * ref_matrix, Ligand * mylig,
       const float dx = mylig->coord_new.x[l] - myprt->x[p];
       const float dy = mylig->coord_new.y[l] - myprt->y[p];
       const float dz = mylig->coord_new.z[l] - myprt->z[p];
-      const float dst = sqrtf (dx * dx + dy * dy + dz * dz);
+      const float dst = sqrtf(dx * dx + dy * dy + dz * dz);
 
       const float pmf0 = enepara->pmf0[lig_t][prt_t];
       ref_matrix[l * pnp + p] = (dst <= pmf0);
@@ -395,109 +346,97 @@ InitContactMatrix (int * ref_matrix, Ligand * mylig,
   }
 }
 
+void SetContactMatrix(const LigRecordSingleStep *const step, int *ref_matrix,
+                      Ligand *lig, const Protein *const prt,
+                      const EnePara *const enepara) {
 
-void
-SetContactMatrix(const LigRecordSingleStep * const step, int * ref_matrix,
-                 Ligand * lig, const Protein * const prt,  const EnePara * const enepara)
-{
+  int idx_lig = step->replica.idx_lig;
+  int idx_prt = step->replica.idx_prt;
+  const float *const move_matrix = step->movematrix;
 
-    int idx_lig = step->replica.idx_lig;
-    int idx_prt = step->replica.idx_prt;
-    const float* const move_matrix = step->movematrix;
-    
-    Ligand* mylig = &lig[idx_lig];
-    const Protein* const myprt = &prt[idx_prt];
+  Ligand *mylig = &lig[idx_lig];
+  const Protein *const myprt = &prt[idx_prt];
 
-    PlaceLigand(mylig, move_matrix);
-    InitContactMatrix(ref_matrix, mylig, myprt, enepara);
+  PlaceLigand(mylig, move_matrix);
+  InitContactMatrix(ref_matrix, mylig, myprt, enepara);
 }
 
-vector < float >
-CmsBetweenConfs(vector < LigRecordSingleStep > &steps, Ligand * lig, Protein * prt, EnePara * enepara)
-{
-  int total= steps.size();
+vector<float> CmsBetweenConfs(vector<LigRecordSingleStep> &steps, Ligand *lig,
+                              Protein *prt, EnePara *enepara) {
+  int total = steps.size();
   int lna = lig->lna;
   int pnp = prt->pnp;
-  int* previous_ref = new int[lna * pnp];
-  int* current_ref = new int[lna * pnp];
+  int *previous_ref = new int[lna * pnp];
+  int *current_ref = new int[lna * pnp];
 
-  vector < float > cms_vals;
+  vector<float> cms_vals;
 
   for (int i = 1; i < total; i++) {
-    LigRecordSingleStep * previous = &(steps[i-1]);
+    LigRecordSingleStep *previous = &(steps[i - 1]);
     SetContactMatrix(previous, previous_ref, lig, prt, enepara);
-    LigRecordSingleStep * current = &(steps[i]);
+    LigRecordSingleStep *current = &(steps[i]);
     SetContactMatrix(current, current_ref, lig, prt, enepara);
 
-    float cms = CalculateContactModeScore (current_ref, previous_ref, enepara, lig, prt);
+    float cms =
+        CalculateContactModeScore(current_ref, previous_ref, enepara, lig, prt);
     cms_vals.push_back(cms);
   }
 
-  delete[]previous_ref;
-  delete[]current_ref;
+  delete[] previous_ref;
+  delete[] current_ref;
 
   return cms_vals;
 }
 
-vector < float >
-Euclid2DistBetweenConfs(vector < LigRecordSingleStep > &steps)
-{
+vector<float> Euclid2DistBetweenConfs(vector<LigRecordSingleStep> &steps) {
   int total = steps.size();
-  vector < float > dists;
+  vector<float> dists;
   int numdims = MAXWEI - 1;
-  for (int i = 1; i < total; i++)
-    {
-      float* previous = steps[i-1].energy.e;
-      float* current = steps[i].energy.e;
-      float euclid_2 = euclid_dist_2(numdims, previous, current);
-      dists.push_back(euclid_2);
-    }
+  for (int i = 1; i < total; i++) {
+    float *previous = steps[i - 1].energy.e;
+    float *current = steps[i].energy.e;
+    float euclid_2 = euclid_dist_2(numdims, previous, current);
+    dists.push_back(euclid_2);
+  }
 
   return dists;
 }
 
-vector < float >
-PearsonDistBetweenConfs(vector < LigRecordSingleStep > &steps)
-{
+vector<float> PearsonDistBetweenConfs(vector<LigRecordSingleStep> &steps) {
   int total = steps.size();
-  vector < float > dists;
+  vector<float> dists;
   int numdims = MAXWEI - 1;
-  for (int i = 1; i < total; i++)
-    {
-      float* previous = steps[i-1].energy.e;
-      float* current = steps[i].energy.e;
-      float p = pearsonr(previous, current, numdims);
-      dists.push_back(p);
-    }
+  for (int i = 1; i < total; i++) {
+    float *previous = steps[i - 1].energy.e;
+    float *current = steps[i].energy.e;
+    float p = pearsonr(previous, current, numdims);
+    dists.push_back(p);
+  }
 
   return dists;
 }
 
-vector < float >
-SimilarityBetweenConfs(vector < LigRecordSingleStep > &steps, char method,
-                       Ligand * lig, Protein * prt, EnePara * enepara)
-{
-  vector < float > similarities;
-  switch(method)
-    {
-    case 'c':
-      similarities = CmsBetweenConfs(steps, lig, prt, enepara);
-      break;
-    case 'e':
-      similarities = Euclid2DistBetweenConfs(steps);
-      break;
-    case 'p':
-      similarities = PearsonDistBetweenConfs(steps);
-      break;
-    }
+vector<float> SimilarityBetweenConfs(vector<LigRecordSingleStep> &steps,
+                                     char method, Ligand *lig, Protein *prt,
+                                     EnePara *enepara) {
+  vector<float> similarities;
+  switch (method) {
+  case 'c':
+    similarities = CmsBetweenConfs(steps, lig, prt, enepara);
+    break;
+  case 'e':
+    similarities = Euclid2DistBetweenConfs(steps);
+    break;
+  case 'p':
+    similarities = PearsonDistBetweenConfs(steps);
+    break;
+  }
 
   return similarities;
 }
 
 // move the ligand to its center
-void
-InitLigCoord (Ligand * lig, const ComplexSize complexsize)
-{
+void InitLigCoord(Ligand *lig, const ComplexSize complexsize) {
   for (int i = 0; i < complexsize.n_lig; ++i) {
     Ligand *mylig = &lig[i];
 
@@ -515,22 +454,15 @@ InitLigCoord (Ligand * lig, const ComplexSize complexsize)
   }
 }
 
-
-
-
-
-
-void
-PlaceLigand (Ligand* mylig, const float* const movematrix_new)
-{
+void PlaceLigand(Ligand *mylig, const float *const movematrix_new) {
   float rot[3][3];
-  
-  const float s1 = sinf (movematrix_new[3]);
-  const float c1 = cosf (movematrix_new[3]);
-  const float s2 = sinf (movematrix_new[4]);
-  const float c2 = cosf (movematrix_new[4]);
-  const float s3 = sinf (movematrix_new[5]);
-  const float c3 = cosf (movematrix_new[5]);
+
+  const float s1 = sinf(movematrix_new[3]);
+  const float c1 = cosf(movematrix_new[3]);
+  const float s2 = sinf(movematrix_new[4]);
+  const float c2 = cosf(movematrix_new[4]);
+  const float s3 = sinf(movematrix_new[5]);
+  const float c3 = cosf(movematrix_new[5]);
 
   rot[0][0] = c1 * c2;
   rot[0][1] = c1 * s2 * s3 - c3 * s1;
@@ -545,11 +477,10 @@ PlaceLigand (Ligand* mylig, const float* const movematrix_new)
   LigCoord *coord_new = &mylig->coord_new;
   LigCoord *coord_orig = &mylig->coord_orig;
 
-
   const float cx = coord_orig->center[0];
   const float cy = coord_orig->center[1];
   const float cz = coord_orig->center[2];
-  
+
   // iterate through all ligand residues
   // rotation and translation, and apply coordinate system transformation
   int lna = mylig->lna;
@@ -557,21 +488,22 @@ PlaceLigand (Ligand* mylig, const float* const movematrix_new)
     float x = coord_orig->x[l];
     float y = coord_orig->y[l];
     float z = coord_orig->z[l];
-    coord_new->x[l] = rot[0][0] * x + rot[0][1] * y + rot[0][2] * z + movematrix_new[0] + cx;
-    coord_new->y[l] = rot[1][0] * x + rot[1][1] * y + rot[1][2] * z + movematrix_new[1] + cy;
-    coord_new->z[l] = rot[2][0] * x + rot[2][1] * y + rot[2][2] * z + movematrix_new[2] + cz;
+    coord_new->x[l] =
+        rot[0][0] * x + rot[0][1] * y + rot[0][2] * z + movematrix_new[0] + cx;
+    coord_new->y[l] =
+        rot[1][0] * x + rot[1][1] * y + rot[1][2] * z + movematrix_new[1] + cy;
+    coord_new->z[l] =
+        rot[2][0] * x + rot[2][1] * y + rot[2][2] * z + movematrix_new[2] + cz;
   }
-  
-  
-  for (int i = 0; i < 3; ++i) { 
+
+  for (int i = 0; i < 3; ++i) {
     coord_new->center[i] = coord_orig->center[i] + movematrix_new[i];
   }
 }
 
-list < string > 
-replaceLigandCoords(LigandFile * lig_file, Ligand * lig){
-  list < string > l1_sdf;
-  list < string >::iterator i1_sdf;
+list<string> replaceLigandCoords(LigandFile *lig_file, Ligand *lig) {
+  list<string> l1_sdf;
+  list<string>::iterator i1_sdf;
   string line1;
   ifstream compounds_file(lig_file->path.c_str());
   if (!compounds_file.is_open()) {
@@ -582,17 +514,17 @@ replaceLigandCoords(LigandFile * lig_file, Ligand * lig){
 
   while (getline(compounds_file, line1))
     l1_sdf.push_back(line1);
-  
+
   compounds_file.close();
-  
-  list < string > new_sdf;
+
+  list<string> new_sdf;
   int line_num = 0;
   int lna = lig->lna;
   int atom_num = 0;
   char xyz[100];
   const LigCoord *mycoord = &lig->coord_new;
-  
-  for (i1_sdf = l1_sdf.begin(); i1_sdf != l1_sdf.end(); line_num++, i1_sdf++){
+
+  for (i1_sdf = l1_sdf.begin(); i1_sdf != l1_sdf.end(); line_num++, i1_sdf++) {
     string old_line = *i1_sdf;
     if (line_num > 3 && line_num < (4 + lna)) {
       // coordinates lines, replace
@@ -607,23 +539,20 @@ replaceLigandCoords(LigandFile * lig_file, Ligand * lig){
       string new_line = coords + rest;
 
       new_sdf.push_back(new_line);
-    }
-    else {
+    } else {
       // use the original lines
       new_sdf.push_back(old_line);
     }
   }
-  
+
   return new_sdf;
 }
 
-void
-PrintLigCoord2File(const Ligand * lig, string ofn)
-{
+void PrintLigCoord2File(const Ligand *lig, string ofn) {
   const LigCoord *mycoord = &lig->coord_new;
-  
+
   ofstream myfile;
-  myfile.open (ofn.c_str());
+  myfile.open(ofn.c_str());
 
   myfile << "lna:\t" << lig->lna << endl;
   myfile << "@<BEGIN>ATOM\n";
@@ -642,12 +571,9 @@ PrintLigCoord2File(const Ligand * lig, string ofn)
   myfile.close();
 }
 
-
-
-void
-CopyProteinResidue (const Protein0 * src, Protein * dst, const int residue_src,
-		    const int residue_dst, const EnePara0 * enepara0)
-{
+void CopyProteinResidue(const Protein0 *src, Protein *dst,
+                        const int residue_src, const int residue_dst,
+                        const EnePara0 *enepara0) {
   dst->x[residue_dst] = src->x[residue_src];
   dst->y[residue_dst] = src->y[residue_src];
   dst->z[residue_dst] = src->z[residue_src];
@@ -663,16 +589,16 @@ CopyProteinResidue (const Protein0 * src, Protein * dst, const int residue_src,
   dst->seq3r[residue_dst] = src->seq3[src->r[residue_src]];
 
   dst->c0_and_d12_or_c2[residue_dst] =
-    (src->c[residue_src] == 0 && src->d[residue_src] == 12) || (src->c[residue_src] == 2);
+      (src->c[residue_src] == 0 && src->d[residue_src] == 12) ||
+      (src->c[residue_src] == 2);
 
   dst->hpp[residue_dst] = enepara0->hpp[d];
 
 }
 
-void
-OptimizeProtein (const Protein0 * prt0, Protein * prt, const EnePara0 * enepara0,
-		 const Ligand0 * lig0, const ComplexSize complexsize)
-{
+void OptimizeProtein(const Protein0 *prt0, Protein *prt,
+                     const EnePara0 *enepara0, const Ligand0 *lig0,
+                     const ComplexSize complexsize) {
   // pocket center
   const float cx = lig0[0].pocket_center[0];
   const float cy = lig0[0].pocket_center[1];
@@ -684,37 +610,38 @@ OptimizeProtein (const Protein0 * prt0, Protein * prt, const EnePara0 * enepara0
     const int pnp = src->pnp;
 
     // sort protein in increament order of t
-    int *t = (int *) malloc (sizeof (int) * pnp);
-    int *order = (int *) malloc (sizeof (int) * pnp);
+    int *t = (int *)malloc(sizeof(int) * pnp);
+    int *order = (int *)malloc(sizeof(int) * pnp);
     for (int j = 0; j < pnp; ++j) {
       t[j] = src->t[j];
       order[j] = j;
     }
 
 #if 0
-    QuickSort (t, order, 0, pnp - 1);
+    QuickSort(t, order, 0, pnp - 1);
 #endif
 
 #if 0
     for (int j = 0; j < pnp; ++j) {
-      printf ("%d ", t[j]);
+      printf("%d ", t[j]);
     }
-    putchar ('\n');
+    putchar('\n');
 
     for (int j = 0; j < pnp; ++j) {
-      printf ("%d ", src->t[order[j]]);
+      printf("%d ", src->t[order[j]]);
     }
-    putchar ('\n');
+    putchar('\n');
 #endif
 
     dst->pnp = pnp;
     for (int j = 0; j < pnp; ++j)
-      CopyProteinResidue (src, dst, order[j], j, enepara0);
+      CopyProteinResidue(src, dst, order[j], j, enepara0);
 
-    free (t);
-    free (order);
+    free(t);
+    free(order);
 
-    // assign the pocket center from the ligand structure to the protein sturcture
+    // assign the pocket center from the ligand structure to the protein
+    // sturcture
     dst->pocket_center[0] = cx;
     dst->pocket_center[1] = cy;
     dst->pocket_center[2] = cz;
@@ -723,53 +650,46 @@ OptimizeProtein (const Protein0 * prt0, Protein * prt, const EnePara0 * enepara0
 
 }
 
-
-
-
-
-void
-OptimizePsp (const Psp0 * psp0, Psp * psp, const Ligand * lig, const Protein * prt)
-{
+void OptimizePsp(const Psp0 *psp0, Psp *psp, const Ligand *lig,
+                 const Protein *prt) {
   for (int i = 0; i < MAXPRO; ++i) {
     for (int j = 0; j < MAXLIG; ++j) {
       psp->psp[j][i] = psp0->psp[i][j];
     }
   }
 
-/*
-  int lig_lna = lig[0].lna;
-  int prt_pnp = prt[0].pnp;
-  int count = 0;
-*/
+  /*
+    int lig_lna = lig[0].lna;
+    int prt_pnp = prt[0].pnp;
+    int count = 0;
+  */
 
-/*
-  for (int i = 0; i < lig_lna; ++i) {
-    int lig_t = lig[0].t[i];
-    for (int j = 0; j < prt_pnp; ++j) {
-      int pspidx2 = prt[0].seq3r[j];
-
-      if (prt[0].c[j] == 2) {
-	printf ("potentialy accessed psp \t%2d\t%2d\n", lig_t, pspidx2);
-	count++;
-
-      if (psp->psp[i][j] != 0)
-        printf ("lig %3d \tprt %3d \t\tpsp\t%f\n", i, j, psp->psp[j][i]);
-
+  /*
+    for (int i = 0; i < lig_lna; ++i) {
+      int lig_t = lig[0].t[i];
+      for (int j = 0; j < prt_pnp; ++j) {
+        int pspidx2 = prt[0].seq3r[j];
+  
+        if (prt[0].c[j] == 2) {
+  	printf ("potentialy accessed psp \t%2d\t%2d\n", lig_t, pspidx2);
+  	count++;
+  
+        if (psp->psp[i][j] != 0)
+          printf ("lig %3d \tprt %3d \t\tpsp\t%f\n", i, j, psp->psp[j][i]);
+  
+        }
       }
     }
-  }
-*/
+  */
 
-/*
-  printf ("percentage %f / %f = %f", count, lig_lna * prt_pnp,
-	  (float) count / (lig_lna * prt_pnp));
-*/
+  /*
+    printf ("percentage %f / %f = %f", count, lig_lna * prt_pnp,
+  	  (float) count / (lig_lna * prt_pnp));
+  */
 
 }
 
-void
-OptimizeKde (const Kde0 * kde0, Kde * kde)
-{
+void OptimizeKde(const Kde0 *kde0, Kde *kde) {
   for (int i = 0; i < MAXKDE; ++i) {
     kde->x[i] = kde0->x[i];
     kde->y[i] = kde0->y[i];
@@ -779,9 +699,7 @@ OptimizeKde (const Kde0 * kde0, Kde * kde)
   kde->pnk = kde0->pnk;
 }
 
-void
-OptimizeMcs (const Mcs0 * mcs0, Mcs * mcs, const ComplexSize complexsize)
-{
+void OptimizeMcs(const Mcs0 *mcs0, Mcs *mcs, const ComplexSize complexsize) {
   // pos
   for (int i = 0; i < complexsize.pos; ++i) {
     mcs[i].tcc = mcs0[i].tcc;
@@ -796,16 +714,14 @@ OptimizeMcs (const Mcs0 * mcs0, Mcs * mcs, const ComplexSize complexsize)
 
 }
 
-void
-OptimizeEnepara (const EnePara0 * enepara0, EnePara * enepara)
-{
-  const float sqrt_2_pi = sqrtf (2.0f * PI);
+void OptimizeEnepara(const EnePara0 *enepara0, EnePara *enepara) {
+  const float sqrt_2_pi = sqrtf(2.0f * PI);
 
-  for (int i = 0; i < MAXTP2; ++i) {	// lig
-    for (int j = 0; j < MAXTP1; ++j) {	// prt
+  for (int i = 0; i < MAXTP2; ++i) {   // lig
+    for (int j = 0; j < MAXTP1; ++j) { // prt
       const float tmp = enepara0->vdw[j][i][0] * enepara0->lj[2];
-      enepara->p1a[i][j] = 2.0f * enepara0->vdw[j][i][1] * powf (tmp, 9.0f);
-      enepara->p2a[i][j] = 3.0f * enepara0->vdw[j][i][1] * powf (tmp, 6.0f);
+      enepara->p1a[i][j] = 2.0f * enepara0->vdw[j][i][1] * powf(tmp, 9.0f);
+      enepara->p2a[i][j] = 3.0f * enepara0->vdw[j][i][1] * powf(tmp, 6.0f);
     }
   }
   enepara->lj0 = enepara0->lj[0];
@@ -819,8 +735,8 @@ OptimizeEnepara (const EnePara0 * enepara0, EnePara * enepara)
   for (int i = 0; i < MAXTP3; ++i)
     enepara->ele[i] = enepara0->ele[i];
 
-  for (int i = 0; i < MAXTP2; ++i) {	// lig
-    for (int j = 0; j < MAXTP1; ++j) {	// prt
+  for (int i = 0; i < MAXTP2; ++i) {   // lig
+    for (int j = 0; j < MAXTP1; ++j) { // prt
       enepara->pmf0[i][j] = enepara0->pmf[j][i][0];
       enepara->pmf1[i][j] = enepara0->pmf[j][i][1];
       enepara->hdb0[i][j] = enepara0->hdb[j][i][0];
@@ -833,11 +749,11 @@ OptimizeEnepara (const EnePara0 * enepara0, EnePara * enepara)
   for (int i = 0; i < MAXTP2; ++i) {
     enepara->hpl0[i] = enepara0->hpl[i][0];
     enepara->hpl1[i] = enepara0->hpl[i][1];
-    enepara->hpl2[i] = logf (1.0f / (enepara->hpl1[i] * sqrt_2_pi));
+    enepara->hpl2[i] = logf(1.0f / (enepara->hpl1[i] * sqrt_2_pi));
   }
 
   enepara->kde2 = -0.5f / (enepara0->kde * enepara0->kde);
-  enepara->kde3 = powf (enepara0->kde * sqrt_2_pi, 3.0f);
+  enepara->kde3 = powf(enepara0->kde * sqrt_2_pi, 3.0f);
 
   for (int i = 0; i < MAXWEI; ++i) {
     enepara->w[i] = enepara0->w[i];
@@ -850,9 +766,6 @@ OptimizeEnepara (const EnePara0 * enepara0, EnePara * enepara)
     // cout << enepara->w[i] << endl;
   }
 }
-
-
-
 
 /*
 void
@@ -881,11 +794,10 @@ SetWeight (EnePara * enepara)
 }
 */
 
-void
-SetTemperature (Temp * temp, ExchgPara * exchgpara)
-{
-  printf ("Setting up temperature replicas\n");
-  printf ("================================================================================\n");
+void SetTemperature(Temp *temp, ExchgPara *exchgpara) {
+  printf("Setting up temperature replicas\n");
+  printf("====================================================================="
+         "===========\n");
 
   int num_temp = exchgpara->num_temp;
   float floor_temp = exchgpara->floor_temp;
@@ -896,19 +808,19 @@ SetTemperature (Temp * temp, ExchgPara * exchgpara)
     float beta = 1.0f / (BOLTZMANN_CONST * my_temp);
 
     for (int i = 0; i < num_temp; i++) {
-      printf ("temp # %d\t\t\t%f\n", i, my_temp);
+      printf("temp # %d\t\t\t%f\n", i, my_temp);
 
       temp[i].order = i;
       temp[i].minus_beta = 0.0f - beta;
     }
-  }
-  else {
-    const float temp_ratio = exp (log (ceiling_temp / floor_temp) / (float) (num_temp - 1));
+  } else {
+    const float temp_ratio =
+        exp(log(ceiling_temp / floor_temp) / (float)(num_temp - 1));
     float a = floor_temp;
     for (int i = 0; i < num_temp; i++) {
       float my_temp = a;
       float my_beta = 1.0f / (BOLTZMANN_CONST * my_temp);
-      printf ("temp # %d\t\t\t%f\n", i, my_temp);
+      printf("temp # %d\t\t\t%f\n", i, my_temp);
 
       temp[i].order = i;
       temp[i].minus_beta = 0.0f - my_beta;
@@ -916,7 +828,6 @@ SetTemperature (Temp * temp, ExchgPara * exchgpara)
       a *= temp_ratio;
     }
   }
-
 
   // for (int i = 0; i < num_temp; i++) {
   //   temp[i].t = floor_temp;
@@ -928,9 +839,7 @@ SetTemperature (Temp * temp, ExchgPara * exchgpara)
 // replica[n_rep]
 // replica[n_prt][n_tmp][n_lig]
 
-void
-SetReplica (Replica * replica, Ligand * lig, const ComplexSize complexsize)
-{
+void SetReplica(Replica *replica, Ligand *lig, const ComplexSize complexsize) {
   const int n_lig = complexsize.n_lig;
   const int n_prt = complexsize.n_prt;
   const int n_tmp = complexsize.n_tmp;
@@ -938,59 +847,68 @@ SetReplica (Replica * replica, Ligand * lig, const ComplexSize complexsize)
   for (int i = 0; i < n_prt; ++i) {
     for (int j = 0; j < n_tmp; ++j) {
       for (int k = 0; k < n_lig; ++k) {
-	const int flatten_addr = n_tmp * n_lig * i + n_lig * j + k;
-	replica[flatten_addr].idx_rep = flatten_addr;
-	replica[flatten_addr].idx_prt = i;
-	replica[flatten_addr].idx_tmp = j;
-	replica[flatten_addr].idx_lig = k;
+        const int flatten_addr = n_tmp * n_lig * i + n_lig * j + k;
+        replica[flatten_addr].idx_rep = flatten_addr;
+        replica[flatten_addr].idx_prt = i;
+        replica[flatten_addr].idx_tmp = j;
+        replica[flatten_addr].idx_lig = k;
 
-	lig[flatten_addr] = lig[k];	// duplicate ligand replicas
+        lig[flatten_addr] = lig[k]; // duplicate ligand replicas
       }
     }
   }
 
 }
 
-
-void
-SetMcLog (McLog * mclog)
-{
+void SetMcLog(McLog *mclog) {
   mclog->t0 = 0;
   mclog->t1 = 0;
   mclog->t2 = 0;
 }
 
-
-
 // arg = 1      print title
 // arg = 2      print content
 // arg = 3      print all
 
-void
-PrintEnergy1 (const Energy * energy, const int step, const int arg)
-{
+void PrintEnergy1(const Energy *energy, const int step, const int arg) {
   int a = arg & 0x1;
   int b = (arg >> 1) & 0x1;
 
   if (a == 1) {
-    std::cout << "step" << ","
-      << "etot" << "," << "elhm" << ","
-      << "ekde" << "," << "edst" << ","
-      << "eele" << "," << "epmf" << "," << "ehpc" << "," << "ehdb" << "," << "epsp" << "," << "evdw"
-      << std::endl;
+    std::cout << "step"
+              << ","
+              << "etot"
+              << ","
+              << "elhm"
+              << ","
+              << "ekde"
+              << ","
+              << "edst"
+              << ","
+              << "eele"
+              << ","
+              << "epmf"
+              << ","
+              << "ehpc"
+              << ","
+              << "ehdb"
+              << ","
+              << "epsp"
+              << ","
+              << "evdw" << std::endl;
   }
 
   if (b == 1) {
-    std::cout << step << "," << energy->e[9] << ","	// total
-      << energy->e[7] << ","	// lhm
-      << energy->e[6] << ","	// kde
-      << energy->e[8] << ","	// dst
-      << energy->e[1] << ","	// ele
-      << energy->e[2] << ","	// pmf
-      << energy->e[5] << ","	// hpc
-      << energy->e[4] << ","	// hdb
-      << energy->e[3] << ","	// psp
-      << energy->e[0] << std::endl;	// vdw
+    std::cout << step << "," << energy->e[9] << "," // total
+              << energy->e[7] << ","                // lhm
+              << energy->e[6] << ","                // kde
+              << energy->e[8] << ","                // dst
+              << energy->e[1] << ","                // ele
+              << energy->e[2] << ","                // pmf
+              << energy->e[5] << ","                // hpc
+              << energy->e[4] << ","                // hdb
+              << energy->e[3] << ","                // psp
+              << energy->e[0] << std::endl;         // vdw
   }
 
 }
@@ -999,194 +917,145 @@ PrintEnergy1 (const Energy * energy, const int step, const int arg)
 // arg = 2      print content
 // arg = 3      print all
 
-void
-PrintStepTrack (const LigRecordSingleStep * step_record, const int step, const int arg)
-{
+void PrintStepTrack(const LigRecordSingleStep *step_record, const int step,
+                    const int arg) {
 
-  char names[11][30] = {
-    "step",
-    "prt_conf",
-    "lig_conf",
-    "temp_idx",
-    "total",
-    "x",
-    "y",
-    "z",
-    "theta",
-    "gama",
-    "fi"
-  };
+  char names[11][30] = { "step", "prt_conf", "lig_conf", "temp_idx", "total",
+                         "x", "y", "z", "theta", "gama", "fi" };
 
   int a = arg & 0x1;
   int b = (arg >> 1) & 0x1;
 
   if (a == 1) {
     for (int i = 0; i < 11; ++i)
-      printf (",%s", names[i]);
-    printf ("\n");
+      printf(",%s", names[i]);
+    printf("\n");
   }
 
   if (b == 1) {
-    printf (",%d", step_record->step);
-    printf (",%d", step_record->replica.idx_prt);
-    printf (",%d", step_record->replica.idx_lig);
-    printf (",%d", step_record->replica.idx_tmp);
-    printf (",%f", step_record->energy.e[MAXWEI - 1]);
+    printf(",%d", step_record->step);
+    printf(",%d", step_record->replica.idx_prt);
+    printf(",%d", step_record->replica.idx_lig);
+    printf(",%d", step_record->replica.idx_tmp);
+    printf(",%f", step_record->energy.e[MAXWEI - 1]);
     for (int i = 0; i < 6; i++)
-      printf (",%f", step_record->movematrix[i]);
-    printf ("\n");
+      printf(",%f", step_record->movematrix[i]);
+    printf("\n");
   }
 }
 
-void
-PrintCsv (const Energy * energy, const int idx_rep, const int step, const int arg)
-{
+void PrintCsv(const Energy *energy, const int idx_rep, const int step,
+              const int arg) {
 
-  char names[MAXWEI][8] = {
-    "vdw", // 0
-    "ele", // 1
-    "pmf", // 2
-    "psp", // 3
-    "hdb", // 4
-    "hpc", // 5
-    "kde", // 6
-    "lhm", // 7
-    "dst", // 8
-    "total" // 9
+  char names[MAXWEI][8] = { "vdw",  // 0
+                            "ele",  // 1
+                            "pmf",  // 2
+                            "psp",  // 3
+                            "hdb",  // 4
+                            "hpc",  // 5
+                            "kde",  // 6
+                            "lhm",  // 7
+                            "dst",  // 8
+                            "total" // 9
   };
 
   int a = arg & 0x1;
   int b = (arg >> 1) & 0x1;
 
   if (a == 1) {
-    printf ("rep step");
+    printf("rep step");
     for (int i = 0; i < MAXWEI; ++i)
-      printf (" %s", names[i]);
-    printf ("\n");
+      printf(" %s", names[i]);
+    printf("\n");
   }
 
   if (b == 1) {
-    printf ("%d %d", idx_rep,  step);
+    printf("%d %d", idx_rep, step);
     for (int i = 0; i < MAXWEI; ++i)
       // printf (" %+14.10f"  energy->e[i]);
-      printf (" %.4f",  energy->e[i]);
-    printf ("\n");
+      printf(" %.4f", energy->e[i]);
+    printf("\n");
   }
 }
 
-void
-PrintEnergy2 (const Energy * energy, const int idx_rep, const int step, const int arg)
-{
+void PrintEnergy2(const Energy *energy, const int idx_rep, const int step,
+                  const int arg) {
 
-  char names[MAXWEI][8] = {
-    "vdw",
-    "ele",
-    "pmf",
-    "psp",
-    "hdb",
-    "hpc",
-    "kde",
-    "lhm",
-    "dst",
-    "total"
-  };
+  char names[MAXWEI][8] = { "vdw", "ele", "pmf", "psp", "hdb", "hpc", "kde",
+                            "lhm", "dst", "total" };
 
   int a = arg & 0x1;
   int b = (arg >> 1) & 0x1;
 
   if (a == 1) {
-    printf ("rep \tstep \t");
+    printf("rep \tstep \t");
     for (int i = 0; i < MAXWEI; ++i)
-      printf ("\t\t%s", names[i]);
-    printf ("\n");
+      printf("\t\t%s", names[i]);
+    printf("\n");
   }
 
   if (b == 1) {
-    printf ("%4d \t%5d \t\t", idx_rep, step);
+    printf("%4d \t%5d \t\t", idx_rep, step);
     for (int i = 0; i < MAXWEI; ++i)
       //printf ("\t%+.3e", energy->e[i]);
-      printf ("\t%+14.10f", energy->e[i]);
-    printf ("\n");
+      printf("\t%+14.10f", energy->e[i]);
+    printf("\n");
   }
 }
 
+void PrintEnergy3(const Energy *energy, const int idx_rep, const int step,
+                  const int track, const int arg) {
 
-
-void
-PrintEnergy3 (const Energy * energy, const int idx_rep, const int step,
-	      const int track, const int arg)
-{
-
-  char names[MAXWEI][8] = {
-    "vdw",
-    "ele",
-    "pmf",
-    "psp",
-    "hdb",
-    "hpc",
-    "kde",
-    "lhm",
-    "dst",
-    "total"
-  };
+  char names[MAXWEI][8] = { "vdw", "ele", "pmf", "psp", "hdb", "hpc", "kde",
+                            "lhm", "dst", "total" };
 
   int a = arg & 0x1;
   int b = (arg >> 1) & 0x1;
 
   if (a == 1) {
-    printf ("rep \tstep \ttrack ");
+    printf("rep \tstep \ttrack ");
     for (int i = 0; i < MAXWEI; ++i)
-      printf ("\t\t%s", names[i]);
-    printf ("\n");
+      printf("\t\t%s", names[i]);
+    printf("\n");
   }
 
   if (b == 1) {
-    printf ("%4d \t%5d \t%d \t", idx_rep, step, track);
+    printf("%4d \t%5d \t%d \t", idx_rep, step, track);
     for (int i = 0; i < MAXWEI; ++i)
       //printf ("\t%+.3e", energy->e[i]);
-      printf ("\t%+10.6f", energy->e[i]);
-    printf ("\n");
+      printf("\t%+10.6f", energy->e[i]);
+    printf("\n");
   }
 }
 
-
-
-void
-PrintMoveVector (const float m[6], const int step)
-{
-  printf ("\t  %3d\t\t\t", step);
+void PrintMoveVector(const float m[6], const int step) {
+  printf("\t  %3d\t\t\t", step);
   for (int i = 0; i < 6; ++i) {
-    printf (" %+f\t", m[i]);
+    printf(" %+f\t", m[i]);
   }
-  printf ("\n");
+  printf("\n");
 }
 
-
-
-void
-PrintMoveRecord (const LigRecord * ligrecord, const int steps_per_dump, const int replica,
-		 const int iter_begin, const int iter_end, const int arg)
-{
+void PrintMoveRecord(const LigRecord *ligrecord, const int steps_per_dump,
+                     const int replica, const int iter_begin,
+                     const int iter_end, const int arg) {
   for (int s = iter_begin; s <= iter_end; ++s) {
     const LigRecordSingleStep *myrecord = &ligrecord[replica].step[s];
-    PrintMoveVector (myrecord->movematrix, myrecord->step);
+    PrintMoveVector(myrecord->movematrix, myrecord->step);
   }
 
 }
 
-
-void
-PrintTrack (LigRecord * ligrecord, int steps_per_dump, int replica,
-	    int iter_begin, int iter_end, int arg)
-{
+void PrintTrack(LigRecord *ligrecord, int steps_per_dump, int replica,
+                int iter_begin, int iter_end, int arg) {
   // print title
   // PrintEnergy2 (NULL, NULL, NULL, 1);
-  PrintStepTrack (NULL, NULL, 1);
+  PrintStepTrack(NULL, NULL, 1);
 
   for (int s = iter_begin; s <= iter_end; ++s) {
     const LigRecordSingleStep *myrecord = &ligrecord[replica].step[s];
     // PrintEnergy2 (&myrecord->energy, replica, myrecord->step, arg);
-    PrintStepTrack (myrecord, myrecord->step, arg);
+    PrintStepTrack(myrecord, myrecord->step, arg);
   }
 
 }
@@ -1195,46 +1064,39 @@ PrintTrack (LigRecord * ligrecord, int steps_per_dump, int replica,
 // arg = 2      print content
 // arg = 3      print all
 
-void
-PrintLigRecord (LigRecord * ligrecord, int steps_per_dump, int replica,
-		int iter_begin, int iter_end, int arg)
-{
+void PrintLigRecord(LigRecord *ligrecord, int steps_per_dump, int replica,
+                    int iter_begin, int iter_end, int arg) {
   // print title
   // PrintEnergy2 (NULL, NULL, NULL, 1);
-  PrintCsv (NULL, NULL, NULL, 1);
+  PrintCsv(NULL, NULL, NULL, 1);
 
   for (int s = iter_begin; s <= iter_end; ++s) {
     const LigRecordSingleStep *myrecord = &ligrecord[replica].step[s];
     // PrintEnergy2 (&myrecord->energy, replica, myrecord->step, arg);
-    PrintCsv (&myrecord->energy, replica, myrecord->step, arg);
+    PrintCsv(&myrecord->energy, replica, myrecord->step, arg);
   }
 
 }
 
+void PrintRepRecord(const LigRecord *ligrecord, const int steps_per_dump,
+                    const int rep_begin, const int rep_end,
+                    const int iter_begin, const int iter_end, const int arg) {
+  printf("\treplicas\n");
 
-
-
-
-void
-PrintRepRecord (const LigRecord * ligrecord, const int steps_per_dump, const int rep_begin,
-		const int rep_end, const int iter_begin, const int iter_end, const int arg)
-{
-  printf ("\treplicas\n");
-
-  printf ("step|\t");
+  printf("step|\t");
 
   for (int r = rep_begin; r <= rep_end; ++r)
-    printf ("%2d\t", r);
-  putchar ('\n');
+    printf("%2d\t", r);
+  putchar('\n');
 
-  printf ("----+");
+  printf("----+");
 
   for (int r = rep_begin; r <= rep_end; ++r)
-    printf ("--------");
-  putchar ('\n');
+    printf("--------");
+  putchar('\n');
 
   for (int s = iter_begin; s <= iter_end; ++s) {
-    printf ("%3d |\t", s);
+    printf("%3d |\t", s);
 
     for (int r = rep_begin; r <= rep_end; ++r) {
       const Replica *myrep = &ligrecord[r].step[s].replica;
@@ -1242,155 +1104,136 @@ PrintRepRecord (const LigRecord * ligrecord, const int steps_per_dump, const int
       //printf ("%2d ", myrep->idx_tmp);
       //printf ("%2d ", myrep->idx_lig);
 
-      printf ("%2d ", myrep->idx_rep);
+      printf("%2d ", myrep->idx_rep);
 
-      printf ("\t");
+      printf("\t");
     }
-    putchar ('\n');
+    putchar('\n');
   }
 
 }
 
-
-
-
-
 // print all temperature replicas of the same lig & prt
-void
-PrintRepRecord2 (LigRecord * ligrecord, ComplexSize complexsize,
-		 int steps_per_dump, int idx_prt, int idx_lig,
-		 int iter_begin, int iter_end, int arg)
-{
-  printf ("temperature replicas with lig %d prt %d\n", idx_lig, idx_prt);
+void PrintRepRecord2(LigRecord *ligrecord, ComplexSize complexsize,
+                     int steps_per_dump, int idx_prt, int idx_lig,
+                     int iter_begin, int iter_end, int arg) {
+  printf("temperature replicas with lig %d prt %d\n", idx_lig, idx_prt);
 
-  printf ("MC step |\t");
+  printf("MC step |\t");
 
   for (int t = 0; t < complexsize.n_tmp; ++t)
-    printf ("%2d\t", t);
-  putchar ('\n');
+    printf("%2d\t", t);
+  putchar('\n');
 
-  printf ("--------+----");
+  printf("--------+----");
 
   for (int t = 0; t < complexsize.n_tmp; ++t)
-    printf ("--------");
-  putchar ('\n');
+    printf("--------");
+  putchar('\n');
 
   for (int s = iter_begin; s <= iter_end; ++s) {
-    printf ("%5d   |\t", s);
+    printf("%5d   |\t", s);
 
     for (int t = 0; t < complexsize.n_tmp; ++t) {
-      const int r =
-	complexsize.n_tmp * complexsize.n_lig * idx_prt + complexsize.n_lig * t + idx_lig;
+      const int r = complexsize.n_tmp * complexsize.n_lig * idx_prt +
+                    complexsize.n_lig * t + idx_lig;
       const Replica *myrep = &ligrecord[r].step[s].replica;
       //printf ("%2d ", myrep->idx_prt);
-      printf ("%2d ", myrep->idx_tmp);
+      printf("%2d ", myrep->idx_tmp);
       //printf ("%2d ", myrep->idx_lig);
       //printf ("%2d ", myrep->idx_rep);
 
-      printf ("\t");
+      printf("\t");
     }
-    putchar ('\n');
+    putchar('\n');
   }
 }
 
-
-
-
-
-
-void
-PrintLigCoord (const Ligand * lig, const int unused)
-{
+void PrintLigCoord(const Ligand *lig, const int unused) {
   const Ligand *mylig = &lig[0];
   const LigCoord *mycoord = &mylig->coord_new;
 
   //int range = mylig->lna;
   int range = 6;
 
-  printf ("---------------------------------------------------------------------\n");
+  printf("---------------------------------------------------------------------"
+         "\n");
 
   for (int i = 0; i < range; ++i)
-    printf ("%9d  ", i);
-  putchar ('\n');
+    printf("%9d  ", i);
+  putchar('\n');
   for (int i = 0; i < range; ++i)
-    printf ("%+9.4f  ", mycoord->x[i]);
-  putchar ('\n');
+    printf("%+9.4f  ", mycoord->x[i]);
+  putchar('\n');
   for (int i = 0; i < range; ++i)
-    printf ("%+9.4f  ", mycoord->y[i]);
-  putchar ('\n');
+    printf("%+9.4f  ", mycoord->y[i]);
+  putchar('\n');
   for (int i = 0; i < range; ++i)
-    printf ("%+9.4f  ", mycoord->z[i]);
-  putchar ('\n');
+    printf("%+9.4f  ", mycoord->z[i]);
+  putchar('\n');
 
-  printf ("center xyz\t\t: %f  %4f  %4f\n", mycoord->center[0], mycoord->center[1],
-	  mycoord->center[2]);
+  printf("center xyz\t\t: %f  %4f  %4f\n", mycoord->center[0],
+         mycoord->center[1], mycoord->center[2]);
 
-  printf ("---------------------------------------------------------------------\n");
+  printf("---------------------------------------------------------------------"
+         "\n");
 }
 
-void
-PrintLigand (const Ligand * lig)
-{
+void PrintLigand(const Ligand *lig) {
 
   // const LigCoord *mycoord = &lig->coord_new;
   const LigCoord *mycoord = &lig->coord_orig;
-  printf ("center:\t\t%+10.6f\t%+10.6f\t%+10.6f\n", mycoord->center[0], mycoord->center[1],
-	  mycoord->center[2]);
-  printf ("lna:\t\t%d\n", lig->lna);
+  printf("center:\t\t%+10.6f\t%+10.6f\t%+10.6f\n", mycoord->center[0],
+         mycoord->center[1], mycoord->center[2]);
+  printf("lna:\t\t%d\n", lig->lna);
 
-  printf ("x \t\ty \t\tz \t\tc \t\t t \t n \tindex\n");
-  printf ("-----------------------------------------------\n");
+  printf("x \t\ty \t\tz \t\tc \t\t t \t n \tindex\n");
+  printf("-----------------------------------------------\n");
   const int lna = lig->lna;
   for (int i = 0; i < lna; ++i) {
-    printf ("%+10.6f\t", mycoord->x[i]);
-    printf ("%+10.6f\t", mycoord->y[i]);
-    printf ("%+10.6f\t", mycoord->z[i]);
-    printf ("%+10.6f\t", lig->c[i]);
-    printf ("%2d\t", lig->t[i]);
-    printf ("%2d\t", lig->n[i]);
-    printf ("%3d\n", i);
+    printf("%+10.6f\t", mycoord->x[i]);
+    printf("%+10.6f\t", mycoord->y[i]);
+    printf("%+10.6f\t", mycoord->z[i]);
+    printf("%+10.6f\t", lig->c[i]);
+    printf("%2d\t", lig->t[i]);
+    printf("%2d\t", lig->n[i]);
+    printf("%3d\n", i);
   }
 
 }
 
-void
-PrintProtein (const Protein * prt)
-{
-  printf ("pnp:\t\t%d\n", prt->pnp);
+void PrintProtein(const Protein *prt) {
+  printf("pnp:\t\t%d\n", prt->pnp);
 
-  printf ("x \t\ty \t\tz \t\t t \t c \t d \tindex\n");
-  printf ("-----------------------------------------------\n");
+  printf("x \t\ty \t\tz \t\t t \t c \t d \tindex\n");
+  printf("-----------------------------------------------\n");
   const int pnp = prt->pnp;
   for (int i = 0; i < pnp; ++i) {
-    printf ("%+10.6f\t", prt->x[i]);
-    printf ("%+10.6f\t", prt->y[i]);
-    printf ("%+10.6f\t", prt->z[i]);
-    printf ("%2d\t", prt->t[i]);
-    printf ("%2d\t", prt->c[i]);
-    printf ("%4d\n", i);
+    printf("%+10.6f\t", prt->x[i]);
+    printf("%+10.6f\t", prt->y[i]);
+    printf("%+10.6f\t", prt->z[i]);
+    printf("%2d\t", prt->t[i]);
+    printf("%2d\t", prt->c[i]);
+    printf("%4d\n", i);
   }
 
 }
 
-void
-PrintDataSize (const Ligand * lig,
-	       const Protein * prt, const Psp * psp, const Kde * kde, const Mcs * mcs,
-	       const EnePara * enepara)
-{
+void PrintDataSize(const Ligand *lig, const Protein *prt, const Psp *psp,
+                   const Kde *kde, const Mcs *mcs, const EnePara *enepara) {
   float lig_sz, prt_sz, psp_sz, kde_sz, mcs_sz, enepara_sz;
 
-  lig_sz = sizeof (Ligand);
-  prt_sz = sizeof (Protein);
-  psp_sz = sizeof (Psp);
-  kde_sz = sizeof (Kde);
-  mcs_sz = sizeof (Mcs);
-  enepara_sz = sizeof (EnePara);
+  lig_sz = sizeof(Ligand);
+  prt_sz = sizeof(Protein);
+  psp_sz = sizeof(Psp);
+  kde_sz = sizeof(Kde);
+  mcs_sz = sizeof(Mcs);
+  enepara_sz = sizeof(EnePara);
 
-  printf ("lig \t\tprt \t\tpsp \t\tkde \t\tmcs \t\tenepara\n");
-  printf ("%f \t%f \t%f \t%f \t%f \t%f\t\t",
-	  lig_sz / 1024, prt_sz / 1024, psp_sz / 1024, kde_sz / 1024, mcs_sz / 1024,
-	  enepara_sz / 1024);
-  printf ("full size (KB)\n");
+  printf("lig \t\tprt \t\tpsp \t\tkde \t\tmcs \t\tenepara\n");
+  printf("%f \t%f \t%f \t%f \t%f \t%f\t\t", lig_sz / 1024, prt_sz / 1024,
+         psp_sz / 1024, kde_sz / 1024, mcs_sz / 1024, enepara_sz / 1024);
+  printf("full size (KB)\n");
 
   lig_sz = (3 * 2 + 4) * lig->lna * 4;
   prt_sz = (8) * prt->pnp * 4;
@@ -1399,79 +1242,78 @@ PrintDataSize (const Ligand * lig,
   mcs_sz = 999;
   enepara_sz = 999;
 
-  printf ("%f \t%f \t%f \t%f \t%f \t%f\t\t",
-	  lig_sz / 1024, prt_sz / 1024, psp_sz / 1024, kde_sz / 1024, mcs_sz / 1024,
-	  enepara_sz / 1024);
-  printf ("effective size (KB)\n");
+  printf("%f \t%f \t%f \t%f \t%f \t%f\t\t", lig_sz / 1024, prt_sz / 1024,
+         psp_sz / 1024, kde_sz / 1024, mcs_sz / 1024, enepara_sz / 1024);
+  printf("effective size (KB)\n");
 }
 
-void
-PrintSummary (const InputFiles * inputfiles, const McPara * mcpara, const Temp * temp,
-	      const McLog * mclog, const ComplexSize * complexsize)
-{
-  putchar ('\n');
+void PrintSummary(const InputFiles *inputfiles, const McPara *mcpara,
+                  const Temp *temp, const McLog *mclog,
+                  const ComplexSize *complexsize) {
+  putchar('\n');
 
   // inputs and outputs
-  printf ("================================================================================\n");
-  printf ("Inputs and Outputs\n");
-  printf ("================================================================================\n");
-  printf ("ligand file\t\t\t");
+  printf("====================================================================="
+         "===========\n");
+  printf("Inputs and Outputs\n");
+  printf("====================================================================="
+         "===========\n");
+  printf("ligand file\t\t\t");
   std::cout << inputfiles->lig_file.path << std::endl;
-  printf ("protein file\t\t\t");
+  printf("protein file\t\t\t");
   std::cout << inputfiles->prt_file.path << std::endl;
-  printf ("lhm file\t\t\t");
+  printf("lhm file\t\t\t");
   std::cout << inputfiles->lhm_file.path << std::endl;
-  printf ("enepara file\t\t\t");
+  printf("enepara file\t\t\t");
   std::cout << inputfiles->enepara_file.path << std::endl;
-  printf ("weight file\t\t\t");
-  std::cout << inputfiles->weight_file.path << std::endl;
 
-  printf ("out file (HDF)\t\t\t%s\n", mcpara->hdf_path);
+  cout << "out file (csv)\t\t\t" << inputfiles->trace_file.path << endl;
 
-  printf ("steps_per_dump\t\t\t%d\n", mcpara->steps_per_dump);
+  printf("steps_per_dump\t\t\t%d\n", mcpara->steps_per_dump);
 
-  const size_t ligrecord_sz = sizeof (LigRecord) * complexsize->n_rep;
-  printf ("per dump record size:\t\t%.3f MB\n", (float) ligrecord_sz / 1024 / 1024);
+  const size_t ligrecord_sz = sizeof(LigRecord) * complexsize->n_rep;
+  printf("per dump record size:\t\t%.3f MB\n",
+         (float) ligrecord_sz / 1024 / 1024);
 
-  printf ("================================================================================\n");
+  printf("====================================================================="
+         "===========\n");
 
   // Replica Exchange Monte carlo parameters
-  printf ("Replica Exchange Monte Carlo parameters\n");
-  printf ("================================================================================\n");
-  printf ("steps_total\t\t\t%d\n", mcpara->steps_total);
-  printf ("steps_per_dump\t\t\t%d\n", mcpara->steps_per_dump);
-  printf ("steps_per_exchange\t\t%d\n", mcpara->steps_per_exchange);
+  printf("Replica Exchange Monte Carlo parameters\n");
+  printf("====================================================================="
+         "===========\n");
+  printf("steps_total\t\t\t%d\n", mcpara->steps_total);
+  printf("steps_per_dump\t\t\t%d\n", mcpara->steps_per_dump);
+  printf("steps_per_exchange\t\t%d\n", mcpara->steps_per_exchange);
 
-  printf ("translational scale\t\t");
+  printf("translational scale\t\t");
   for (int i = 0; i < 3; ++i)
-    printf ("%.8f ", mcpara->move_scale[i]);
-  printf ("\n");
+    printf("%.8f ", mcpara->move_scale[i]);
+  printf("\n");
 
-  printf ("rotational scale\t\t");
+  printf("rotational scale\t\t");
   for (int i = 3; i < 6; ++i)
-    printf ("%.8f ", mcpara->move_scale[i]);
-  printf ("\n");
+    printf("%.8f ", mcpara->move_scale[i]);
+  printf("\n");
 
-  printf ("ligand conformations\t\t%d\n", complexsize->n_lig);
-  printf ("prt conformations\t\t%d\n", complexsize->n_prt);
-  printf ("temperatures\t\t\t%d\n", complexsize->n_tmp);
-  printf ("replica ensembles\t\t%d\n", complexsize->n_rep);
+  printf("ligand conformations\t\t%d\n", complexsize->n_lig);
+  printf("prt conformations\t\t%d\n", complexsize->n_prt);
+  printf("temperatures\t\t\t%d\n", complexsize->n_tmp);
+  printf("replica ensembles\t\t%d\n", complexsize->n_rep);
 
-  printf ("size_lig\t\t\t%d\n", complexsize->lna);
-  printf ("size_prt\t\t\t%d\n", complexsize->pnp);
-  printf ("size_pnk\t\t\t%d\n", complexsize->pnk);
-  printf ("size_mcs\t\t\t%d\n", complexsize->pos);
-  
-  printf ("AR of MC\t\t\t%.3f\n", mclog->ar);
+  printf("size_lig\t\t\t%d\n", complexsize->lna);
+  printf("size_prt\t\t\t%d\n", complexsize->pnp);
+  printf("size_pnk\t\t\t%d\n", complexsize->pnk);
+  printf("size_mcs\t\t\t%d\n", complexsize->pos);
+
+  printf("AR of MC\t\t\t%.3f\n", mclog->ar);
 
 #if 0
   for (int t = 0; t < complexsize->n_tmp; ++t) {
     const int myreplica = complexsize->n_lig * t;
-    printf ("AR of temperature[%d]=%f \t %d / %d \t%f\n",
-	    t,
-	    temp[t].t,
-	    mclog->acs_mc[myreplica],
-	    mcpara->steps_total, (float) mclog->acs_mc[myreplica] / mcpara->steps_total);
+    printf("AR of temperature[%d]=%f \t %d / %d \t%f\n", t, temp[t].t,
+           mclog->acs_mc[myreplica], mcpara->steps_total,
+           (float) mclog->acs_mc[myreplica] / mcpara->steps_total);
   }
 #endif
 
@@ -1480,11 +1322,11 @@ PrintSummary (const InputFiles * inputfiles, const McPara * mcpara, const Temp *
   for (int i = 0; i < complexsize->n_prt; ++i) {
     for (int j = 0; j < complexsize->n_tmp; ++j) {
       for (int k = 0; k < complexsize->n_lig; ++k) {
-	const int flatten_addr =
-	  complexsize->n_tmp * complexsize->n_lig * i + complexsize->n_lig * j + k;
-	printf ("AR of %4d temperature[%d]=%f \t %d / %d \t%f\n", flatten_addr, j, temp[j].t,
-		mclog->acs_mc[flatten_addr], mcpara->steps_total,
-		(float) mclog->acs_mc[flatten_addr] / mcpara->steps_total);
+        const int flatten_addr = complexsize->n_tmp * complexsize->n_lig * i +
+                                 complexsize->n_lig * j + k;
+        printf("AR of %4d temperature[%d]=%f \t %d / %d \t%f\n", flatten_addr,
+               j, temp[j].t, mclog->acs_mc[flatten_addr], mcpara->steps_total,
+               (float) mclog->acs_mc[flatten_addr] / mcpara->steps_total);
       }
     }
   }
@@ -1494,30 +1336,35 @@ PrintSummary (const InputFiles * inputfiles, const McPara * mcpara, const Temp *
   printf ("AR of temp exchange \t\t%d / %d \t%f\n",
 	  mclog->ac_temp_exchg,
 	  mcpara->steps_total / mcpara->steps_per_exchange * complexsize->n_rep,
-	  (float) mclog->ac_temp_exchg / (mcpara->steps_total / mcpara->steps_per_exchange *
+	  (float) mclog->ac_temp_exchg / (mcpara->steps_total /
+mcpara->steps_per_exchange *
 					  complexsize->n_rep));
   */
 
-  printf ("================================================================================\n");
+  printf("====================================================================="
+         "===========\n");
 
   // performance
-  printf ("Performance\n");
-  printf ("================================================================================\n");
+  printf("Performance\n");
+  printf("====================================================================="
+         "===========\n");
 
   const float mcpersec0 = mclog->steps_total * complexsize->n_rep / mclog->t0;
-  printf ("compute time\t\t\t%.3f seconds\n", mclog->t0);
-  printf ("time per MC sweep per replica\t%.3f * 1e-6 seconds\n", 1e6 / mcpersec0);
-  printf ("MC sweeps per second\t\t%.3f\n", mcpersec0);
-  printf ("speedup over 843.75\t\t%.3f X\n", mcpersec0 / 843.75);
+  printf("compute time\t\t\t%.3f seconds\n", mclog->t0);
+  printf("time per MC sweep per replica\t%.3f * 1e-6 seconds\n",
+         1e6 / mcpersec0);
+  printf("MC sweeps per second\t\t%.3f\n", mcpersec0);
+  printf("speedup over 843.75\t\t%.3f X\n", mcpersec0 / 843.75);
 
   const float mcpersec1 = mclog->steps_total * complexsize->n_rep / mclog->t1;
-  printf ("wall time\t\t\t%.3f seconds\n", mclog->t1);
-  printf ("time per MC sweep per replica\t%.3f * 1e-6 seconds \n", 1e6 / mcpersec1);
-  printf ("MC sweeps per second\t\t%.3f\n", mcpersec1);
-  printf ("speedup over 843.75\t\t%.3f X\n", mcpersec1 / 843.75);
-  printf ("================================================================================\n");
-  printf ("GeauxDock ... done\n");
-
+  printf("wall time\t\t\t%.3f seconds\n", mclog->t1);
+  printf("time per MC sweep per replica\t%.3f * 1e-6 seconds \n",
+         1e6 / mcpersec1);
+  printf("MC sweeps per second\t\t%.3f\n", mcpersec1);
+  printf("speedup over 843.75\t\t%.3f X\n", mcpersec1 / 843.75);
+  printf("====================================================================="
+         "===========\n");
+  printf("GeauxDock ... done\n");
 
 }
 
@@ -1530,33 +1377,22 @@ float MyRand()
 }
 */
 
+int minimal_int(const int a, const int b) { return a < b ? a : b; }
 
-int
-minimal_int (const int a, const int b)
-{
-  return a < b ? a : b;
-}
-
-
-vector < string >
-splitByWhiteSpace(string s) {
-  vector < string > tokens;
-  istringstream ss (s);
-  while (!ss.eof())
-    {
-      string x;
-      getline(ss, x, ' ');
-      tokens.push_back(x);
-    }
+vector<string> splitByWhiteSpace(string s) {
+  vector<string> tokens;
+  istringstream ss(s);
+  while (!ss.eof()) {
+    string x;
+    getline(ss, x, ' ');
+    tokens.push_back(x);
+  }
 
   return tokens;
 }
 
-
 // return 1 if two movevector are the same else return 0
-int
-sameVector(float *v1, float *v2)
-{
+int sameVector(float *v1, float *v2) {
   float threshold = 0.01;
   for (int i = 0; i < 6; i++) {
     float diff = fabs(v1[i] - v2[i]);
@@ -1566,133 +1402,107 @@ sameVector(float *v1, float *v2)
   return 1;
 }
 
-int
-checkRedundancy(vector < LigRecordSingleStep > &records,
-                int idx_rep,
-                LigRecord * ligrecord)
-{
+int checkRedundancy(vector<LigRecordSingleStep> &records, int idx_rep,
+                    LigRecord *ligrecord) {
   // rare array of float used to be compared
   // expext no initial move-vectors be the same as this one
-  float current_matrix[6] = {3.10, 1.6, 4.8, 1.2, 0.03, 0.08};
-  
+  float current_matrix[6] = { 3.10, 1.6, 4.8, 1.2, 0.03, 0.08 };
+
   for (int i = 0; i < STEPS_PER_DUMP; i++) {
     LigRecordSingleStep *myrecord = &ligrecord[idx_rep].step[i];
     float *movematrix = myrecord->movematrix;
 
-    if (!sameVector(current_matrix, movematrix))
-      {
-        LigRecordSingleStep rec;
-        memcpy(&rec, myrecord, sizeof(LigRecordSingleStep));
-        records.push_back(rec);
+    if (!sameVector(current_matrix, movematrix)) {
+      LigRecordSingleStep rec;
+      memcpy(&rec, myrecord, sizeof(LigRecordSingleStep));
+      records.push_back(rec);
 
-        // copied for the next comparison
-        memcpy(current_matrix, movematrix, sizeof(current_matrix));
-      }
+      // copied for the next comparison
+      memcpy(current_matrix, movematrix, sizeof(current_matrix));
+    }
   }
 
   return records.size();
 }
 
-
-bool
-energyLessThan(const LigRecordSingleStep &s1, const LigRecordSingleStep &s2)
-{
+bool energyLessThan(const LigRecordSingleStep &s1,
+                    const LigRecordSingleStep &s2) {
   float e1 = s1.energy.e[MAXWEI - 1];
   float e2 = s2.energy.e[MAXWEI - 1];
   return (e1 < e2);
 }
 
-
-bool
-rmsdLessThan(const LigRecordSingleStep &s1, const LigRecordSingleStep &s2)
-{
+bool rmsdLessThan(const LigRecordSingleStep &s1,
+                  const LigRecordSingleStep &s2) {
   float rmsd1 = s1.energy.rmsd;
   float rmsd2 = s2.energy.rmsd;
   return (rmsd1 < rmsd2);
 }
 
-bool
-cmsLargerThan(const LigRecordSingleStep &s1, const LigRecordSingleStep &s2)
-{
+bool cmsLargerThan(const LigRecordSingleStep &s1,
+                   const LigRecordSingleStep &s2) {
   float cms1 = s1.energy.cms;
   float cms2 = s2.energy.cms;
   return (cms1 > cms2);
 }
 
-float
-getTotalEner(LigRecordSingleStep *step)
-{
+float getTotalEner(LigRecordSingleStep *step) {
   return step->energy.e[MAXWEI - 1];
 }
 
-float
-getRMSD(LigRecordSingleStep *step)
-{
-  return step->energy.rmsd;
-}
+float getRMSD(LigRecordSingleStep *step) { return step->energy.rmsd; }
 
-float
-getCMS(LigRecordSingleStep *step)
-{
-  return step->energy.cms;
-}
+float getCMS(LigRecordSingleStep *step) { return step->energy.cms; }
 
-void
-printHeader(const McPara * mcpara)
-{
+void printHeader(const McPara *mcpara) {
   ofstream myfile;
   myfile.open(mcpara->csv_path);
-  myfile << "lig prt t0 t1 t2 r0 r1 r2 cms rmsd ener"  << endl;
+  myfile << "lig prt t0 t1 t2 r0 r1 r2 cms rmsd ener" << endl;
   myfile.close();
 }
 
-void
-printStates(vector < Medoid > &medoids, const McPara * mcpara)
-{
+void printStates(vector<Medoid> &medoids, const McPara *mcpara) {
   ofstream myfile;
   myfile.open(mcpara->csv_path);
   myfile << "lig prt t0 t1 t2 r0 r1 r2 ";
   myfile << "vdw ele pmf psp hdb hpc kde lhm edst ";
-  myfile << "cms rmsd ener cluster_sz"  << endl;
+  myfile << "cms rmsd ener cluster_sz" << endl;
   myfile.close();
 
   myfile.open(mcpara->csv_path, ios::app);
   myfile << fixed;
   // myfile << setprecision(4);
 
-  vector < Medoid > :: iterator itc;
-  for (itc = medoids.begin(); itc != medoids.end(); itc++)
-    {
-      LigRecordSingleStep *s = &((*itc).step);
-      int cluster_sz = (*itc).cluster_sz;
-      Replica * rep = &s->replica;
-      float * mv = s->movematrix;
-      float * e = s->energy.e;
-      float ener = getTotalEner(s);
-      float cms = getCMS(s);
-      float rmsd = getRMSD(s);
+  vector<Medoid>::iterator itc;
+  for (itc = medoids.begin(); itc != medoids.end(); itc++) {
+    LigRecordSingleStep *s = &((*itc).step);
+    int cluster_sz = (*itc).cluster_sz;
+    Replica *rep = &s->replica;
+    float *mv = s->movematrix;
+    float *e = s->energy.e;
+    float ener = getTotalEner(s);
+    float cms = getCMS(s);
+    float rmsd = getRMSD(s);
 
-      myfile << rep->idx_lig << " ";
-      myfile << rep->idx_prt << " ";
+    myfile << rep->idx_lig << " ";
+    myfile << rep->idx_prt << " ";
 
-      for (int i = 0; i < 6; i++)
-        myfile << mv[i] << " ";
-      for (int i = 0; i < MAXWEI - 1; i++)
-        myfile << e[i] << " ";
+    for (int i = 0; i < 6; i++)
+      myfile << mv[i] << " ";
+    for (int i = 0; i < MAXWEI - 1; i++)
+      myfile << e[i] << " ";
 
-      myfile << cms << " ";
-      myfile << rmsd << " ";
-      myfile << ener << " ";
-      myfile << cluster_sz << " ";
-      myfile << endl;
-    }
+    myfile << cms << " ";
+    myfile << rmsd << " ";
+    myfile << ener << " ";
+    myfile << cluster_sz << " ";
+    myfile << endl;
+  }
   myfile.close();
 }
 
-
-void
-printStates(vector < LigRecordSingleStep > &steps, std::string &ofn)
-{
+void printStates(vector<LigRecordSingleStep> &steps, std::string &ofn) {
+  printf("%s\n", "Final output");
   ofstream myfile;
   myfile.open(ofn, std::ofstream::out);
   myfile << fixed;
@@ -1702,11 +1512,11 @@ printStates(vector < LigRecordSingleStep > &steps, std::string &ofn)
   myfile << "cms rmsd ";
   myfile << "vdw ele pmf psp hdb hpc kde lhm edst ener" << endl;
 
-  vector < LigRecordSingleStep > :: iterator its;
+  vector<LigRecordSingleStep>::iterator its;
   for (its = steps.begin(); its != steps.end(); its++) {
     LigRecordSingleStep *s = &(*its);
-    Replica * rep = &s->replica;
-    float * mv = s->movematrix;
+    Replica *rep = &s->replica;
+    float *mv = s->movematrix;
     float ener = getTotalEner(s);
     float cms = getCMS(s);
     float rmsd = getRMSD(s);
@@ -1733,25 +1543,23 @@ printStates(vector < LigRecordSingleStep > &steps, std::string &ofn)
     myfile << s->energy.e[9];
 
     myfile << endl;
-  } 
+  }
   myfile.flush();
 
   myfile.close();
 }
 
-void
-printStates(vector < LigRecordSingleStep > &steps, const McPara * mcpara)
-{
+void printStates(vector<LigRecordSingleStep> &steps, const McPara *mcpara) {
   ofstream myfile;
   myfile.open(mcpara->csv_path, ios::app);
   myfile << fixed;
   myfile << setprecision(4);
 
-  vector < LigRecordSingleStep > :: iterator its;
+  vector<LigRecordSingleStep>::iterator its;
   for (its = steps.begin(); its != steps.end(); its++) {
     LigRecordSingleStep *s = &(*its);
-    Replica * rep = &s->replica;
-    float * mv = s->movematrix;
+    Replica *rep = &s->replica;
+    float *mv = s->movematrix;
     float ener = getTotalEner(s);
     float cms = getCMS(s);
     float rmsd = getRMSD(s);
@@ -1766,164 +1574,154 @@ printStates(vector < LigRecordSingleStep > &steps, const McPara * mcpara)
     myfile << rmsd << " ";
     myfile << ener << " ";
     myfile << endl;
-  } 
+  }
 
   myfile.close();
 }
 
-
-bool
-medoidEnergyLessThan(const Medoid &c1, const Medoid &c2)
-{
+bool medoidEnergyLessThan(const Medoid &c1, const Medoid &c2) {
   float e1 = c1.step.energy.e[MAXWEI - 1];
   float e2 = c2.step.energy.e[MAXWEI - 1];
 
   return (e1 < e2);
 }
 
-void
-ParallelGenCmsSimiMat(const vector < LigRecordSingleStep > & steps, 
-                      Ligand* lig, int n_lig,
-                      const Protein* const prt, const EnePara* const enepara, 
-                      double** dis_mat)
-{
+void ParallelGenCmsSimiMat(const vector<LigRecordSingleStep> &steps,
+                           Ligand *lig, int n_lig, const Protein *const prt,
+                           const EnePara *const enepara, double **dis_mat) {
   int tot = steps.size();
   int lna = lig->lna;
   int pnp = prt->pnp;
 
   int tot_threads = omp_get_max_threads();
-  
-  Ligand* copied_lig = (Ligand*) calloc(tot_threads * n_lig, sizeof(Ligand));
+
+  Ligand *copied_lig = (Ligand *)calloc(tot_threads * n_lig, sizeof(Ligand));
   assert(copied_lig != NULL);
 
   for (int i = 0; i < tot_threads; ++i) {
-    Ligand* dest = &copied_lig[i * n_lig];
+    Ligand *dest = &copied_lig[i * n_lig];
     memcpy(dest, lig, n_lig * sizeof(Ligand));
   }
 
   cout << tot_threads << " found and used" << endl;
-#pragma omp parallel num_threads(tot_threads) 
+#pragma omp parallel num_threads(tot_threads)
   {
 #pragma omp for schedule(dynamic)
     for (int i = 0; i < tot; i++) {
-    
+
       int tid = omp_get_thread_num();
-      Ligand* mylig = &copied_lig[tid * n_lig];
+      Ligand *mylig = &copied_lig[tid * n_lig];
 
-      int* my_ref = (int*) calloc(lna * pnp, sizeof(int));
-      int* other_ref = (int*) calloc(lna * pnp, sizeof(int));
-    
-      for (int j = i; j < tot; j++)
-        {
-          const LigRecordSingleStep* const my = &(steps[i]);
-          const LigRecordSingleStep* const other = &(steps[j]);
-          SetContactMatrix(my, my_ref, mylig, prt, enepara);
-          SetContactMatrix(other, other_ref, mylig, prt, enepara);
+      int *my_ref = (int *)calloc(lna * pnp, sizeof(int));
+      int *other_ref = (int *)calloc(lna * pnp, sizeof(int));
 
-          float cms = CalculateContactModeScore(my_ref, other_ref, enepara, mylig, prt);
-          double dividend = 1 + (double)cms;
-          double dis = 1.0 / dividend;
+      for (int j = i; j < tot; j++) {
+        const LigRecordSingleStep *const my = &(steps[i]);
+        const LigRecordSingleStep *const other = &(steps[j]);
+        SetContactMatrix(my, my_ref, mylig, prt, enepara);
+        SetContactMatrix(other, other_ref, mylig, prt, enepara);
 
-          if (dividend < 0.0001)
-            dis = MAX_DIST;
-
-          dis_mat[i][j] = dis;
-        }
-      free(my_ref);
-      free(other_ref);
-    }
-  }
-  
-  for (int i = 0; i < tot; i++)
-    {
-      for (int j = 0; j < i; j++) {
-        dis_mat[i][j] = dis_mat[j][i];
-      }
-    }
-  
-  free(copied_lig);
-}
-
-void
-GenCmsSimiMat(const vector < LigRecordSingleStep > & steps, Ligand* lig, 
-              const Protein* const prt,
-              const EnePara* const enepara, double** dis_mat)
-{
-  int tot = steps.size();
-  int lna = lig->lna;
-  int pnp = prt->pnp;
-
-  int* my_ref = (int*) calloc(lna * pnp, sizeof(int));
-  int* other_ref = (int*) calloc(lna * pnp, sizeof(int));
-
-  for (int i = 0; i < tot; i++)
-    for (int j = i; j < tot; j++)
-      {
-        const LigRecordSingleStep* const my = &(steps[i]);
-        const LigRecordSingleStep* const other = &(steps[j]);
-        SetContactMatrix(my, my_ref, lig, prt, enepara);
-        SetContactMatrix(other, other_ref, lig, prt, enepara);
-
-        float cms = CalculateContactModeScore(my_ref, other_ref, enepara, lig, prt);
-        double dividend = 1 + (double)cms;
+        float cms =
+            CalculateContactModeScore(my_ref, other_ref, enepara, mylig, prt);
+        double dividend = 1 + (double) cms;
         double dis = 1.0 / dividend;
 
         if (dividend < 0.0001)
           dis = MAX_DIST;
 
         dis_mat[i][j] = dis;
-        dis_mat[j][i] = dis;
       }
-  
+      free(my_ref);
+      free(other_ref);
+    }
+  }
+
+  for (int i = 0; i < tot; i++) {
+    for (int j = 0; j < i; j++) {
+      dis_mat[i][j] = dis_mat[j][i];
+    }
+  }
+
+  free(copied_lig);
+}
+
+void GenCmsSimiMat(const vector<LigRecordSingleStep> &steps, Ligand *lig,
+                   const Protein *const prt, const EnePara *const enepara,
+                   double **dis_mat) {
+  int tot = steps.size();
+  int lna = lig->lna;
+  int pnp = prt->pnp;
+
+  int *my_ref = (int *)calloc(lna * pnp, sizeof(int));
+  int *other_ref = (int *)calloc(lna * pnp, sizeof(int));
+
+  for (int i = 0; i < tot; i++)
+    for (int j = i; j < tot; j++) {
+      const LigRecordSingleStep *const my = &(steps[i]);
+      const LigRecordSingleStep *const other = &(steps[j]);
+      SetContactMatrix(my, my_ref, lig, prt, enepara);
+      SetContactMatrix(other, other_ref, lig, prt, enepara);
+
+      float cms =
+          CalculateContactModeScore(my_ref, other_ref, enepara, lig, prt);
+      double dividend = 1 + (double) cms;
+      double dis = 1.0 / dividend;
+
+      if (dividend < 0.0001)
+        dis = MAX_DIST;
+
+      dis_mat[i][j] = dis;
+      dis_mat[j][i] = dis;
+    }
+
   free(my_ref);
   free(other_ref);
 }
 
-
-vector < Medoid >
-clusterCmsByAveLinkage(const vector < LigRecordSingleStep > & steps, int cluster_num, int n_lig,
-                       Ligand* lig, const Protein* const prt, const EnePara* const enepara)
-{
+vector<Medoid> clusterCmsByAveLinkage(const vector<LigRecordSingleStep> &steps,
+                                      int cluster_num, int n_lig, Ligand *lig,
+                                      const Protein *const prt,
+                                      const EnePara *const enepara) {
   // create distance matrix using cms value between two conformations
   // dimension of the matrix is n x n, where n is the number of steps
   // entries of the matrix should be in double precision
   int tot = steps.size();
-  double** dis_mat = (double**) malloc(tot * sizeof(double*));
+  double **dis_mat = (double **)malloc(tot * sizeof(double *));
   assert(dis_mat != NULL);
-  for (int i = 0; i < tot; i++)
-    {
-      dis_mat[i] = (double*) malloc(tot * sizeof(double));
-      assert(dis_mat[i] != NULL);
-    }
+  for (int i = 0; i < tot; i++) {
+    dis_mat[i] = (double *)malloc(tot * sizeof(double));
+    assert(dis_mat[i] != NULL);
+  }
   // GenCmsSimiMat(steps, lig, prt, enepara, dis_mat);
-  ParallelGenCmsSimiMat (steps, lig, n_lig, prt, enepara, dis_mat);
+  ParallelGenCmsSimiMat(steps, lig, n_lig, prt, enepara, dis_mat);
 
   // cluster the distance matrix using average linkage method
-  Node* tree;
+  Node *tree;
   int nrows = tot;
   int ncols = MAXWEI - 1;
   tree = treecluster(nrows, ncols, 0, 0, 0, 0, 'e', 's', dis_mat);
   if (!tree)
-    printf ("treecluster routine failed due to insufficient memory\n");
+    printf("treecluster routine failed due to insufficient memory\n");
 
-  int* clusterid = (int*) malloc(nrows*sizeof(int));
+  int *clusterid = (int *)malloc(nrows * sizeof(int));
   bool show_penalties = 0;
-  
+
   int my_cluster_num;
-  if (-1 == cluster_num )
+  if (-1 == cluster_num)
     my_cluster_num = KGS(tree, clusterid, dis_mat, nrows, show_penalties);
   else
     my_cluster_num = cluster_num;
-    
-  cuttree (nrows, tree, my_cluster_num, clusterid);
+
+  cuttree(nrows, tree, my_cluster_num, clusterid);
 
   // to find the medoids;
-  vector < Medoid > medoids;
-  map < int , vector < int > > clusters;
-  map < int , vector < int > > :: iterator itc;
+  vector<Medoid> medoids;
+  map<int, vector<int> > clusters;
+  map<int, vector<int> >::iterator itc;
   clusters = GetClusters(clusterid, my_cluster_num, nrows);
-  for (itc = clusters.begin(); itc != clusters.end(); itc ++) {
-    map < int, double > pt_and_its_dist_to_others = Distances2Others(itc->second, dis_mat);
+  for (itc = clusters.begin(); itc != clusters.end(); itc++) {
+    map<int, double> pt_and_its_dist_to_others =
+        Distances2Others(itc->second, dis_mat);
     int medoid_idx = FindMedoid(pt_and_its_dist_to_others);
     LigRecordSingleStep step = steps[medoid_idx];
     Medoid medoid;
@@ -1933,67 +1731,62 @@ clusterCmsByAveLinkage(const vector < LigRecordSingleStep > & steps, int cluster
   }
 
   // free the memory
-  for (int i = 0; i < tot; i++) free(dis_mat[i]);
+  for (int i = 0; i < tot; i++)
+    free(dis_mat[i]);
   free(dis_mat);
   free(clusterid);
   free(tree);
-  
+
   return medoids;
 }
 
-
-vector < Medoid >
-clusterEnerByAveLinkage(vector < LigRecordSingleStep > &steps)
-{
+vector<Medoid> clusterEnerByAveLinkage(vector<LigRecordSingleStep> &steps) {
   int nrows = steps.size();
   int ncols = MAXWEI - 1;
   int i, j;
 
-  const int nnodes = nrows -1;
-  double** data = (double**) malloc(nrows * sizeof(double*));
-  double* weight = (double*) malloc(ncols*sizeof(double));
-  int** mask = (int**) malloc(nrows * sizeof(int*));
-  int* clusterid;
-  Node* tree;
+  const int nnodes = nrows - 1;
+  double **data = (double **)malloc(nrows * sizeof(double *));
+  double *weight = (double *)malloc(ncols * sizeof(double));
+  int **mask = (int **)malloc(nrows * sizeof(int *));
+  int *clusterid;
+  Node *tree;
 
-  for (i = 0; i < ncols; i++) weight[i] = 1.0;
+  for (i = 0; i < ncols; i++)
+    weight[i] = 1.0;
 
-  for (i = 0; i < nrows; i++)
-    {
-      data[i] = (double*) malloc(ncols * sizeof(double));
-      mask[i] = (int*) malloc(ncols * sizeof(int));
-    }
+  for (i = 0; i < nrows; i++) {
+    data[i] = (double *)malloc(ncols * sizeof(double));
+    mask[i] = (int *)malloc(ncols * sizeof(int));
+  }
 
   // copy the data
   // convert float to double
-  for (i = 0; i < nrows; i++)
-    {
-      float *e = steps[i].energy.e;
-      for (j = 0; j < ncols; j++)
-        {
-          data[i][j] = (double) e[j];
-          mask[i][j] = 1;
-        }
+  for (i = 0; i < nrows; i++) {
+    float *e = steps[i].energy.e;
+    for (j = 0; j < ncols; j++) {
+      data[i][j] = (double) e[j];
+      mask[i][j] = 1;
     }
+  }
 
   printf("\n");
   printf("================ Pairwise average linkage clustering ============\n");
   tree = treecluster(nrows, ncols, data, mask, weight, 0, 'e', 'a', 0);
-  if (!tree)
-    {
-      printf ("treecluster routine failed due to insufficient memory\n");
-      free(weight);
-      exit(1);
-    }
+  if (!tree) {
+    printf("treecluster routine failed due to insufficient memory\n");
+    free(weight);
+    exit(1);
+  }
   printf("Node     Item 1   Item 2    Distance\n");
-  for ( i = 0; i < nnodes; i++)
-    printf("%3d:%9d%9d      %g\n",
-           -i-1, tree[i].left, tree[i].right, tree[i].distance);
+  for (i = 0; i < nnodes; i++)
+    printf("%3d:%9d%9d      %g\n", -i - 1, tree[i].left, tree[i].right,
+           tree[i].distance);
   printf("\n");
 
   printf("=============== Cutting a hierarchical clustering tree ==========\n");
-  clusterid = (int*) malloc(nrows*sizeof(int));
-  cuttree (nrows, tree, 10, clusterid);
+  clusterid = (int *)malloc(nrows * sizeof(int));
+  cuttree(nrows, tree, 10, clusterid);
   for (i = 0; i < nrows; i++)
     printf("conformation %2d: cluster %2d\n", i, clusterid[i]);
 
@@ -2001,65 +1794,72 @@ clusterEnerByAveLinkage(vector < LigRecordSingleStep > &steps)
   free(tree);
   free(weight);
 
-  vector < Medoid > medoids;
+  vector<Medoid> medoids;
   return medoids;
 }
 
-vector < Medoid >
-clusterByKmeans(vector < LigRecordSingleStep > &steps, int numClusters)
-{
-  int     numCoords, numObjs;
-  int    *membership;    /* [numObjs] */
-  float **objects;       /* [numObjs][numCoords] data objects */
-  float **clusters;      /* [numClusters][numCoords] cluster center */
-  float   threshold;
-  int     loop_iterations;
+vector<Medoid> clusterByKmeans(vector<LigRecordSingleStep> &steps,
+                               int numClusters) {
+  if (steps.size() < numClusters) {
+    std::vector<Medoid> medoids;
+    for (auto it = steps.begin(); it != steps.end(); ++it) {
+      Medoid medoid;
+      medoid.step = *it;
+      medoid.cluster_sz = 1;
+      medoids.push_back(medoid);
+    }
+    return medoids;
+  } else {
+    int numCoords, numObjs;
+    int *membership;  /* [numObjs] */
+    float **objects;  /* [numObjs][numCoords] data objects */
+    float **clusters; /* [numClusters][numCoords] cluster center */
+    float threshold;
+    int loop_iterations;
 
-  /* allocate space for objects[][] and load the features' value */
-  int i, j, len;
-  numCoords = MAXWEI - 1;
-  numObjs = steps.size();
-  len = numCoords * numObjs;
-  objects = (float**) malloc(numObjs * sizeof(float*));
-  assert(objects != NULL);
-  objects[0] = (float*) malloc(len * sizeof(float));
-  assert(objects[0] != NULL);
-  for (i = 1; i < numObjs; i++)
-    objects[i] = objects[i - 1] + numCoords;
+    /* allocate space for objects[][] and load the features' value */
+    int i, j, len;
+    numCoords = MAXWEI - 1;
+    numObjs = steps.size();
+    len = numCoords * numObjs;
+    objects = (float **)malloc(numObjs * sizeof(float *));
+    assert(objects != NULL);
+    objects[0] = (float *)malloc(len * sizeof(float));
+    assert(objects[0] != NULL);
+    for (i = 1; i < numObjs; i++)
+      objects[i] = objects[i - 1] + numCoords;
 
-  // shuffle the records
-  srand ( unsigned (time(0)) );
-  random_shuffle(steps.begin(), steps.end());
-  for (i = 0; i< numObjs; i++)
-    {
+    // shuffle the records
+    srand(unsigned(time(0)));
+    random_shuffle(steps.begin(), steps.end());
+    for (i = 0; i < numObjs; i++) {
       LigRecordSingleStep *s = &steps[i];
       for (j = 0; j < MAXWEI - 1; j++)
         objects[i][j] = s->energy.e[j];
     }
-  
-  /* some default values */
-  threshold        = 0.001;
 
-  /* membership: the cluster id for each data object */
-  membership = (int*) malloc(numObjs * sizeof(int));
-  assert(membership != NULL);
+    /* some default values */
+    threshold = 0.001;
 
-  clusters = seq_kmeans(objects, numCoords, numObjs, numClusters, threshold,
-                        membership, &loop_iterations);
-    
-  // find medoids for each cluster
-  vector < Medoid > medoids;
-  for (i = 0; i < numClusters; i++)
-    {
+    /* membership: the cluster id for each data object */
+    membership = (int *)malloc(numObjs * sizeof(int));
+    assert(membership != NULL);
+
+    clusters = seq_kmeans(objects, numCoords, numObjs, numClusters, threshold,
+                          membership, &loop_iterations);
+
+    // find medoids for each cluster
+    vector<Medoid> medoids;
+    for (i = 0; i < numClusters; i++) {
       int medoid_idx = -1;
       float dist = -1.0;
       int cluster_sz = 0;
-      float * my_medoid = clusters[i];
+      float *my_medoid = clusters[i];
       for (j = 0; j < numObjs; j++) {
-        if ( membership[j] == i ) {
+        if (membership[j] == i) {
           cluster_sz += 1;
           LigRecordSingleStep *s = &steps[j];
-          float * feature_vals = s->energy.e;
+          float *feature_vals = s->energy.e;
           float euclid_dist = euclid_dist_2(numCoords, my_medoid, feature_vals);
           if (euclid_dist > dist)
             medoid_idx = j;
@@ -2072,41 +1872,35 @@ clusterByKmeans(vector < LigRecordSingleStep > &steps, int numClusters)
       medoids.push_back(medoid);
     }
 
-  free(objects[0]);
-  free(objects);
+    free(objects[0]);
+    free(objects);
 
-  free(membership);
-  free(clusters[0]);
-  free(clusters);
+    free(membership);
+    free(clusters[0]);
+    free(clusters);
 
-  sort(medoids.begin(), medoids.end(), medoidEnergyLessThan);
-  return medoids;
+    sort(medoids.begin(), medoids.end(), medoidEnergyLessThan);
+    return medoids;
+  }
 }
 
-
-vector < Medoid >
-clusterOneRepResults(vector < LigRecordSingleStep > &steps, string clustering_method, int n_lig,
-                     Ligand* lig, const Protein* const prt, const EnePara* const enepara)
-{
-  if ( clustering_method.compare("a") == 0)
-    {
-      return clusterEnerByAveLinkage(steps);
-    }
-  else if ( clustering_method.compare("c") == 0)
-    {
-      return clusterCmsByAveLinkage(steps, -1, n_lig, lig, prt, enepara);
-    }
-  else
-    {
-      printf("Please provide clustering method");
-      vector < Medoid > medoids;
-      return medoids;
-    }
+vector<Medoid> clusterOneRepResults(vector<LigRecordSingleStep> &steps,
+                                    string clustering_method, int n_lig,
+                                    Ligand *lig, const Protein *const prt,
+                                    const EnePara *const enepara) {
+  if (clustering_method.compare("a") == 0) {
+    return clusterEnerByAveLinkage(steps);
+  } else if (clustering_method.compare("c") == 0) {
+    return clusterCmsByAveLinkage(steps, -1, n_lig, lig, prt, enepara);
+  } else {
+    printf("Please provide clustering method");
+    vector<Medoid> medoids;
+    return medoids;
+  }
 }
 
-void
-processOneReplica(vector < LigRecordSingleStep > &steps, SingleRepResult * rep_result)
-{
+void processOneReplica(vector<LigRecordSingleStep> &steps,
+                       SingleRepResult *rep_result) {
 
   float rmsd;
   float cms;
@@ -2118,7 +1912,7 @@ processOneReplica(vector < LigRecordSingleStep > &steps, SingleRepResult * rep_r
   cms = getCMS(s);
   rep_result->init_cms = cms;
   rep_result->init_rmsd = rmsd;
-  
+
   // sort by energy
   sort(steps.begin(), steps.end(), energyLessThan);
   s = &steps[0];
@@ -2141,9 +1935,9 @@ processOneReplica(vector < LigRecordSingleStep > &steps, SingleRepResult * rep_r
 
   // pearson coefficient
   int tot_samples = steps.size();
-  float * ener_vals = new float[tot_samples];
-  float * cms_vals = new float[tot_samples];
-  float * rmsd_vals = new float[tot_samples];
+  float *ener_vals = new float[tot_samples];
+  float *cms_vals = new float[tot_samples];
+  float *rmsd_vals = new float[tot_samples];
 
   for (int i = 0; i < tot_samples; i++) {
     LigRecordSingleStep *s = &steps[i];
@@ -2157,15 +1951,16 @@ processOneReplica(vector < LigRecordSingleStep > &steps, SingleRepResult * rep_r
 
   rep_result->accpt_ratio = (float) steps.size() / STEPS_PER_DUMP;
 
+  delete[] ener_vals;
+  delete[] rmsd_vals;
+  delete[] cms_vals;
 
-  delete[]ener_vals;
-  delete[]rmsd_vals;
-  delete[]cms_vals;
-
-  SingleRepResult * first_rep = rep_result;
-  printf("================================================================================\n");
+  SingleRepResult *first_rep = rep_result;
+  printf("====================================================================="
+         "===========\n");
   printf("Docking result\n");
-  printf("================================================================================\n");
+  printf("====================================================================="
+         "===========\n");
   printf("initial cms\t\t\t%.3f\n", first_rep->init_cms);
   printf("initial rmsd\t\t\t%.3f\n", first_rep->init_rmsd);
   printf("best scored cms\t\t\t%.3f\n", first_rep->best_scored_cms);
@@ -2177,22 +1972,21 @@ processOneReplica(vector < LigRecordSingleStep > &steps, SingleRepResult * rep_r
 }
 
 void
-SimilarityCorrelation(vector < vector < LigRecordSingleStep > > multi_reps_records,
-                      Ligand* lig, Protein* prt, EnePara* enepara)
-{
-  vector < float > cms_vals;
-  vector < float > euclid_vals;
-  vector < float > p_vals;
-  vector < float > :: iterator it_simi;
+SimilarityCorrelation(vector<vector<LigRecordSingleStep> > multi_reps_records,
+                      Ligand *lig, Protein *prt, EnePara *enepara) {
+  vector<float> cms_vals;
+  vector<float> euclid_vals;
+  vector<float> p_vals;
+  vector<float>::iterator it_simi;
 
   int rep_idx = 0;
 
-  cms_vals = SimilarityBetweenConfs(multi_reps_records[rep_idx],
-                                    'c', lig, prt, enepara);
-  euclid_vals = SimilarityBetweenConfs(multi_reps_records[rep_idx],
-                                       'e', lig, prt, enepara);
-  p_vals = SimilarityBetweenConfs(multi_reps_records[rep_idx],
-                                  'p', lig, prt, enepara);
+  cms_vals = SimilarityBetweenConfs(multi_reps_records[rep_idx], 'c', lig, prt,
+                                    enepara);
+  euclid_vals = SimilarityBetweenConfs(multi_reps_records[rep_idx], 'e', lig,
+                                       prt, enepara);
+  p_vals = SimilarityBetweenConfs(multi_reps_records[rep_idx], 'p', lig, prt,
+                                  enepara);
 
   float p_cms_euclid = pearsonr(cms_vals, euclid_vals);
   float p_cms_p = pearsonr(cms_vals, p_vals);
@@ -2200,7 +1994,8 @@ SimilarityCorrelation(vector < vector < LigRecordSingleStep > > multi_reps_recor
   printf("pearson between cms simi and ener disimi\t%f\n", p_cms_euclid);
   printf("pearson between cms simi and p disimi\t\t%f\n", p_cms_p);
 
-  // for (it_simi = euclid_vals.begin(); it_simi != euclid_vals.end(); it_simi++) {
+  // for (it_simi = euclid_vals.begin(); it_simi != euclid_vals.end();
+  // it_simi++) {
   //   cout << (*it_simi) << endl;
   // }
   // for (it_simi = cms_vals.begin(); it_simi != cms_vals.end(); it_simi++) {
@@ -2208,59 +2003,49 @@ SimilarityCorrelation(vector < vector < LigRecordSingleStep > > multi_reps_recor
   // }
 }
 
-int
-CountValidRecords(const map < int, vector < LigRecordSingleStep > > &multi_reps_records)
-{
+int CountValidRecords(
+    const map<int, vector<LigRecordSingleStep> > &multi_reps_records) {
   int cnt = 0;
-  for (auto it = multi_reps_records.begin();
-       it != multi_reps_records.end(); ++it)
-      cnt += it->second.size();
+  for (auto it = multi_reps_records.begin(); it != multi_reps_records.end();
+       ++it)
+    cnt += it->second.size();
 
   return cnt;
 }
 
-double**
-AllocSquareMatrix(int tot)
-{
-  double** mat = (double**) malloc(tot * sizeof(double*));
+double **AllocSquareMatrix(int tot) {
+  double **mat = (double **)malloc(tot * sizeof(double *));
   assert(mat != NULL);
-  for (int i = 0; i < tot; i++)
-    {
-      mat[i] = (double*) calloc(tot, sizeof(double));
-      assert(mat[i] != NULL);
-    }
+  for (int i = 0; i < tot; i++) {
+    mat[i] = (double *)calloc(tot, sizeof(double));
+    assert(mat[i] != NULL);
+  }
   return mat;
 }
 
-void
-FreeSquareMatrix(double** mat, int tot)
-{
-  for (int i = 0; i < tot; i++) free(mat[i]);
+void FreeSquareMatrix(double **mat, int tot) {
+  for (int i = 0; i < tot; i++)
+    free(mat[i]);
   free(mat);
 }
 
-
-double get_wall_time()
-{
+double get_wall_time() {
   struct timeval time;
-  if (gettimeofday(&time,NULL)){
+  if (gettimeofday(&time, NULL)) {
     //  Handle error
     return 0;
   }
-  return (double)time.tv_sec + (double)time.tv_usec * .000001;
+  return (double) time.tv_sec + (double) time.tv_usec * .000001;
 }
 
-
-void
-printLigandTrajectories(const vector < LigRecordSingleStep > &records)
-{
+void printLigandTrajectories(const vector<LigRecordSingleStep> &records) {
   printf("PrtIdx LigIdx v1 v2 v3 v4 v5 v6 cms ener\n");
   for (auto it = records.begin(); it != records.end(); it++) {
     Replica replica = it->replica;
     Energy energy = it->energy;
     float cms = energy.cms;
     float ener = energy.e[MAXWEI - 1];
-    const float* movematrix = it->movematrix;
+    const float *movematrix = it->movematrix;
     printf("%d %d", replica.idx_prt, replica.idx_lig);
     for (int i = 0; i < 6; i++)
       printf(" %f", movematrix[i]);

@@ -11,6 +11,7 @@ CUDAKERNELSYNC (MonteCarlo_Init_d, dim_grid, dim_block, rep_begin[i], rep_end[i]
 
 int s1 = 0;
 int est_tot_rec = mcpara->steps_per_dump * complexsize.n_rep;
+printf("estimated total records: %d\n", est_tot_rec);
 // int est_tot_rec = MINIMUM_REC;
 
 while(CountValidRecords(multi_reps_records) < est_tot_rec) {
@@ -49,7 +50,7 @@ while(CountValidRecords(multi_reps_records) < est_tot_rec) {
   fflush (stdout);
 
 
-#if IS_OUTPUT == 1
+#if IS_OUTPUT == 0
     
   // dump ligand record from CPU memory to disk
   if (!(strlen(mcpara->hdf_path) == 0))

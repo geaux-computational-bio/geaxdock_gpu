@@ -284,5 +284,7 @@ Run (const Ligand * lig,
 
   free (acs_temp_exchg);
   free (ligrecord);
+
+  printf("%s\n", "Kernel completes");
 }
 
