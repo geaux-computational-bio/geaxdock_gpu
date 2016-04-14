@@ -12,7 +12,7 @@
 #define IS_EXCHANGE 0
 
 // move ligand away from center
-#define IS_AWAY 1
+#define IS_AWAY 0
 
 // control the purterbation be 2.0f
 #define IS_CONTROL_MOVE 0
@@ -27,7 +27,7 @@
 #define IS_LINEAR 0
 
 // force field optimization
-#define IS_OPT 1
+#define IS_OPT 0
 
 // use bayesian force field
 #define IS_BAYE 0

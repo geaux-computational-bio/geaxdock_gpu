@@ -33,7 +33,7 @@ ${bin} \
 \
 --csv ./1a07C1.csv \
 --nc 10 \
---floor_temp 0.004 \
+--floor_temp 0.04 \
 --ceiling_temp 0.036 \
 --nt 1 \
 -t 0.02 \
