@@ -1509,8 +1509,8 @@ void printStates(vector<LigRecordSingleStep> &steps, std::string &ofn) {
   myfile << setprecision(4);
 
   myfile << "lig prt ";
-  myfile << "cms rmsd ";
   myfile << "mv1 mv2 mv3 mv4 mv5 mv6 ";
+  myfile << "cms rmsd ";
   myfile << "vdw ele pmf psp hdb hpc kde lhm edst ener" << endl;
 
   vector<LigRecordSingleStep>::iterator its;
@@ -1518,18 +1518,18 @@ void printStates(vector<LigRecordSingleStep> &steps, std::string &ofn) {
     LigRecordSingleStep *s = &(*its);
     Replica *rep = &s->replica;
     float *mv = s->movematrix;
-    float ener = getTotalEner(s);
     float cms = getCMS(s);
     float rmsd = getRMSD(s);
 
     myfile << rep->idx_lig << " ";
     myfile << rep->idx_prt << " ";
 
+    for (int i = 0; i < 6; i++)
+      myfile << mv[i] << " ";
+
     myfile << cms << " ";
     myfile << rmsd << " ";
     // myfile << ener << " ";
-    for (int i = 0; i < 6; i++)
-      myfile << mv[i] << " ";
 
     myfile << s->energy.e[0] << " ";
     myfile << s->energy.e[1] << " ";
