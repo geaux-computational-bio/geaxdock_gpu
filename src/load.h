@@ -54,6 +54,6 @@ void loadWeight(WeightFile *, EnePara0 *);
 void loadNorPara(NorParaFile *,
                  EnePara0 *); // load the normalization parameter a and b
 
-vector<vector<float> > read2D(TraceFile *);
+vector<vector<float> > read2D(const std::string &fn);
 
 #endif // LOAD_H

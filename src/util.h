@@ -36,7 +36,7 @@ void SetMcLog(McLog *);
 void PlaceLigand(Ligand *, const float *const);
 
 // replace ligand coordinates
-list<string> replaceLigandCoords(LigandFile *, Ligand *);
+list<string> replaceLigandCoords(const std::string &fn, Ligand *);
 
 // print the ligand coord in a sdf or mol format
 void PrintLigCoord2File(const Ligand *, std::string);

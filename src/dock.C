@@ -56,6 +56,8 @@ int main(int argc, char **argv) {
       ("id,i", po::value<std::string>(&inputfiles.lhm_file.ligand_id)->required(), "complex id")
       ("csv,o", po::value<std::string>(&inputfiles.trace_file.path)->required(), "trajectories")
 
+      ("conf,", po::value<std::string>(&inputfiles.lig_file.conf_path)->default_value("."), "trajectory ligands path")
+      ("trace,", po::bool_switch()->default_value(false), "calculate trace")
       ("nc", po::value<int>(&mcpara.steps_per_exchange), "")
       ("nt", po::value<int>(&exchgpara.num_temp), "number of temperatures")
       ("ceiling_temp", po::value<float>(&exchgpara.ceiling_temp), "ceiling temperature")
@@ -87,6 +89,7 @@ int main(int argc, char **argv) {
       return ERROR_IN_COMMAND_LINE;
     }
 
+    bool calculate_trace = vm["trace"].as<bool>();
 
     // run application
     srand (time (0));
@@ -185,36 +188,70 @@ int main(int argc, char **argv) {
     //PrintLigand (lig);
     //PrintProtein (prt);
 
-    std::map<int, std::vector<LigRecordSingleStep> > multi_reps_records;
+    if (!calculate_trace) {
+      std::map<int, std::vector<LigRecordSingleStep> > multi_reps_records;
 
-    printf ("Start docking\n");
-    Run (lig, prt, psp, kde, mcs, enepara, temp, replica, &mcpara, mclog,
-         multi_reps_records, complexsize);
+      printf ("Start docking\n");
+      Run (lig, prt, psp, kde, mcs, enepara, temp, replica, &mcpara, mclog,
+           multi_reps_records, complexsize);
 
-    auto medoids = post_mc(multi_reps_records, lig, prt, enepara, &mcpara);
-    std::vector<LigRecordSingleStep> medoids_steps;
-    for (auto it = medoids.begin(); it != medoids.end(); ++it) {
-      medoids_steps.push_back(it->step);
-    }
+      auto medoids = post_mc(multi_reps_records, lig, prt, enepara, &mcpara);
+      std::vector<LigRecordSingleStep> medoids_steps;
+      for (auto it = medoids.begin(); it != medoids.end(); ++it) {
+        medoids_steps.push_back(it->step);
+      }
 
 #if IS_OPT != 1
-    printStates(medoids_steps, inputfiles.trace_file.path);
+      printStates(medoids_steps, inputfiles.trace_file.path);
 #endif
-
-    // printf ("0 0 0.643 -0.037 -0.208 -0.184 0.852 -0.888 0.052 0.174 -1.000 0.774 Ref result\n");
-    // printStates(multi_reps_records[0], inputfiles.trace_file.path);
+      // printf ("0 0 0.643 -0.037 -0.208 -0.184 0.852 -0.888 0.052 0.174 -1.000 0.774 Ref result\n");
+      // printStates(multi_reps_records[0], inputfiles.trace_file.path);
 
 #if IS_OPT == 1
-    auto opt_medoids = cluster_trajectories(multi_reps_records, lig, complexsize.n_lig, prt, enepara);
+      auto opt_medoids = cluster_trajectories(multi_reps_records, lig, complexsize.n_lig, prt, enepara);
 
-    std::vector<LigRecordSingleStep> opt_medoids_steps;
-    for (auto it = opt_medoids.begin(); it != opt_medoids.end(); ++it) {
-      opt_medoids_steps.push_back(it->step);
-    }
-    printStates(opt_medoids_steps, inputfiles.trace_file.path);
+      std::vector<LigRecordSingleStep> opt_medoids_steps;
+      for (auto it = opt_medoids.begin(); it != opt_medoids.end(); ++it) {
+        opt_medoids_steps.push_back(it->step);
+      }
+      printStates(opt_medoids_steps, inputfiles.trace_file.path);
 #endif // IS_OPT == 1
 
-    PrintSummary (&inputfiles, &mcpara, temp, mclog, &complexsize);
+      PrintSummary (&inputfiles, &mcpara, temp, mclog, &complexsize);
+    }
+    else {
+      printf ("Start calculating trace\n");
+      vector < vector < float > > trace_matrix = read2D(inputfiles.trace_file.path);
+      int config_idx = 0;
+      for (vector < vector < float > > :: iterator it = trace_matrix.begin();
+           it != trace_matrix.end();
+           it++, config_idx++)
+        {
+          vector < float > conf = *it;
+          float my_conf[8];
+          for (int i = 0; i < 8; i++)
+            my_conf[i] = conf.at(i);
+
+          int lig_conf = my_conf[0];
+          float *mv_vec = &my_conf[2];
+          Ligand *my_lig = &lig[lig_conf];
+
+          PlaceLigand(my_lig, mv_vec);
+          list < string > new_sdf = replaceLigandCoords(inputfiles.lig_file.path, my_lig);
+
+          string prefix = inputfiles.lig_file.conf_path;
+          char c[10];
+          sprintf(c, "%d", config_idx);
+          string ofn = prefix + "_" + string(c) + ".sdf";  // to_string does not work
+          // with this compiler
+          ofstream of;
+          of.open(ofn.c_str());
+          for (list < string >::iterator it = new_sdf.begin(); it != new_sdf.end(); it++)
+            of << *it << endl;
+          of.close();
+          cout << "write the new ligand conformation to " << ofn << endl;
+        }
+    }
 
     // clean up
 

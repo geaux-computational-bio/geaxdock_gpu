@@ -501,14 +501,14 @@ void PlaceLigand(Ligand *mylig, const float *const movematrix_new) {
   }
 }
 
-list<string> replaceLigandCoords(LigandFile *lig_file, Ligand *lig) {
+list<string> replaceLigandCoords(const std::string &fn, Ligand *lig) {
   list<string> l1_sdf;
   list<string>::iterator i1_sdf;
   string line1;
-  ifstream compounds_file(lig_file->path.c_str());
+  ifstream compounds_file(fn);
   if (!compounds_file.is_open()) {
     cout << "cannot open ligand file" << endl;
-    cout << "Cannot open " << lig_file->path << endl;
+    cout << "Cannot open " << fn << endl;
     exit(EXIT_FAILURE);
   }
 

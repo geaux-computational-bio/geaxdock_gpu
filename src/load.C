@@ -77,8 +77,7 @@ void loadLigConf(LigandFile *lig_file) {
 /*
  * read 2D matrix
  */
-vector<vector<float> > read2D(TraceFile *trace_file) {
-  string fn = trace_file->path;
+vector<vector<float> > read2D(const std::string &fn) {
   vector<vector<float> > matrix;
   string line;
   float val;
