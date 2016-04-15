@@ -20,6 +20,8 @@ __device__ void CalcRmsd_d (const int, Ligand * __restrict__);
 
 __device__ void Move_d (const int, Ligand * __restrict__, const float);
 
+__device__ void ForceMove_d (const int, Ligand * __restrict__, const float);
+
 __device__ void CalcEnergy_d (const int, Ligand * __restrict__, const Protein * __restrict__);
 
 __device__ void CombineEnergy_d (const int, Energy *);
