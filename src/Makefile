@@ -54,7 +54,7 @@ else ifeq ($(HOST), shelob)
 	GPU := GK110
 
 else ifeq ($(HOST), qb)
-	LIBPATH := -L/usr/local/packages/cuda/6.5/lib64 -L/usr/local/packages/hdf51.8.12/INTEL-140-MVAPICH2-2.0/lib
+	LIBPATH := -L/usr/local/packages/cuda/6.5/lib64
 	DMARCRO += -DTARGET_DEVICE=$(TARGET_GPU)
 	GPU := GK110
 
