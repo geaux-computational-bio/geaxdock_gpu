@@ -5,3 +5,6 @@
 /src/GPATH
 /src/GRTAGS
 /src/GTAGS
+/src/dock
+/src/trace
+*.csv
